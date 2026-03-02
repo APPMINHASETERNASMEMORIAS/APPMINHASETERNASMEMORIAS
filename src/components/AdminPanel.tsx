@@ -159,8 +159,8 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
 
   const filteredEvents = useMemo(() => {
     return events.filter(event =>
-      event.eventName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.clientName.toLowerCase().includes(searchQuery.toLowerCase())
+      (event.eventName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (event.clientName || '').toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [events, searchQuery]);
 
@@ -198,7 +198,7 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-white/80 text-sm">Total de Eventos</p>
-                <p className="text-3xl font-bold">{stats.totalEvents}</p>
+                <p className="text-3xl font-bold">{stats?.totalEvents || 0}</p>
               </div>
               <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
                 <Calendar className="w-6 h-6 text-white" />
@@ -212,7 +212,7 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-white/80 text-sm">Total de Mídias</p>
-                <p className="text-3xl font-bold">{stats.totalMedia}</p>
+                <p className="text-3xl font-bold">{stats?.totalMedia || 0}</p>
               </div>
               <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
                 <Image className="w-6 h-6 text-white" />
@@ -226,7 +226,7 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-white/80 text-sm">Pendentes</p>
-                <p className="text-3xl font-bold">{pendingMediaCount}</p>
+                <p className="text-3xl font-bold">{pendingMediaCount || 0}</p>
               </div>
               <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-white" />
@@ -240,7 +240,7 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-white/80 text-sm">Eventos Ativos</p>
-                <p className="text-3xl font-bold">{stats.activeEvents}</p>
+                <p className="text-3xl font-bold">{stats?.activeEvents || 0}</p>
               </div>
               <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
                 <Users className="w-6 h-6 text-white" />

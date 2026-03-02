@@ -7,6 +7,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { MediaWall } from './MediaWall';
 import { QRCodeDisplay } from './QRCodeDisplay';
+import JSZip from 'jszip';
+import { saveAs } from 'file-saver';
+import toast from 'react-hot-toast';
 import {
   LayoutDashboard,
   Calendar,
@@ -20,7 +23,11 @@ import {
   Users,
   TrendingUp,
   LogOut,
-  ChevronRight
+  ChevronRight,
+  Download,
+  Play,
+  Pause,
+  Eraser
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -36,16 +43,66 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
   const [showQRCode, setShowQRCode] = useState(false);
   const [showMediaWall, setShowMediaWall] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState<string | null>(null);
 
   const {
     events,
     media,
     createEvent,
+    updateEvent,
     deleteEvent,
     approveMedia,
     deleteMedia,
     stats
   } = useEvents();
+
+  const handleDownloadEvent = async (event: Event) => {
+    try {
+      setIsDownloading(event.id);
+      toast.loading(`Preparando download do evento ${event.eventName}...`, { id: 'download' });
+
+      const eventMedia = media.filter(m => m.eventId === event.id && m.status === 'approved');
+      
+      if (eventMedia.length === 0) {
+        toast.error('Não há mídias aprovadas para baixar neste evento.', { id: 'download' });
+        setIsDownloading(null);
+        return;
+      }
+
+      const zip = new JSZip();
+      const folder = zip.folder(event.eventName.replace(/[^a-z0-9]/gi, '_').toLowerCase());
+
+      if (!folder) {
+         throw new Error('Erro ao criar pasta no arquivo zip');
+      }
+
+      // Download each file and add to zip
+      const downloadPromises = eventMedia.map(async (item, index) => {
+        try {
+          const response = await fetch(item.originalUrl || item.url);
+          const blob = await response.blob();
+          const extension = item.type === 'video' ? 'mp4' : 'jpg';
+          const filename = `${item.uploadedBy.replace(/[^a-z0-9]/gi, '_')}_${index + 1}.${extension}`;
+          folder.file(filename, blob);
+        } catch (error) {
+          console.error(`Erro ao baixar arquivo ${item.url}:`, error);
+        }
+      });
+
+      await Promise.all(downloadPromises);
+
+      toast.loading('Compactando arquivos...', { id: 'download' });
+      const content = await zip.generateAsync({ type: 'blob' });
+      
+      saveAs(content, `${event.eventName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_memorias.zip`);
+      toast.success('Download concluído!', { id: 'download' });
+    } catch (error) {
+      console.error('Erro no download:', error);
+      toast.error('Erro ao fazer o download das mídias.', { id: 'download' });
+    } finally {
+      setIsDownloading(null);
+    }
+  };
 
   const filteredEvents = useMemo(() => {
     return events.filter(event =>
@@ -249,6 +306,42 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                     {event.eventName.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex gap-2">
+                    <button
+                      onClick={() => handleDownloadEvent(event)}
+                      disabled={isDownloading === event.id}
+                      className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center hover:bg-blue-200 transition-colors disabled:opacity-50"
+                      title="Baixar todas as mídias"
+                    >
+                      <Download className={`w-4 h-4 text-blue-600 ${isDownloading === event.id ? 'animate-bounce' : ''}`} />
+                    </button>
+                    <button
+                      onClick={() => {
+                        const newStatus = event.status === 'paused' ? 'active' : 'paused';
+                        updateEvent(event.id, { status: newStatus });
+                        toast.success(`Evento ${newStatus === 'active' ? 'retomado' : 'pausado'} com sucesso!`);
+                      }}
+                      className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
+                        event.status === 'paused' 
+                          ? 'bg-green-100 hover:bg-green-200 text-green-600' 
+                          : 'bg-orange-100 hover:bg-orange-200 text-orange-600'
+                      }`}
+                      title={event.status === 'paused' ? 'Retomar evento' : 'Pausar evento'}
+                    >
+                      {event.status === 'paused' ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (window.confirm('Tem certeza que deseja apagar TODAS as mídias deste evento para liberar espaço? Esta ação não pode ser desfeita.')) {
+                          const eventMedia = media.filter(m => m.eventId === event.id);
+                          eventMedia.forEach(m => deleteMedia(m.id));
+                          toast.success('Mídias apagadas com sucesso! Espaço liberado.');
+                        }
+                      }}
+                      className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center hover:bg-yellow-200 transition-colors"
+                      title="Limpar mídias (Liberar espaço)"
+                    >
+                      <Eraser className="w-4 h-4 text-yellow-600" />
+                    </button>
                     <button
                       onClick={() => {
                         setSelectedEvent(event);

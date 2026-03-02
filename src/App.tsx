@@ -785,6 +785,10 @@ function EventPage() {
   const { id } = useParams();
   const [refreshGallery, setRefreshGallery] = useState(0);
   const navigate = useNavigate();
+  const { getEvent } = useEvents();
+  
+  const event = id ? getEvent(id) : undefined;
+  const isPaused = event?.status === 'paused';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -808,17 +812,19 @@ function EventPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h1 className="text-3xl md:text-4xl font-playfair font-bold text-gray-900 mb-4">
-              Compartilhe seu momento!
+              {event ? event.eventName : 'Compartilhe seu momento!'}
             </h1>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              Tire uma foto ou grave um vídeo e deixe uma mensagem especial.
+              {isPaused 
+                ? 'O recebimento de fotos para este evento foi pausado pelo administrador.' 
+                : 'Tire uma foto ou grave um vídeo e deixe uma mensagem especial.'}
             </p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div className="lg:col-span-4">
               <div className="sticky top-24">
-                <UploadMemory eventId={id} onUploadSuccess={() => setRefreshGallery(prev => prev + 1)} />
+                <UploadMemory eventId={id} isPaused={isPaused} onUploadSuccess={() => setRefreshGallery(prev => prev + 1)} />
               </div>
             </div>
             <div className="lg:col-span-8">

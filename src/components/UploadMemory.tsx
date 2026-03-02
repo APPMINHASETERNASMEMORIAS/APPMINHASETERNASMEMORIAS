@@ -5,7 +5,7 @@ import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import imageCompression from 'browser-image-compression';
 
-export function UploadMemory({ eventId, onUploadSuccess }: { eventId?: string, onUploadSuccess?: () => void }) {
+export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { eventId?: string, isPaused?: boolean, onUploadSuccess?: () => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState('');
   const [message, setMessage] = useState('');
@@ -20,8 +20,19 @@ export function UploadMemory({ eventId, onUploadSuccess }: { eventId?: string, o
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (isPaused) {
+      toast.error('Este evento está pausado. Não é possível enviar novas mídias.');
+      return;
+    }
+    
     if (!isCloudinaryConfigured || !isSupabaseConfigured) {
-      toast.error('O sistema ainda não está conectado ao Cloudinary/Supabase. Configure as chaves no .env');
+      const missing = [];
+      if (!import.meta.env.VITE_CLOUDINARY_CLOUD_NAME) missing.push('Cloudinary Cloud Name');
+      if (!import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET) missing.push('Cloudinary Upload Preset');
+      if (!import.meta.env.VITE_SUPABASE_URL) missing.push('Supabase URL');
+      if (!import.meta.env.VITE_SUPABASE_ANON_KEY) missing.push('Supabase Anon Key');
+      
+      toast.error(`Faltam configurar: ${missing.join(', ')}`);
       return;
     }
 
@@ -137,12 +148,17 @@ export function UploadMemory({ eventId, onUploadSuccess }: { eventId?: string, o
             id="file-upload"
             accept="image/*,video/*"
             onChange={handleFileChange}
+            disabled={isPaused}
             className="hidden"
           />
           <label
             htmlFor="file-upload"
-            className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
-              file ? 'border-purple-500 bg-purple-50' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'
+            className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-xl transition-colors ${
+              isPaused 
+                ? 'border-gray-200 bg-gray-100 cursor-not-allowed opacity-60' 
+                : file 
+                  ? 'border-purple-500 bg-purple-50 cursor-pointer' 
+                  : 'border-gray-300 bg-gray-50 hover:bg-gray-100 cursor-pointer'
             }`}
           >
             {file ? (
@@ -159,9 +175,13 @@ export function UploadMemory({ eventId, onUploadSuccess }: { eventId?: string, o
               </div>
             ) : (
               <div className="text-center p-4">
-                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                <p className="text-sm font-medium text-gray-700">Clique para selecionar</p>
-                <p className="text-xs text-gray-500 mt-1">Fotos ou Vídeos</p>
+                <Upload className={`w-8 h-8 mx-auto mb-2 ${isPaused ? 'text-gray-300' : 'text-gray-400'}`} />
+                <p className={`text-sm font-medium ${isPaused ? 'text-gray-500' : 'text-gray-700'}`}>
+                  {isPaused ? 'Envios Pausados' : 'Clique para selecionar'}
+                </p>
+                <p className={`text-xs mt-1 ${isPaused ? 'text-gray-400' : 'text-gray-500'}`}>
+                  Fotos ou Vídeos
+                </p>
               </div>
             )}
           </label>
@@ -178,7 +198,8 @@ export function UploadMemory({ eventId, onUploadSuccess }: { eventId?: string, o
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Ex: Tio João"
-            className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+            disabled={isPaused}
+            className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors disabled:bg-gray-100 disabled:text-gray-500"
             required
           />
         </div>
@@ -194,14 +215,15 @@ export function UploadMemory({ eventId, onUploadSuccess }: { eventId?: string, o
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Deixe uma mensagem de carinho..."
             rows={3}
-            className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors resize-none"
+            disabled={isPaused}
+            className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors resize-none disabled:bg-gray-100 disabled:text-gray-500"
           />
         </div>
 
         {/* Submit Button */}
         <button
           type="submit"
-          disabled={isUploading}
+          disabled={isUploading || isPaused}
           className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg shadow-purple-200 hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0 flex items-center justify-center"
         >
           {isUploading ? (
@@ -209,6 +231,8 @@ export function UploadMemory({ eventId, onUploadSuccess }: { eventId?: string, o
               <Loader2 className="w-5 h-5 mr-2 animate-spin" />
               Enviando...
             </>
+          ) : isPaused ? (
+            'Evento Pausado'
           ) : (
             'Enviar Memória'
           )}

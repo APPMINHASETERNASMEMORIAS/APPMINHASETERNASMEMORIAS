@@ -85,7 +85,12 @@ export function UploadMemory({ eventId, onUploadSuccess }: { eventId?: string, o
         }
       ]);
 
-      if (error) throw error;
+      if (error) {
+        if (error.message.includes('event_id')) {
+          throw new Error('O banco de dados precisa ser atualizado. Por favor, adicione a coluna "event_id" (tipo TEXT) na tabela "memories" do seu Supabase.');
+        }
+        throw error;
+      }
 
       toast.success('Memória enviada com sucesso! Obrigado por compartilhar.');
       

@@ -36,7 +36,21 @@ export function MemoryGallery({ eventId, refreshTrigger }: { eventId?: string, r
 
         const { data, error } = await query;
 
-        if (error) throw error;
+        if (error) {
+          if (error.message.includes('event_id')) {
+            console.error('O banco de dados precisa ser atualizado. Por favor, adicione a coluna "event_id" (tipo TEXT) na tabela "memories" do seu Supabase.');
+            // Fallback to fetch without event_id if the column doesn't exist yet
+            const fallbackQuery = supabase!
+              .from('memories')
+              .select('*')
+              .order('created_at', { ascending: false });
+            const { data: fallbackData, error: fallbackError } = await fallbackQuery;
+            if (fallbackError) throw fallbackError;
+            setMemories(fallbackData || []);
+            return;
+          }
+          throw error;
+        }
         setMemories(data || []);
       } catch (error) {
         console.error('Erro ao buscar memórias:', error);

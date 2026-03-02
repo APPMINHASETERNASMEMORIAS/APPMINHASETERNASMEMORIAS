@@ -122,6 +122,13 @@ export function QRCodeDisplay({ eventId, eventName, isOpen, onClose }: QRCodeDis
               Compartilhar
             </Button>
           </div>
+          <Button 
+            onClick={() => window.open(eventUrl, '_blank')} 
+            variant="ghost" 
+            className="w-full text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+          >
+            Acessar página do evento
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

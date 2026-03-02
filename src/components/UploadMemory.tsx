@@ -87,9 +87,23 @@ export function UploadMemory({ eventId, onUploadSuccess }: { eventId?: string, o
 
       if (error) {
         if (error.message.includes('event_id')) {
-          throw new Error('O banco de dados precisa ser atualizado. Por favor, adicione a coluna "event_id" (tipo TEXT) na tabela "memories" do seu Supabase.');
+          // Fallback: Try to insert without event_id if the column doesn't exist
+          console.warn('Aviso: Coluna event_id não encontrada. Tentando salvar sem vincular ao evento.');
+          const { error: fallbackError } = await supabase!.from('memories').insert([
+            {
+              url: fileUrl,
+              type: isVideo ? 'video' : 'image',
+              uploader_name: name,
+              message: message || null,
+            }
+          ]);
+          
+          if (fallbackError) {
+             throw fallbackError;
+          }
+        } else {
+          throw error;
         }
-        throw error;
       }
 
       toast.success('Memória enviada com sucesso! Obrigado por compartilhar.');

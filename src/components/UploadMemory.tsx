@@ -3,6 +3,7 @@ import { Upload, Image as ImageIcon, Video, Loader2 } from 'lucide-react';
 import { uploadToCloudinary, isCloudinaryConfigured } from '../lib/cloudinary';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import toast from 'react-hot-toast';
+import imageCompression from 'browser-image-compression';
 
 export function UploadMemory({ eventId, onUploadSuccess }: { eventId?: string, onUploadSuccess?: () => void }) {
   const [file, setFile] = useState<File | null>(null);
@@ -31,12 +32,49 @@ export function UploadMemory({ eventId, onUploadSuccess }: { eventId?: string, o
 
     try {
       setIsUploading(true);
+      let fileToUpload = file;
+      const isVideo = file.type.startsWith('video/');
+
+      if (isVideo) {
+        // Check video size (Cloudinary free tier unsigned upload limit is usually 10MB or 100MB)
+        // Let's enforce a 10MB limit for all files just to be safe with the free tier
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.size > maxSize) {
+          toast.error('O vídeo é muito grande. O tamanho máximo permitido é 10MB.');
+          setIsUploading(false);
+          return;
+        }
+      } else if (file.type.startsWith('image/')) {
+        // Compress image if it's larger than 1MB
+        if (file.size > 1024 * 1024) {
+          const options = {
+            maxSizeMB: 2,
+            maxWidthOrHeight: 1920,
+            useWebWorker: true,
+          };
+          try {
+            toast.loading('Otimizando imagem...', { id: 'compress' });
+            fileToUpload = await imageCompression(file, options);
+            toast.dismiss('compress');
+          } catch (error) {
+            console.error('Erro ao comprimir imagem:', error);
+            toast.dismiss('compress');
+            // Continue with original file if compression fails, but check size
+            if (file.size > 10 * 1024 * 1024) {
+               toast.error('A imagem é muito grande. O tamanho máximo permitido é 10MB.');
+               setIsUploading(false);
+               return;
+            }
+          }
+        }
+      }
       
       // 1. Upload to Cloudinary
-      const fileUrl = await uploadToCloudinary(file);
+      toast.loading('Enviando arquivo...', { id: 'upload' });
+      const fileUrl = await uploadToCloudinary(fileToUpload);
+      toast.dismiss('upload');
       
       // 2. Save to Supabase
-      const isVideo = file.type.startsWith('video/');
       const { error } = await supabase!.from('memories').insert([
         {
           url: fileUrl,

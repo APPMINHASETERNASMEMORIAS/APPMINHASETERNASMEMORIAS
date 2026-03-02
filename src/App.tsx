@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { BrowserRouter as Router, Routes, Route, useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useScroll, useTransform, useSpring, useInView } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
 import { Toaster } from 'react-hot-toast';
@@ -203,7 +204,7 @@ function FeatureRow({ icon: Icon, title, description, image, reverse = false, de
   );
 }
 
-function App() {
+function LandingPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [isAdminOpen, setIsAdminOpen] = useState(false);
@@ -777,6 +778,67 @@ function App() {
         />
       )}
     </div>
+  );
+}
+
+function EventPage() {
+  const { id } = useParams();
+  const [refreshGallery, setRefreshGallery] = useState(0);
+  const navigate = useNavigate();
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Toaster position="top-center" />
+      
+      {/* Simple Header */}
+      <header className="bg-white shadow-sm sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 flex items-center justify-center">
+              <Camera className="w-5 h-5 text-white" />
+            </div>
+            <span className="font-bold text-xl bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+              Memórias
+            </span>
+          </div>
+        </div>
+      </header>
+
+      <main className="py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h1 className="text-3xl md:text-4xl font-playfair font-bold text-gray-900 mb-4">
+              Compartilhe seu momento!
+            </h1>
+            <p className="text-gray-600 max-w-2xl mx-auto">
+              Tire uma foto ou grave um vídeo e deixe uma mensagem especial.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <div className="lg:col-span-4">
+              <div className="sticky top-24">
+                <UploadMemory eventId={id} onUploadSuccess={() => setRefreshGallery(prev => prev + 1)} />
+              </div>
+            </div>
+            <div className="lg:col-span-8">
+              <MemoryGallery eventId={id} refreshTrigger={refreshGallery} />
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/evento/:id" element={<EventPage />} />
+      </Routes>
+    </Router>
   );
 }
 

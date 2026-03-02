@@ -4,7 +4,7 @@ import { uploadToCloudinary, isCloudinaryConfigured } from '../lib/cloudinary';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import toast from 'react-hot-toast';
 
-export function UploadMemory({ onUploadSuccess }: { onUploadSuccess?: () => void }) {
+export function UploadMemory({ eventId, onUploadSuccess }: { eventId?: string, onUploadSuccess?: () => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState('');
   const [message, setMessage] = useState('');
@@ -43,6 +43,7 @@ export function UploadMemory({ onUploadSuccess }: { onUploadSuccess?: () => void
           type: isVideo ? 'video' : 'image',
           uploader_name: name,
           message: message || null,
+          event_id: eventId || null,
         }
       ]);
 

@@ -11,7 +11,7 @@ interface Memory {
   message: string | null;
 }
 
-export function MemoryGallery({ refreshTrigger }: { refreshTrigger: number }) {
+export function MemoryGallery({ eventId, refreshTrigger }: { eventId?: string, refreshTrigger: number }) {
   const [memories, setMemories] = useState<Memory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -23,10 +23,18 @@ export function MemoryGallery({ refreshTrigger }: { refreshTrigger: number }) {
 
     const fetchMemories = async () => {
       try {
-        const { data, error } = await supabase!
+        let query = supabase!
           .from('memories')
           .select('*')
           .order('created_at', { ascending: false });
+          
+        if (eventId) {
+          query = query.eq('event_id', eventId);
+        } else {
+          query = query.is('event_id', null);
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
         setMemories(data || []);
@@ -38,7 +46,7 @@ export function MemoryGallery({ refreshTrigger }: { refreshTrigger: number }) {
     };
 
     fetchMemories();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, eventId]);
 
   if (!isSupabaseConfigured) {
     return (

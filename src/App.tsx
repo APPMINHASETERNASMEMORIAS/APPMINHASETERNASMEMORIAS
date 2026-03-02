@@ -211,6 +211,8 @@ function LandingPage() {
   const [createdEvent, setCreatedEvent] = useState<Event | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [refreshGallery, setRefreshGallery] = useState(0);
+  const [selectedPlan, setSelectedPlan] = useState('festa');
+  const [isTestMode, setIsTestMode] = useState(false);
   const { events, createEvent } = useEvents();
 
   const handleCreateEvent = (data: any) => {
@@ -218,6 +220,12 @@ function LandingPage() {
     setCreatedEvent(event);
     setIsCreateModalOpen(false);
     setIsQRModalOpen(true);
+  };
+
+  const openCreateModal = (plan: string, testMode: boolean = false) => {
+    setSelectedPlan(plan);
+    setIsTestMode(testMode);
+    setIsCreateModalOpen(true);
   };
 
   const scrollToSection = (id: string) => {
@@ -285,7 +293,7 @@ function LandingPage() {
                 Admin
               </motion.button>
               <motion.button
-                onClick={() => setIsCreateModalOpen(true)}
+                onClick={() => openCreateModal('festa')}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-2.5 rounded-full font-semibold shadow-lg hover:shadow-xl transition-shadow"
@@ -334,7 +342,7 @@ function LandingPage() {
                 </button>
                 <button
                   onClick={() => {
-                    setIsCreateModalOpen(true);
+                    openCreateModal('festa');
                     setIsMobileMenuOpen(false);
                   }}
                   className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-full font-semibold"
@@ -414,7 +422,7 @@ function LandingPage() {
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
             <motion.button
-              onClick={() => setIsCreateModalOpen(true)}
+              onClick={() => openCreateModal('festa')}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="bg-white text-purple-600 px-8 py-4 rounded-full font-bold text-lg shadow-2xl hover:shadow-white/25 transition-shadow flex items-center justify-center gap-2"
@@ -653,19 +661,19 @@ function LandingPage() {
                   </li>
                   <li className="flex items-center text-gray-600">
                     <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                    <span>QR Code Exclusivo</span>
+                    <span>QR Code para compartilhar</span>
                   </li>
                   <li className="flex items-center text-gray-600">
                     <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                    <span>Fotos e Vídeos</span>
+                    <span>Link para baixar todas as fotos</span>
                   </li>
                   <li className="flex items-center text-gray-600">
-                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                    <span>Download em ZIP</span>
+                    <Clock className="w-5 h-5 text-purple-500 mr-3 flex-shrink-0" />
+                    <span>Fotos guardadas por <strong>7 dias</strong></span>
                   </li>
                 </ul>
                 <button 
-                  onClick={() => setIsCreateModalOpen(true)}
+                  onClick={() => openCreateModal('intimo')}
                   className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold py-3 rounded-xl transition-colors"
                 >
                   Escolher Plano
@@ -694,15 +702,19 @@ function LandingPage() {
                   </li>
                   <li className="flex items-center text-white">
                     <CheckCircle2 className="w-5 h-5 text-yellow-300 mr-3 flex-shrink-0" />
-                    <span>Tudo do plano Íntimo</span>
+                    <span>QR Code para compartilhar</span>
                   </li>
                   <li className="flex items-center text-white">
                     <CheckCircle2 className="w-5 h-5 text-yellow-300 mr-3 flex-shrink-0" />
-                    <span>Suporte prioritário</span>
+                    <span>Link para baixar todas as fotos</span>
+                  </li>
+                  <li className="flex items-center text-white">
+                    <Clock className="w-5 h-5 text-yellow-300 mr-3 flex-shrink-0" />
+                    <span>Fotos guardadas por <strong>30 dias</strong></span>
                   </li>
                 </ul>
                 <button 
-                  onClick={() => setIsCreateModalOpen(true)}
+                  onClick={() => openCreateModal('festa')}
                   className="w-full bg-white text-purple-600 hover:bg-gray-50 font-bold py-3 rounded-xl transition-colors shadow-lg"
                 >
                   Escolher Plano
@@ -728,15 +740,19 @@ function LandingPage() {
                   </li>
                   <li className="flex items-center text-gray-600">
                     <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                    <span>Tudo do plano Festa</span>
+                    <span>QR Code para compartilhar</span>
                   </li>
                   <li className="flex items-center text-gray-600">
                     <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                    <span>Moderação avançada</span>
+                    <span>Link para baixar todas as fotos</span>
+                  </li>
+                  <li className="flex items-center text-gray-600">
+                    <Clock className="w-5 h-5 text-purple-500 mr-3 flex-shrink-0" />
+                    <span>Fotos guardadas por <strong>90 dias</strong></span>
                   </li>
                 </ul>
                 <button 
-                  onClick={() => setIsCreateModalOpen(true)}
+                  onClick={() => openCreateModal('celebracao')}
                   className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold py-3 rounded-xl transition-colors"
                 >
                   Escolher Plano
@@ -762,15 +778,19 @@ function LandingPage() {
                   </li>
                   <li className="flex items-center text-gray-300">
                     <CheckCircle2 className="w-5 h-5 text-purple-400 mr-3 flex-shrink-0" />
-                    <span>Tudo do plano Celebração</span>
+                    <span>QR Code para compartilhar</span>
                   </li>
                   <li className="flex items-center text-gray-300">
                     <CheckCircle2 className="w-5 h-5 text-purple-400 mr-3 flex-shrink-0" />
-                    <span>Backup em nuvem extra</span>
+                    <span>Link para baixar todas as fotos</span>
+                  </li>
+                  <li className="flex items-center text-gray-300">
+                    <Clock className="w-5 h-5 text-purple-400 mr-3 flex-shrink-0" />
+                    <span>Fotos guardadas por <strong>6 meses</strong></span>
                   </li>
                 </ul>
                 <button 
-                  onClick={() => setIsCreateModalOpen(true)}
+                  onClick={() => openCreateModal('ilimitado')}
                   className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-xl transition-colors"
                 >
                   Escolher Plano
@@ -782,7 +802,7 @@ function LandingPage() {
           {/* Botão de Teste Admin */}
           <div className="mt-12 text-center">
              <button 
-                onClick={() => toast('Em breve: Checkout de Teste (R$ 1,00)', { icon: '🛠️' })}
+                onClick={() => openCreateModal('test', true)}
                 className="text-sm text-gray-400 hover:text-gray-600 underline transition-colors"
              >
                 Admin: Testar fluxo de pagamento (R$ 1,00)
@@ -938,6 +958,8 @@ function LandingPage() {
       <CreateEventModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
+        selectedPlan={selectedPlan}
+        isTestMode={isTestMode}
         onCreate={handleCreateEvent}
       />
 

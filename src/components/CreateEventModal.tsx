@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Calendar, Clock, User, Type, FileText, Camera, ChevronDown } from 'lucide-react';
+import { Calendar, Clock, User, Type, FileText, Camera, ChevronDown, CreditCard, CheckCircle2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,10 +19,13 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import type { EventType, EventSettings } from '@/types';
+import toast from 'react-hot-toast';
 
 interface CreateEventModalProps {
   isOpen: boolean;
   onClose: () => void;
+  selectedPlan?: string;
+  isTestMode?: boolean;
   onCreate: (data: {
     clientName: string;
     eventName: string;
@@ -31,6 +34,7 @@ interface CreateEventModalProps {
     eventType: EventType;
     description: string;
     settings: EventSettings;
+    plan: string;
   }) => void;
 }
 
@@ -45,7 +49,15 @@ const EVENT_TYPES: { value: EventType; label: string; emoji: string }[] = [
   { value: 'outro', label: 'Outro', emoji: '✨' },
 ];
 
-export function CreateEventModal({ isOpen, onClose, onCreate }: CreateEventModalProps) {
+const PLANS = {
+  intimo: { name: 'Íntimo', price: 59.99, limit: 50, storage: '7 dias' },
+  festa: { name: 'Festa', price: 99.99, limit: 100, storage: '30 dias' },
+  celebracao: { name: 'Celebração', price: 159.99, limit: 150, storage: '90 dias' },
+  ilimitado: { name: 'Ilimitado', price: 239.99, limit: 'Ilimitados', storage: '6 meses' },
+  test: { name: 'Teste Admin', price: 1.00, limit: 10, storage: '24 horas' }
+};
+
+export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTestMode = false, onCreate }: CreateEventModalProps) {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     clientName: '',
@@ -63,11 +75,46 @@ export function CreateEventModal({ isOpen, onClose, onCreate }: CreateEventModal
     revealMode: 'immediate',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
 
-  const handleSubmit = async () => {
+  const activePlan = isTestMode ? 'test' : selectedPlan;
+  const planDetails = PLANS[activePlan as keyof typeof PLANS] || PLANS.festa;
+
+  const handleGeneratePayment = async () => {
     setIsSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    onCreate({ ...formData, settings });
+    try {
+      const response = await fetch('/api/payments/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          planId: activePlan,
+          amount: planDetails.price,
+          isTest: isTestMode
+        })
+      });
+      
+      const data = await response.json();
+      if (data.success && data.paymentUrl) {
+        setPaymentUrl(data.paymentUrl);
+        toast.success('Link de pagamento gerado!');
+      } else {
+        throw new Error('Falha ao gerar pagamento');
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error('Erro ao conectar com a InfinitePay');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleSimulatePaymentSuccess = async () => {
+    setIsSubmitting(true);
+    // Simulate webhook delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    toast.success('Pagamento aprovado!');
+    
+    onCreate({ ...formData, settings, plan: activePlan });
     setIsSubmitting(false);
     resetForm();
     onClose();
@@ -75,6 +122,7 @@ export function CreateEventModal({ isOpen, onClose, onCreate }: CreateEventModal
 
   const resetForm = () => {
     setStep(1);
+    setPaymentUrl(null);
     setFormData({
       clientName: '',
       eventName: '',
@@ -95,25 +143,34 @@ export function CreateEventModal({ isOpen, onClose, onCreate }: CreateEventModal
   const isStep1Valid = formData.clientName && formData.eventName && formData.eventDate && formData.eventTime && formData.eventType;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        resetForm();
+        onClose();
+      }
+    }}>
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center">
-            {step === 1 ? 'Criar Novo Evento' : 'Configurações do Evento'}
+            {step === 1 ? 'Criar Novo Evento' : step === 2 ? 'Configurações' : 'Pagamento'}
           </DialogTitle>
         </DialogHeader>
 
-        <div className="flex items-center justify-center gap-4 mb-6">
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
+        <div className="flex items-center justify-center gap-2 mb-6">
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm ${
             step >= 1 ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' : 'bg-gray-200 text-gray-500'
           }`}>1</div>
-          <div className={`w-16 h-1 rounded ${step >= 2 ? 'bg-gradient-to-r from-purple-600 to-pink-600' : 'bg-gray-200'}`} />
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold ${
+          <div className={`w-12 h-1 rounded ${step >= 2 ? 'bg-gradient-to-r from-purple-600 to-pink-600' : 'bg-gray-200'}`} />
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm ${
             step >= 2 ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' : 'bg-gray-200 text-gray-500'
           }`}>2</div>
+          <div className={`w-12 h-1 rounded ${step >= 3 ? 'bg-gradient-to-r from-purple-600 to-pink-600' : 'bg-gray-200'}`} />
+          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm ${
+            step >= 3 ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' : 'bg-gray-200 text-gray-500'
+          }`}>3</div>
         </div>
 
-        {step === 1 ? (
+        {step === 1 && (
           <div className="space-y-5">
             <div className="space-y-2">
               <Label className="flex items-center gap-2"><User className="w-4 h-4" />Seu Nome *</Label>
@@ -177,7 +234,9 @@ export function CreateEventModal({ isOpen, onClose, onCreate }: CreateEventModal
               </Button>
             </div>
           </div>
-        ) : (
+        )}
+
+        {step === 2 && (
           <div className="space-y-6">
             <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
               <div>
@@ -260,8 +319,78 @@ export function CreateEventModal({ isOpen, onClose, onCreate }: CreateEventModal
 
             <div className="flex justify-between pt-4">
               <Button variant="outline" onClick={() => setStep(1)}>Voltar</Button>
-              <Button onClick={handleSubmit} disabled={isSubmitting || settings.allowedTypes.length === 0} className="bg-gradient-to-r from-purple-600 to-pink-600">
-                {isSubmitting ? 'Criando...' : 'Criar Evento'}
+              <Button onClick={() => setStep(3)} disabled={settings.allowedTypes.length === 0} className="bg-gradient-to-r from-purple-600 to-pink-600">
+                Ir para Pagamento<ChevronDown className="w-4 h-4 ml-2 rotate-[-90deg]" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {step === 3 && (
+          <div className="space-y-6">
+            <div className="bg-purple-50 border border-purple-100 rounded-xl p-6 text-center">
+              <h3 className="text-lg font-semibold text-purple-900 mb-2">Resumo do Pedido</h3>
+              <p className="text-purple-700 mb-4">
+                Plano {planDetails.name} (Até {planDetails.limit} acessos)
+                <br />
+                <span className="text-sm opacity-80">Fotos guardadas por {planDetails.storage}</span>
+              </p>
+              <div className="text-4xl font-bold text-purple-900 mb-2">
+                R$ {planDetails.price.toFixed(2).replace('.', ',')}
+              </div>
+              {isTestMode && (
+                <span className="inline-block bg-yellow-200 text-yellow-800 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">
+                  Modo de Teste
+                </span>
+              )}
+            </div>
+
+            {!paymentUrl ? (
+              <div className="space-y-4">
+                <p className="text-center text-gray-600 text-sm">
+                  Você será redirecionado para o ambiente seguro da InfinitePay para concluir o pagamento via Pix ou Cartão de Crédito.
+                </p>
+                <Button 
+                  onClick={handleGeneratePayment} 
+                  disabled={isSubmitting} 
+                  className="w-full h-14 text-lg bg-[#00E676] hover:bg-[#00C853] text-black font-bold"
+                >
+                  {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : <CreditCard className="w-6 h-6 mr-2" />}
+                  {isSubmitting ? 'Gerando...' : 'Pagar com InfinitePay'}
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4 text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle2 className="w-8 h-8 text-green-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900">Link Gerado!</h3>
+                <p className="text-gray-600 mb-6">
+                  Clique no botão abaixo para abrir a página de pagamento. Seu evento será liberado automaticamente após a confirmação.
+                </p>
+                <a 
+                  href={paymentUrl} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="block w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 rounded-xl transition-colors mb-4"
+                >
+                  Abrir Página de Pagamento
+                </a>
+                
+                {/* Botão temporário para simular o webhook durante o desenvolvimento */}
+                <button 
+                  onClick={handleSimulatePaymentSuccess}
+                  disabled={isSubmitting}
+                  className="text-sm text-gray-400 underline hover:text-gray-600"
+                >
+                  {isSubmitting ? 'Aguardando...' : '(Dev) Simular Pagamento Aprovado'}
+                </button>
+              </div>
+            )}
+
+            <div className="flex justify-start pt-4 border-t">
+              <Button variant="ghost" onClick={() => setStep(2)} disabled={isSubmitting || !!paymentUrl}>
+                Voltar
               </Button>
             </div>
           </div>

@@ -263,10 +263,10 @@ function LandingPage() {
             
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-8">
-              {['Início', 'Como Funciona', 'Recursos', 'Depoimentos'].map((item, index) => (
+              {['Início', 'Como Funciona', 'Recursos', 'Planos', 'Depoimentos'].map((item, index) => (
                 <motion.button
                   key={item}
-                  onClick={() => scrollToSection(['hero', 'how-it-works', 'features', 'testimonials'][index])}
+                  onClick={() => scrollToSection(['hero', 'how-it-works', 'features', 'pricing', 'testimonials'][index])}
                   className="text-gray-600 hover:text-purple-600 font-medium transition-colors"
                   whileHover={{ y: -2 }}
                 >
@@ -314,10 +314,13 @@ function LandingPage() {
               className="md:hidden bg-white border-t border-gray-100"
             >
               <div className="px-4 py-4 space-y-3">
-                {['Início', 'Como Funciona', 'Recursos', 'Depoimentos'].map((item, index) => (
+                {['Início', 'Como Funciona', 'Recursos', 'Planos', 'Depoimentos'].map((item, index) => (
                   <button
                     key={item}
-                    onClick={() => scrollToSection(['hero', 'how-it-works', 'features', 'testimonials'][index])}
+                    onClick={() => {
+                      scrollToSection(['hero', 'how-it-works', 'features', 'pricing', 'testimonials'][index]);
+                      setIsMobileMenuOpen(false);
+                    }}
                     className="block w-full text-left py-2 text-gray-600 hover:text-purple-600"
                   >
                     {item}
@@ -615,6 +618,175 @@ function LandingPage() {
             <div className="lg:col-span-8">
               <MemoryGallery refreshTrigger={refreshGallery} />
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Section */}
+      <section id="pricing" className="py-24 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <AnimatedSection className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-playfair font-bold text-gray-900 mb-6">
+              Planos e Valores
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Escolha o plano ideal para o tamanho do seu evento. Sem mensalidades, pagamento único.
+            </p>
+          </AnimatedSection>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Plano Íntimo */}
+            <AnimatedSection delay={0.1}>
+              <div className="bg-white rounded-3xl p-8 shadow-lg hover:shadow-xl transition-shadow border border-gray-100 flex flex-col h-full">
+                <div className="mb-6">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Íntimo</h3>
+                  <p className="text-gray-500">Para pequenos encontros</p>
+                </div>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold text-gray-900">R$ 59</span>
+                  <span className="text-gray-500">,99</span>
+                </div>
+                <ul className="space-y-4 mb-8 flex-grow">
+                  <li className="flex items-center text-gray-600">
+                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                    <span>Até <strong>50</strong> acessos/convidados</span>
+                  </li>
+                  <li className="flex items-center text-gray-600">
+                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                    <span>QR Code Exclusivo</span>
+                  </li>
+                  <li className="flex items-center text-gray-600">
+                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                    <span>Fotos e Vídeos</span>
+                  </li>
+                  <li className="flex items-center text-gray-600">
+                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                    <span>Download em ZIP</span>
+                  </li>
+                </ul>
+                <button 
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold py-3 rounded-xl transition-colors"
+                >
+                  Escolher Plano
+                </button>
+              </div>
+            </AnimatedSection>
+
+            {/* Plano Festa (Destaque) */}
+            <AnimatedSection delay={0.2}>
+              <div className="bg-gradient-to-b from-purple-600 to-pink-600 rounded-3xl p-8 shadow-xl transform md:-translate-y-4 flex flex-col h-full relative overflow-hidden">
+                <div className="absolute top-0 right-0 bg-yellow-400 text-yellow-900 text-xs font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">
+                  Mais Popular
+                </div>
+                <div className="mb-6">
+                  <h3 className="text-2xl font-bold text-white mb-2">Festa</h3>
+                  <p className="text-purple-100">O ideal para a maioria</p>
+                </div>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold text-white">R$ 99</span>
+                  <span className="text-purple-200">,99</span>
+                </div>
+                <ul className="space-y-4 mb-8 flex-grow">
+                  <li className="flex items-center text-white">
+                    <CheckCircle2 className="w-5 h-5 text-yellow-300 mr-3 flex-shrink-0" />
+                    <span>Até <strong>100</strong> acessos/convidados</span>
+                  </li>
+                  <li className="flex items-center text-white">
+                    <CheckCircle2 className="w-5 h-5 text-yellow-300 mr-3 flex-shrink-0" />
+                    <span>Tudo do plano Íntimo</span>
+                  </li>
+                  <li className="flex items-center text-white">
+                    <CheckCircle2 className="w-5 h-5 text-yellow-300 mr-3 flex-shrink-0" />
+                    <span>Suporte prioritário</span>
+                  </li>
+                </ul>
+                <button 
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="w-full bg-white text-purple-600 hover:bg-gray-50 font-bold py-3 rounded-xl transition-colors shadow-lg"
+                >
+                  Escolher Plano
+                </button>
+              </div>
+            </AnimatedSection>
+
+            {/* Plano Celebração */}
+            <AnimatedSection delay={0.3}>
+              <div className="bg-white rounded-3xl p-8 shadow-lg hover:shadow-xl transition-shadow border border-gray-100 flex flex-col h-full">
+                <div className="mb-6">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Celebração</h3>
+                  <p className="text-gray-500">Para grandes eventos</p>
+                </div>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold text-gray-900">R$ 159</span>
+                  <span className="text-gray-500">,99</span>
+                </div>
+                <ul className="space-y-4 mb-8 flex-grow">
+                  <li className="flex items-center text-gray-600">
+                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                    <span>Até <strong>150</strong> acessos/convidados</span>
+                  </li>
+                  <li className="flex items-center text-gray-600">
+                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                    <span>Tudo do plano Festa</span>
+                  </li>
+                  <li className="flex items-center text-gray-600">
+                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                    <span>Moderação avançada</span>
+                  </li>
+                </ul>
+                <button 
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="w-full bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold py-3 rounded-xl transition-colors"
+                >
+                  Escolher Plano
+                </button>
+              </div>
+            </AnimatedSection>
+
+            {/* Plano Ilimitado */}
+            <AnimatedSection delay={0.4}>
+              <div className="bg-gray-900 rounded-3xl p-8 shadow-lg hover:shadow-xl transition-shadow flex flex-col h-full">
+                <div className="mb-6">
+                  <h3 className="text-2xl font-bold text-white mb-2">Ilimitado</h3>
+                  <p className="text-gray-400">Sem preocupações</p>
+                </div>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold text-white">R$ 239</span>
+                  <span className="text-gray-400">,99</span>
+                </div>
+                <ul className="space-y-4 mb-8 flex-grow">
+                  <li className="flex items-center text-gray-300">
+                    <InfinityIcon className="w-5 h-5 text-purple-400 mr-3 flex-shrink-0" />
+                    <span><strong>Acessos Ilimitados</strong></span>
+                  </li>
+                  <li className="flex items-center text-gray-300">
+                    <CheckCircle2 className="w-5 h-5 text-purple-400 mr-3 flex-shrink-0" />
+                    <span>Tudo do plano Celebração</span>
+                  </li>
+                  <li className="flex items-center text-gray-300">
+                    <CheckCircle2 className="w-5 h-5 text-purple-400 mr-3 flex-shrink-0" />
+                    <span>Backup em nuvem extra</span>
+                  </li>
+                </ul>
+                <button 
+                  onClick={() => setIsCreateModalOpen(true)}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 rounded-xl transition-colors"
+                >
+                  Escolher Plano
+                </button>
+              </div>
+            </AnimatedSection>
+          </div>
+          
+          {/* Botão de Teste Admin */}
+          <div className="mt-12 text-center">
+             <button 
+                onClick={() => toast('Em breve: Checkout de Teste (R$ 1,00)', { icon: '🛠️' })}
+                className="text-sm text-gray-400 hover:text-gray-600 underline transition-colors"
+             >
+                Admin: Testar fluxo de pagamento (R$ 1,00)
+             </button>
           </div>
         </div>
       </section>

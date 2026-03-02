@@ -20,7 +20,7 @@ interface QRCodeDisplayProps {
 export function QRCodeDisplay({ eventId, eventName, isOpen, onClose }: QRCodeDisplayProps) {
   const [copied, setCopied] = useState(false);
   
-  const eventUrl = `${window.location.origin}/evento/${eventId}`;
+  const eventUrl = `${window.location.origin}/#/evento/${eventId}`;
   
   const handleCopyLink = async () => {
     try {

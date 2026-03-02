@@ -158,10 +158,11 @@ export function useEvents() {
     eventType: EventType;
     description: string;
   }): Event => {
+    const id = uuidv4();
     const newEvent: Event = {
-      id: uuidv4(),
+      id,
       ...data,
-      qrCode: `${window.location.origin}/evento/${uuidv4()}`,
+      qrCode: `${window.location.origin}/#/evento/${id}`,
       createdAt: new Date().toISOString(),
       status: 'active',
       settings: DEFAULT_SETTINGS,

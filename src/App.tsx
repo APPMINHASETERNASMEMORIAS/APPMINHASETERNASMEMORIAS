@@ -229,11 +229,13 @@ function LandingPage() {
   };
 
   const scrollToSection = (id: string) => {
-    const element = document.getElementById(id);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
     setIsMobileMenuOpen(false);
+    setTimeout(() => {
+      const element = document.getElementById(id);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
   };
 
   // Parallax effect for hero
@@ -353,18 +355,18 @@ function LandingPage() {
                 {['Início', 'Como Funciona', 'Recursos', 'Planos', 'Depoimentos'].map((item, index) => (
                   <button
                     key={item}
-                    onClick={() => {
-                      scrollToSection(['hero', 'how-it-works', 'features', 'pricing', 'testimonials'][index]);
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className="block w-full text-left py-2 text-gray-600 hover:text-purple-600"
+                    onClick={() => scrollToSection(['hero', 'how-it-works', 'features', 'pricing', 'testimonials'][index])}
+                    className="block w-full text-left py-3 px-4 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors font-medium"
                   >
                     {item}
                   </button>
                 ))}
                 <button
-                  onClick={() => setIsAdminOpen(true)}
-                  className="block w-full text-left py-2 text-gray-600 hover:text-purple-600"
+                  onClick={() => {
+                    setIsAdminOpen(true);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="block w-full text-left py-3 px-4 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors font-medium"
                 >
                   Admin
                 </button>

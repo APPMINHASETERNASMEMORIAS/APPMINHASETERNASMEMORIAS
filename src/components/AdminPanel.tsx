@@ -341,10 +341,10 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
       <div className="flex">
-        {/* Sidebar */}
-        <aside className="w-64 bg-white border-r border-gray-200 min-h-screen fixed left-0 top-0">
+        {/* Sidebar (Desktop) */}
+        <aside className="hidden md:block w-64 bg-white border-r border-gray-200 min-h-screen fixed left-0 top-0 z-40">
           <div className="p-6">
             <div className="flex items-center gap-3 mb-8">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
@@ -404,14 +404,58 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
           </div>
         </aside>
 
+        {/* Mobile Bottom Nav */}
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around p-2 z-40 pb-safe">
+          <button
+            onClick={() => setView('dashboard')}
+            className={`flex flex-col items-center p-2 rounded-lg ${view === 'dashboard' ? 'text-purple-600' : 'text-gray-500'}`}
+          >
+            <LayoutDashboard className="w-6 h-6" />
+            <span className="text-[10px] mt-1">Início</span>
+          </button>
+          <button
+            onClick={() => setView('events')}
+            className={`flex flex-col items-center p-2 rounded-lg ${view === 'events' ? 'text-purple-600' : 'text-gray-500'}`}
+          >
+            <Calendar className="w-6 h-6" />
+            <span className="text-[10px] mt-1">Eventos</span>
+          </button>
+          <button
+            onClick={() => setView('media')}
+            className={`flex flex-col items-center p-2 rounded-lg relative ${view === 'media' ? 'text-purple-600' : 'text-gray-500'}`}
+          >
+            <Image className="w-6 h-6" />
+            <span className="text-[10px] mt-1">Mídias</span>
+            {pendingMediaCount > 0 && (
+              <span className="absolute top-1 right-1 w-3 h-3 bg-yellow-500 rounded-full border-2 border-white"></span>
+            )}
+          </button>
+          <button
+            onClick={onClose}
+            className="flex flex-col items-center p-2 rounded-lg text-gray-500"
+          >
+            <LogOut className="w-6 h-6" />
+            <span className="text-[10px] mt-1">Sair</span>
+          </button>
+        </nav>
+
         {/* Main Content */}
-        <main className="flex-1 ml-64 p-8">
+        <main className="flex-1 md:ml-64 p-4 md:p-8 w-full">
           <div className="max-w-7xl mx-auto">
             {view === 'dashboard' && renderDashboard()}
             {view === 'events' && renderEvents()}
             {view === 'media' && (
               <div className="space-y-6">
-                <h2 className="text-2xl font-bold text-gray-800">Todas as Mídias</h2>
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <h2 className="text-2xl font-bold text-gray-800">Todas as Mídias</h2>
+                  <Button 
+                    onClick={() => window.open(`/#/evento/${events[0]?.id || ''}`, '_blank')}
+                    className="bg-purple-600 hover:bg-purple-700 w-full sm:w-auto"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Testar Upload
+                  </Button>
+                </div>
                 {events.length > 0 ? (
                   <MediaWall
                     event={events[0]}
@@ -451,18 +495,29 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
 
       {/* Media Wall Modal */}
       <Dialog open={showMediaWall} onOpenChange={setShowMediaWall}>
-        <DialogContent className="max-w-7xl w-full h-[90vh] overflow-auto">
+        <DialogContent className="max-w-7xl w-[95vw] h-[90vh] overflow-auto p-4 md:p-6">
           <DialogHeader>
             <DialogTitle>Mural de Mídias</DialogTitle>
           </DialogHeader>
           {selectedEvent && (
-            <MediaWall
-              event={selectedEvent}
-              media={media.filter(m => m.eventId === selectedEvent.id)}
-              isAdmin={true}
-              onApprove={approveMedia}
-              onDelete={deleteMedia}
-            />
+            <div className="mt-4">
+              <div className="flex justify-end mb-4">
+                <Button 
+                  onClick={() => window.open(`/#/evento/${selectedEvent.id}`, '_blank')}
+                  className="bg-purple-600 hover:bg-purple-700"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Testar Upload
+                </Button>
+              </div>
+              <MediaWall
+                event={selectedEvent}
+                media={media.filter(m => m.eventId === selectedEvent.id)}
+                isAdmin={true}
+                onApprove={approveMedia}
+                onDelete={deleteMedia}
+              />
+            </div>
           )}
         </DialogContent>
       </Dialog>

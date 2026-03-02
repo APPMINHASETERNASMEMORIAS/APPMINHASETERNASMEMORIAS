@@ -1,5 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useInView } from 'react-intersection-observer';
+import { useState } from 'react';
 import { X, Download, Check, Trash2, Image as ImageIcon, Video, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
@@ -20,13 +19,11 @@ function MediaItemCard({ item, isAdmin, onApprove, onDelete, onClick }: {
   onDelete?: (mediaId: string) => void;
   onClick: () => void;
 }) {
-  const { ref, inView } = useInView({ triggerOnce: true, rootMargin: '100px' });
   const [isLoaded, setIsLoaded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
   return (
     <div
-      ref={ref}
       className="relative aspect-square rounded-xl overflow-hidden cursor-pointer group bg-gray-100"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -38,23 +35,22 @@ function MediaItemCard({ item, isAdmin, onApprove, onDelete, onClick }: {
         </div>
       )}
 
-      {inView && (
-        item.type === 'image' ? (
-          <img
-            src={item.thumbnailUrl}
-            alt={item.caption || 'Foto do evento'}
-            className={`w-full h-full object-cover transition-all duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'} ${isHovered ? 'scale-110' : 'scale-100'}`}
-            loading="lazy"
-            onLoad={() => setIsLoaded(true)}
-          />
-        ) : (
-          <div className="relative w-full h-full">
-            <video src={item.url} className={`w-full h-full object-cover transition-all duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`} preload="metadata" onLoadedData={() => setIsLoaded(true)} />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center"><Video className="w-6 h-6 text-white" /></div>
-            </div>
+      {item.type === 'image' ? (
+        <img
+          src={item.thumbnailUrl}
+          alt={item.caption || 'Foto do evento'}
+          className={`w-full h-full object-cover transition-all duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'} ${isHovered ? 'scale-110' : 'scale-100'}`}
+          loading="lazy"
+          onLoad={() => setIsLoaded(true)}
+          onError={() => setIsLoaded(true)}
+        />
+      ) : (
+        <div className="relative w-full h-full">
+          <video src={item.url} className={`w-full h-full object-cover transition-all duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`} preload="metadata" onLoadedData={() => setIsLoaded(true)} onError={() => setIsLoaded(true)} />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center"><Video className="w-6 h-6 text-white" /></div>
           </div>
-        )
+        </div>
       )}
 
       <div className={`absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>

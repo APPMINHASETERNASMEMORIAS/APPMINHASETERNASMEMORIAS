@@ -671,6 +671,14 @@ function LandingPage() {
                     <Clock className="w-5 h-5 text-purple-500 mr-3 flex-shrink-0" />
                     <span>Fotos guardadas por <strong>7 dias</strong></span>
                   </li>
+                  <li className="flex items-center text-gray-600">
+                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                    <span>Galeria interativa em tempo real</span>
+                  </li>
+                  <li className="flex items-center text-gray-600">
+                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                    <span>Suporte via WhatsApp</span>
+                  </li>
                 </ul>
                 <button 
                   onClick={() => openCreateModal('intimo')}
@@ -712,6 +720,18 @@ function LandingPage() {
                     <Clock className="w-5 h-5 text-yellow-300 mr-3 flex-shrink-0" />
                     <span>Fotos guardadas por <strong>30 dias</strong></span>
                   </li>
+                  <li className="flex items-center text-white">
+                    <CheckCircle2 className="w-5 h-5 text-yellow-300 mr-3 flex-shrink-0" />
+                    <span>Galeria interativa em tempo real</span>
+                  </li>
+                  <li className="flex items-center text-white">
+                    <CheckCircle2 className="w-5 h-5 text-yellow-300 mr-3 flex-shrink-0" />
+                    <span>Suporte prioritário WhatsApp</span>
+                  </li>
+                  <li className="flex items-center text-white">
+                    <CheckCircle2 className="w-5 h-5 text-yellow-300 mr-3 flex-shrink-0" />
+                    <span>Moderação de fotos (opcional)</span>
+                  </li>
                 </ul>
                 <button 
                   onClick={() => openCreateModal('festa')}
@@ -750,6 +770,18 @@ function LandingPage() {
                     <Clock className="w-5 h-5 text-purple-500 mr-3 flex-shrink-0" />
                     <span>Fotos guardadas por <strong>90 dias</strong></span>
                   </li>
+                  <li className="flex items-center text-gray-600">
+                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                    <span>Galeria interativa em tempo real</span>
+                  </li>
+                  <li className="flex items-center text-gray-600">
+                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                    <span>Suporte prioritário WhatsApp</span>
+                  </li>
+                  <li className="flex items-center text-gray-600">
+                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
+                    <span>Download em Alta Resolução</span>
+                  </li>
                 </ul>
                 <button 
                   onClick={() => openCreateModal('celebracao')}
@@ -787,6 +819,18 @@ function LandingPage() {
                   <li className="flex items-center text-gray-300">
                     <Clock className="w-5 h-5 text-purple-400 mr-3 flex-shrink-0" />
                     <span>Fotos guardadas por <strong>6 meses</strong></span>
+                  </li>
+                  <li className="flex items-center text-gray-300">
+                    <CheckCircle2 className="w-5 h-5 text-purple-400 mr-3 flex-shrink-0" />
+                    <span>Galeria interativa em tempo real</span>
+                  </li>
+                  <li className="flex items-center text-gray-300">
+                    <CheckCircle2 className="w-5 h-5 text-purple-400 mr-3 flex-shrink-0" />
+                    <span>Suporte VIP via WhatsApp</span>
+                  </li>
+                  <li className="flex items-center text-gray-300">
+                    <CheckCircle2 className="w-5 h-5 text-purple-400 mr-3 flex-shrink-0" />
+                    <span>Backup extra em nuvem</span>
                   </li>
                 </ul>
                 <button 

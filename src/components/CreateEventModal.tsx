@@ -1,5 +1,20 @@
 import { useState } from 'react';
-import { Calendar, Clock, User, Type, FileText, Camera, ChevronDown, CreditCard, CheckCircle2, Loader2 } from 'lucide-react';
+import { 
+  Calendar, 
+  Clock, 
+  User, 
+  Type, 
+  FileText, 
+  Camera, 
+  ChevronDown, 
+  CreditCard, 
+  CheckCircle2, 
+  Loader2,
+  Palette,
+  Type as TypeIcon,
+  Layout,
+  Sparkles
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,7 +33,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import type { EventType, EventSettings } from '@/types';
+import type { EventType, EventSettings, FrameSettings } from '@/types';
 import toast from 'react-hot-toast';
 
 interface CreateEventModalProps {
@@ -57,6 +72,30 @@ const PLANS = {
   test: { name: 'Teste Admin', price: 1.00, limit: 10, storage: '24 horas' }
 };
 
+const FONTS = [
+  { name: 'Playfair', value: 'font-playfair' },
+  { name: 'Dancing', value: 'font-dancing' },
+  { name: 'Great Vibes', value: 'font-great-vibes' },
+  { name: 'Cinzel', value: 'font-cinzel' },
+  { name: 'Alex Brush', value: 'font-alex-brush' },
+  { name: 'Satisfy', value: 'font-satisfy' },
+  { name: 'Parisienne', value: 'font-parisienne' },
+  { name: 'Cormorant', value: 'font-cormorant' },
+  { name: 'Libre', value: 'font-libre' },
+  { name: 'Poppins', value: 'font-poppins' },
+];
+
+const FRAME_TEMPLATES = [
+  { id: 'minimal', name: 'Minimalista', preview: 'border-2' },
+  { id: 'floral', name: 'Floral', preview: 'border-4 border-double' },
+  { id: 'modern', name: 'Moderno', preview: 'border-8 border-black/5' },
+  { id: 'classic', name: 'Clássico', preview: 'outline outline-4 outline-offset-[-12px]' },
+];
+
+const COLORS = [
+  '#000000', '#FFFFFF', '#FFD700', '#C0C0C0', '#FF69B4', '#8A2BE2', '#4169E1', '#2E8B57', '#FF4500', '#704214'
+];
+
 export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTestMode = false, onCreate }: CreateEventModalProps) {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -74,11 +113,19 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
     allowedTypes: ['image', 'video'],
     revealMode: 'immediate',
   });
+  const [frameSettings, setFrameSettings] = useState<FrameSettings>({
+    enabled: false,
+    color: '#FFD700',
+    font: 'font-playfair',
+    text: '',
+    templateId: 'minimal',
+  });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
 
   const activePlan = isTestMode ? 'test' : selectedPlan;
   const planDetails = PLANS[activePlan as keyof typeof PLANS] || PLANS.festa;
+  const totalPrice = planDetails.price + (frameSettings.enabled ? 9.99 : 0);
 
   const handleGeneratePayment = async () => {
     setIsSubmitting(true);
@@ -88,8 +135,9 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           planId: activePlan,
-          amount: planDetails.price,
-          isTest: isTestMode
+          amount: totalPrice,
+          isTest: isTestMode,
+          hasFrame: frameSettings.enabled
         })
       });
       
@@ -110,11 +158,14 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
 
   const handleSimulatePaymentSuccess = async () => {
     setIsSubmitting(true);
-    // Simulate webhook delay
     await new Promise(resolve => setTimeout(resolve, 1500));
     toast.success('Pagamento aprovado!');
     
-    onCreate({ ...formData, settings, plan: activePlan });
+    onCreate({ 
+      ...formData, 
+      settings: { ...settings, frameSettings: frameSettings.enabled ? frameSettings : undefined }, 
+      plan: activePlan 
+    });
     setIsSubmitting(false);
     resetForm();
     onClose();
@@ -138,6 +189,13 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
       allowedTypes: ['image', 'video'],
       revealMode: 'immediate',
     });
+    setFrameSettings({
+      enabled: false,
+      color: '#FFD700',
+      font: 'font-playfair',
+      text: '',
+      templateId: 'minimal',
+    });
   };
 
   const isStep1Valid = formData.clientName && formData.eventName && formData.eventDate && formData.eventTime && formData.eventType;
@@ -149,25 +207,24 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
         onClose();
       }
     }}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center">
-            {step === 1 ? 'Criar Novo Evento' : step === 2 ? 'Configurações' : 'Pagamento'}
+            {step === 1 ? 'Criar Novo Evento' : step === 2 ? 'Configurações' : step === 3 ? 'Moldura Personalizada' : 'Pagamento'}
           </DialogTitle>
         </DialogHeader>
 
         <div className="flex items-center justify-center gap-2 mb-6">
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm ${
-            step >= 1 ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' : 'bg-gray-200 text-gray-500'
-          }`}>1</div>
-          <div className={`w-12 h-1 rounded ${step >= 2 ? 'bg-gradient-to-r from-purple-600 to-pink-600' : 'bg-gray-200'}`} />
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm ${
-            step >= 2 ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' : 'bg-gray-200 text-gray-500'
-          }`}>2</div>
-          <div className={`w-12 h-1 rounded ${step >= 3 ? 'bg-gradient-to-r from-purple-600 to-pink-600' : 'bg-gray-200'}`} />
-          <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm ${
-            step >= 3 ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' : 'bg-gray-200 text-gray-500'
-          }`}>3</div>
+          {[1, 2, 3, 4].map((s) => (
+            <div key={s} className="flex items-center">
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm transition-colors ${
+                step >= s ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' : 'bg-gray-200 text-gray-500'
+              }`}>{s}</div>
+              {s < 4 && (
+                <div className={`w-8 sm:w-12 h-1 rounded mx-1 transition-colors ${step > s ? 'bg-gradient-to-r from-purple-600 to-pink-600' : 'bg-gray-200'}`} />
+              )}
+            </div>
+          ))}
         </div>
 
         {step === 1 && (
@@ -182,7 +239,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
             </div>
 
             <div className="space-y-2">
-              <Label className="flex items-center gap-2"><Type className="w-4 h-4" />Nome do Evento *</Label>
+              <Label className="flex items-center gap-2"><TypeIcon className="w-4 h-4" />Nome do Evento *</Label>
               <Input
                 placeholder="Ex: Nosso Casamento"
                 value={formData.eventName}
@@ -320,7 +377,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
             <div className="flex justify-between pt-4">
               <Button variant="outline" onClick={() => setStep(1)}>Voltar</Button>
               <Button onClick={() => setStep(3)} disabled={settings.allowedTypes.length === 0} className="bg-gradient-to-r from-purple-600 to-pink-600">
-                Ir para Pagamento<ChevronDown className="w-4 h-4 ml-2 rotate-[-90deg]" />
+                Próximo<ChevronDown className="w-4 h-4 ml-2 rotate-[-90deg]" />
               </Button>
             </div>
           </div>
@@ -328,15 +385,137 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
 
         {step === 3 && (
           <div className="space-y-6">
+            <div className="flex items-center justify-between p-6 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl text-white shadow-lg">
+              <div className="flex-1">
+                <h3 className="text-xl font-bold flex items-center gap-2">
+                  <Sparkles className="w-6 h-6" />
+                  Moldura Personalizada
+                </h3>
+                <p className="text-purple-100 text-sm mt-1">
+                  Adicione uma moldura elegante e automática em todas as fotos do evento por apenas R$ 9,99 extras.
+                </p>
+              </div>
+              <div className="ml-4">
+                <Switch 
+                  checked={frameSettings.enabled} 
+                  onCheckedChange={(checked) => setFrameSettings({ ...frameSettings, enabled: checked })}
+                  className="bg-white/20"
+                />
+              </div>
+            </div>
+
+            {frameSettings.enabled ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-6">
+                  <div className="space-y-3">
+                    <Label className="flex items-center gap-2"><Layout className="w-4 h-4" />Modelo da Moldura</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {FRAME_TEMPLATES.map((t) => (
+                        <button
+                          key={t.id}
+                          onClick={() => setFrameSettings({ ...frameSettings, templateId: t.id })}
+                          className={`p-3 rounded-xl border-2 transition-all text-sm font-medium ${
+                            frameSettings.templateId === t.id ? 'border-purple-600 bg-purple-50 text-purple-700' : 'border-gray-100 text-gray-600 hover:border-gray-200'
+                          }`}
+                        >
+                          {t.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="flex items-center gap-2"><Palette className="w-4 h-4" />Cor Principal</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {COLORS.map((c) => (
+                        <button
+                          key={c}
+                          onClick={() => setFrameSettings({ ...frameSettings, color: c })}
+                          className={`w-8 h-8 rounded-full border-2 transition-transform ${
+                            frameSettings.color === c ? 'scale-125 border-purple-600' : 'border-transparent'
+                          }`}
+                          style={{ backgroundColor: c }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="flex items-center gap-2"><TypeIcon className="w-4 h-4" />Fonte do Texto</Label>
+                    <Select value={frameSettings.font} onValueChange={(v) => setFrameSettings({ ...frameSettings, font: v })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {FONTS.map((f) => (
+                          <SelectItem key={f.value} value={f.value} className={f.value}>
+                            {f.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-3">
+                    <Label className="flex items-center gap-2"><FileText className="w-4 h-4" />Texto na Moldura</Label>
+                    <Input 
+                      placeholder="Ex: Maria & João 2024" 
+                      value={frameSettings.text}
+                      onChange={(e) => setFrameSettings({ ...frameSettings, text: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <Label>Prévia da Moldura</Label>
+                  <div className="aspect-[4/5] bg-gray-100 rounded-2xl relative overflow-hidden flex items-center justify-center border-4 border-white shadow-inner">
+                    <div 
+                      className={`absolute inset-0 pointer-events-none transition-all duration-500 ${
+                        FRAME_TEMPLATES.find(t => t.id === frameSettings.templateId)?.preview
+                      }`}
+                      style={{ borderColor: frameSettings.color, color: frameSettings.color }}
+                    >
+                      <div className="absolute bottom-6 left-0 right-0 text-center px-4">
+                        <p className={`${frameSettings.font} text-xl font-medium drop-shadow-sm`}>
+                          {frameSettings.text || 'Seu Texto Aqui'}
+                        </p>
+                      </div>
+                    </div>
+                    <Camera className="w-12 h-12 text-gray-300" />
+                    <p className="text-xs text-gray-400 mt-16 absolute">Sua foto aqui</p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="py-12 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200">
+                <Palette className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">Ative a moldura para personalizar suas fotos!</p>
+              </div>
+            )}
+
+            <div className="flex justify-between pt-4">
+              <Button variant="outline" onClick={() => setStep(2)}>Voltar</Button>
+              <Button onClick={() => setStep(4)} className="bg-gradient-to-r from-purple-600 to-pink-600">
+                Próximo: Pagamento<ChevronDown className="w-4 h-4 ml-2 rotate-[-90deg]" />
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {step === 4 && (
+          <div className="space-y-6">
             <div className="bg-purple-50 border border-purple-100 rounded-xl p-6 text-center">
               <h3 className="text-lg font-semibold text-purple-900 mb-2">Resumo do Pedido</h3>
-              <p className="text-purple-700 mb-4">
-                Plano {planDetails.name} (Até {planDetails.limit} acessos)
-                <br />
-                <span className="text-sm opacity-80">Fotos guardadas por {planDetails.storage}</span>
-              </p>
+              <div className="space-y-1 mb-4">
+                <p className="text-purple-700">Plano {planDetails.name} (Até {planDetails.limit} acessos)</p>
+                <p className="text-xs text-purple-500">Fotos guardadas por {planDetails.storage}</p>
+                {frameSettings.enabled && (
+                  <p className="text-sm font-medium text-purple-800 flex items-center justify-center gap-1">
+                    <Sparkles className="w-3 h-3" />
+                    Adicional: Moldura Personalizada (+ R$ 9,99)
+                  </p>
+                )}
+              </div>
               <div className="text-4xl font-bold text-purple-900 mb-2">
-                R$ {planDetails.price.toFixed(2).replace('.', ',')}
+                R$ {totalPrice.toFixed(2).replace('.', ',')}
               </div>
               {isTestMode && (
                 <span className="inline-block bg-yellow-200 text-yellow-800 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">
@@ -377,7 +556,6 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
                   Abrir Página de Pagamento
                 </a>
                 
-                {/* Botão temporário para simular o webhook durante o desenvolvimento */}
                 <button 
                   onClick={handleSimulatePaymentSuccess}
                   disabled={isSubmitting}
@@ -389,7 +567,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
             )}
 
             <div className="flex justify-start pt-4 border-t">
-              <Button variant="ghost" onClick={() => setStep(2)} disabled={isSubmitting || !!paymentUrl}>
+              <Button variant="ghost" onClick={() => setStep(3)} disabled={isSubmitting || !!paymentUrl}>
                 Voltar
               </Button>
             </div>

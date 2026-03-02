@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Event, MediaItem } from '@/types';
 import { useEvents } from '@/hooks/useEvents';
 import { Button } from '@/components/ui/button';
@@ -27,16 +27,22 @@ import {
   Download,
   Play,
   Pause,
-  Eraser
+  Eraser,
+  Lock,
+  ShieldCheck,
+  CreditCard
 } from 'lucide-react';
 
 interface AdminPanelProps {
   onClose: () => void;
+  onOpenTestPayment?: () => void;
 }
 
 type AdminView = 'dashboard' | 'events' | 'media' | 'settings';
 
-export function AdminPanel({ onClose }: AdminPanelProps) {
+export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState('');
   const [view, setView] = useState<AdminView>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -55,6 +61,53 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
     deleteMedia,
     stats
   } = useEvents();
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    // Senha padrão simples conforme solicitado
+    if (password === 'admin123') {
+      setIsAuthenticated(true);
+      toast.success('Acesso autorizado!');
+    } else {
+      toast.error('Senha incorreta!');
+    }
+  };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md bg-white/10 backdrop-blur-md border-white/20 text-white">
+          <CardHeader className="text-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+              <Lock className="w-8 h-8 text-white" />
+            </div>
+            <CardTitle className="text-2xl font-bold">Acesso Restrito</CardTitle>
+            <p className="text-gray-400 text-sm mt-2">Digite a senha para acessar o painel administrativo</p>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Input
+                  type="password"
+                  placeholder="Senha de acesso"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 h-12"
+                  autoFocus
+                />
+              </div>
+              <Button type="submit" className="w-full h-12 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 font-bold text-lg">
+                Entrar no Painel
+              </Button>
+              <Button type="button" variant="ghost" onClick={onClose} className="w-full text-gray-400 hover:text-white hover:bg-white/5">
+                Voltar para o Site
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const handleDownloadEvent = async (event: Event) => {
     try {
@@ -117,6 +170,28 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
 
   const renderDashboard = () => (
     <div className="space-y-6">
+      {/* Admin Test Section */}
+      <Card className="border-2 border-dashed border-purple-200 bg-purple-50/50">
+        <CardContent className="p-6 flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
+              <ShieldCheck className="w-6 h-6 text-purple-600" />
+            </div>
+            <div>
+              <h3 className="font-bold text-purple-900">Modo de Teste Admin</h3>
+              <p className="text-sm text-purple-700">Teste o fluxo completo de pagamento e criação de evento (R$ 1,00)</p>
+            </div>
+          </div>
+          <Button 
+            onClick={onOpenTestPayment}
+            className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-8"
+          >
+            <CreditCard className="w-4 h-4 mr-2" />
+            Iniciar Teste
+          </Button>
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="bg-gradient-to-br from-purple-500 to-pink-500 text-white border-none">
           <CardContent className="p-6">

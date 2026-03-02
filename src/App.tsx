@@ -241,8 +241,36 @@ function LandingPage() {
   const heroY = useTransform(scrollY, [0, 500], [0, 150]);
   const heroOpacity = useTransform(scrollY, [0, 300], [1, 0]);
 
+  useEffect(() => {
+    // Barreiras contra cópia
+    const handleContextMenu = (e: MouseEvent) => e.preventDefault();
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Bloquear F12, Ctrl+Shift+I, Ctrl+U
+      if (
+        e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+        (e.ctrlKey && e.key === 'u')
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   if (isAdminOpen) {
-    return <AdminPanel onClose={() => setIsAdminOpen(false)} />;
+    return (
+      <AdminPanel 
+        onClose={() => setIsAdminOpen(false)} 
+        onOpenTestPayment={() => openCreateModal('test', true)}
+      />
+    );
   }
 
   return (
@@ -843,15 +871,7 @@ function LandingPage() {
             </AnimatedSection>
           </div>
           
-          {/* Botão de Teste Admin */}
-          <div className="mt-12 text-center">
-             <button 
-                onClick={() => openCreateModal('test', true)}
-                className="text-sm text-gray-400 hover:text-gray-600 underline transition-colors"
-             >
-                Admin: Testar fluxo de pagamento (R$ 1,00)
-             </button>
-          </div>
+          {/* Botão de Teste Admin removido da landing page e movido para o painel admin */}
         </div>
       </section>
 

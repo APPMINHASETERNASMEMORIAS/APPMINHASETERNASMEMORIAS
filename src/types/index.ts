@@ -31,6 +31,15 @@ export interface EventSettings {
   allowedTypes: ('image' | 'video')[];
   revealMode: 'immediate' | 'delayed' | 'manual';
   delayedRevealTime?: string;
+  frameSettings?: FrameSettings;
+}
+
+export interface FrameSettings {
+  enabled: boolean;
+  color: string;
+  font: string;
+  text: string;
+  templateId?: string;
 }
 
 export interface EventStats {

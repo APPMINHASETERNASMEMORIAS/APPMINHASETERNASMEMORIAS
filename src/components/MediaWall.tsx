@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { X, Download, Check, Trash2, Image as ImageIcon, Video, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { FrameOverlay } from './FrameOverlay';
 import type { MediaItem, Event } from '@/types';
 
 interface MediaWallProps {
@@ -12,8 +13,9 @@ interface MediaWallProps {
   onDelete?: (mediaId: string) => void;
 }
 
-function MediaItemCard({ item, isAdmin, onApprove, onDelete, onClick }: {
+function MediaItemCard({ item, event, isAdmin, onApprove, onDelete, onClick }: {
   item: MediaItem;
+  event: Event;
   isAdmin?: boolean;
   onApprove?: (mediaId: string, approved: boolean) => void;
   onDelete?: (mediaId: string) => void;
@@ -36,14 +38,16 @@ function MediaItemCard({ item, isAdmin, onApprove, onDelete, onClick }: {
       )}
 
       {item.type === 'image' ? (
-        <img
-          src={item.thumbnailUrl}
-          alt={item.caption || 'Foto do evento'}
-          className={`w-full h-full object-cover transition-all duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'} ${isHovered ? 'scale-110' : 'scale-100'}`}
-          loading="lazy"
-          onLoad={() => setIsLoaded(true)}
-          onError={() => setIsLoaded(true)}
-        />
+        <FrameOverlay settings={event.settings.frameSettings} className="w-full h-full">
+          <img
+            src={item.thumbnailUrl}
+            alt={item.caption || 'Foto do evento'}
+            className={`w-full h-full object-cover transition-all duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'} ${isHovered ? 'scale-110' : 'scale-100'}`}
+            loading="lazy"
+            onLoad={() => setIsLoaded(true)}
+            onError={() => setIsLoaded(true)}
+          />
+        </FrameOverlay>
       ) : (
         <div className="relative w-full h-full">
           <video src={item.url} className={`w-full h-full object-cover transition-all duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'}`} preload="metadata" onLoadedData={() => setIsLoaded(true)} onError={() => setIsLoaded(true)} />
@@ -78,8 +82,9 @@ function MediaItemCard({ item, isAdmin, onApprove, onDelete, onClick }: {
   );
 }
 
-function Lightbox({ item, isOpen, onClose, onNext, onPrev, hasNext, hasPrev }: {
+function Lightbox({ item, event, isOpen, onClose, onNext, onPrev, hasNext, hasPrev }: {
   item: MediaItem | null;
+  event: Event;
   isOpen: boolean;
   onClose: () => void;
   onNext: () => void;
@@ -97,7 +102,9 @@ function Lightbox({ item, isOpen, onClose, onNext, onPrev, hasNext, hasPrev }: {
           {hasPrev && <button onClick={onPrev} className="absolute left-4 z-50 w-12 h-12 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"><span className="text-white text-2xl">‹</span></button>}
           {hasNext && <button onClick={onNext} className="absolute right-4 z-50 w-12 h-12 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"><span className="text-white text-2xl">›</span></button>}
           {item.type === 'image' ? (
-            <img src={item.originalUrl} alt={item.caption || 'Foto'} className="max-w-full max-h-full object-contain" />
+            <FrameOverlay settings={event.settings.frameSettings} className="max-w-full max-h-full">
+              <img src={item.originalUrl} alt={item.caption || 'Foto'} className="w-full h-full object-contain" />
+            </FrameOverlay>
           ) : (
             <video src={item.url} controls className="max-w-full max-h-full" autoPlay />
           )}
@@ -165,7 +172,7 @@ export function MediaWall({ event, media, isAdmin, onApprove, onDelete }: MediaW
       {filteredMedia.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
           {filteredMedia.map((item, index) => (
-            <MediaItemCard key={item.id} item={item} isAdmin={isAdmin} onApprove={onApprove} onDelete={onDelete} onClick={() => setSelectedIndex(index)} />
+            <MediaItemCard key={item.id} item={item} event={event} isAdmin={isAdmin} onApprove={onApprove} onDelete={onDelete} onClick={() => setSelectedIndex(index)} />
           ))}
         </div>
       ) : (
@@ -178,6 +185,7 @@ export function MediaWall({ event, media, isAdmin, onApprove, onDelete }: MediaW
 
       <Lightbox
         item={selectedIndex !== null ? filteredMedia[selectedIndex] : null}
+        event={event}
         isOpen={selectedIndex !== null}
         onClose={() => setSelectedIndex(null)}
         onNext={handleNext}

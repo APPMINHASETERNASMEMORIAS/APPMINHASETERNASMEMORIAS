@@ -121,18 +121,24 @@ export function useEvents() {
     const savedEvents = localStorage.getItem('memorias_events');
     const savedMedia = localStorage.getItem('memorias_media');
     
-    if (savedEvents) {
-      setEvents(JSON.parse(savedEvents));
-    } else {
+    try {
+      if (savedEvents) {
+        setEvents(JSON.parse(savedEvents));
+      } else {
+        setEvents(MOCK_EVENTS);
+        localStorage.setItem('memorias_events', JSON.stringify(MOCK_EVENTS));
+      }
+      
+      if (savedMedia) {
+        setMedia(JSON.parse(savedMedia));
+      } else {
+        setMedia(MOCK_MEDIA);
+        localStorage.setItem('memorias_media', JSON.stringify(MOCK_MEDIA));
+      }
+    } catch (error) {
+      console.error('Error loading data from localStorage:', error);
       setEvents(MOCK_EVENTS);
-      localStorage.setItem('memorias_events', JSON.stringify(MOCK_EVENTS));
-    }
-    
-    if (savedMedia) {
-      setMedia(JSON.parse(savedMedia));
-    } else {
       setMedia(MOCK_MEDIA);
-      localStorage.setItem('memorias_media', JSON.stringify(MOCK_MEDIA));
     }
     
     setLoading(false);
@@ -228,14 +234,12 @@ export function useEvents() {
   }, []);
 
   const getStats = useCallback(() => {
+    const allMedia = Object.values(media).flat().filter(Boolean) as MediaItem[];
     const totalEvents = events.length;
-    const totalMedia = Object.values(media).flat().length;
-    const totalStorage = Object.values(media)
-      .flat()
-      .reduce((acc, item) => acc + item.fileSize, 0);
+    const totalMedia = allMedia.length;
+    const totalStorage = allMedia.reduce((acc, item) => acc + (item?.fileSize || 0), 0);
     const activeEvents = events.filter(e => e.status === 'active').length;
-    const recentUploads = Object.values(media)
-      .flat()
+    const recentUploads = [...allMedia]
       .sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime())
       .slice(0, 10);
 
@@ -250,7 +254,7 @@ export function useEvents() {
 
   return {
     events,
-    media: Object.values(media).flat(),
+    media: Object.values(media).flat().filter(Boolean),
     loading,
     createEvent,
     updateEvent,

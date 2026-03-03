@@ -15,7 +15,7 @@ interface MediaWallProps {
 
 function MediaItemCard({ item, event, isAdmin, onApprove, onDelete, onClick }: {
   item: MediaItem;
-  event: Event;
+  event?: Event;
   isAdmin?: boolean;
   onApprove?: (mediaId: string, approved: boolean) => void;
   onDelete?: (mediaId: string) => void;
@@ -38,7 +38,7 @@ function MediaItemCard({ item, event, isAdmin, onApprove, onDelete, onClick }: {
       )}
 
       {item.type === 'image' ? (
-        <FrameOverlay settings={event.settings?.frameSettings} className="w-full h-full">
+        <FrameOverlay settings={event?.settings?.frameSettings} className="w-full h-full">
           <img
             src={item.thumbnailUrl}
             alt={item.caption || 'Foto do evento'}
@@ -84,7 +84,7 @@ function MediaItemCard({ item, event, isAdmin, onApprove, onDelete, onClick }: {
 
 function Lightbox({ item, event, isOpen, onClose, onNext, onPrev, hasNext, hasPrev }: {
   item: MediaItem | null;
-  event: Event;
+  event?: Event;
   isOpen: boolean;
   onClose: () => void;
   onNext: () => void;
@@ -102,7 +102,7 @@ function Lightbox({ item, event, isOpen, onClose, onNext, onPrev, hasNext, hasPr
           {hasPrev && <button onClick={onPrev} className="absolute left-4 z-50 w-12 h-12 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"><span className="text-white text-2xl">‹</span></button>}
           {hasNext && <button onClick={onNext} className="absolute right-4 z-50 w-12 h-12 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"><span className="text-white text-2xl">›</span></button>}
           {item.type === 'image' ? (
-            <FrameOverlay settings={event.settings?.frameSettings} className="max-w-full max-h-full">
+            <FrameOverlay settings={event?.settings?.frameSettings} className="max-w-full max-h-full">
               <img src={item.originalUrl} alt={item.caption || 'Foto'} className="w-full h-full object-contain" />
             </FrameOverlay>
           ) : (
@@ -128,6 +128,14 @@ function Lightbox({ item, event, isOpen, onClose, onNext, onPrev, hasNext, hasPr
 export function MediaWall({ event, media, isAdmin, onApprove, onDelete }: MediaWallProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [filter, setFilter] = useState<'all' | 'image' | 'video' | 'pending'>('all');
+
+  if (!event) {
+    return (
+      <div className="text-center py-12 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+        <p className="text-gray-500">Selecione um evento para visualizar as mídias.</p>
+      </div>
+    );
+  }
 
   const filteredMedia = media.filter((item) => {
     if (filter === 'all') return true;

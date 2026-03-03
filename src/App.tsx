@@ -277,7 +277,6 @@ function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white overflow-x-hidden">
-      <Toaster position="top-center" />
       {/* Navigation */}
       <motion.nav 
         initial={{ y: -100 }}
@@ -1100,6 +1099,7 @@ function EventPage() {
 function App() {
   return (
     <Router>
+      <Toaster position="top-center" />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/evento/:id" element={<EventPage />} />

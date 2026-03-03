@@ -123,7 +123,8 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
       }
 
       const zip = new JSZip();
-      const folder = zip.folder(event.eventName.replace(/[^a-z0-9]/gi, '_').toLowerCase());
+      const folderName = (event.eventName || 'evento').replace(/[^a-z0-9]/gi, '_').toLowerCase();
+      const folder = zip.folder(folderName);
 
       if (!folder) {
          throw new Error('Erro ao criar pasta no arquivo zip');
@@ -135,7 +136,8 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
           const response = await fetch(item.originalUrl || item.url);
           const blob = await response.blob();
           const extension = item.type === 'video' ? 'mp4' : 'jpg';
-          const filename = `${item.uploadedBy.replace(/[^a-z0-9]/gi, '_')}_${index + 1}.${extension}`;
+          const uploader = (item.uploadedBy || 'convidado').replace(/[^a-z0-9]/gi, '_');
+          const filename = `${uploader}_${index + 1}.${extension}`;
           folder.file(filename, blob);
         } catch (error) {
           console.error(`Erro ao baixar arquivo ${item.url}:`, error);
@@ -147,7 +149,8 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
       toast.loading('Compactando arquivos...', { id: 'download' });
       const content = await zip.generateAsync({ type: 'blob' });
       
-      saveAs(content, `${event.eventName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_memorias.zip`);
+      const zipFilename = `${(event.eventName || 'evento').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_memorias.zip`;
+      saveAs(content, zipFilename);
       toast.success('Download concluído!', { id: 'download' });
     } catch (error) {
       console.error('Erro no download:', error);
@@ -259,7 +262,7 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {events.slice(0, 5).map(event => (
+            {(events || []).slice(0, 5).map(event => (
               <div
                 key={event.id}
                 className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
@@ -270,17 +273,17 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold">
-                    {event.eventName.charAt(0).toUpperCase()}
+                    {(event.eventName || 'E').charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="font-medium text-gray-800">{event.eventName}</p>
-                    <p className="text-sm text-gray-500">{event.clientName}</p>
+                    <p className="font-medium text-gray-800">{event.eventName || 'Evento sem nome'}</p>
+                    <p className="text-sm text-gray-500">{event.clientName || 'Cliente não informado'}</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-gray-400" />
               </div>
             ))}
-            {events.length === 0 && (
+            {(!events || events.length === 0) && (
               <p className="text-center text-gray-500 py-8">Nenhum evento criado ainda</p>
             )}
           </CardContent>
@@ -294,7 +297,7 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {media.filter(m => m.status === 'pending').slice(0, 5).map(item => (
+            {(media || []).filter(m => m && m.status === 'pending').slice(0, 5).map(item => (
               <div key={item.id} className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg">
                 <img
                   src={item.thumbnailUrl}
@@ -302,8 +305,8 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
                   className="w-12 h-12 rounded-lg object-cover"
                 />
                 <div className="flex-1">
-                  <p className="font-medium text-gray-800">{item.uploadedBy}</p>
-                  <p className="text-sm text-gray-500">{new Date(item.uploadedAt).toLocaleDateString('pt-BR')}</p>
+                  <p className="font-medium text-gray-800">{item.uploadedBy || 'Convidado'}</p>
+                  <p className="text-sm text-gray-500">{item.uploadedAt ? new Date(item.uploadedAt).toLocaleDateString('pt-BR') : 'Data não informada'}</p>
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -325,7 +328,7 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
                 </div>
               </div>
             ))}
-            {pendingMediaCount === 0 && (
+            {(!media || media.filter(m => m && m.status === 'pending').length === 0) && (
               <p className="text-center text-gray-500 py-8">Nenhuma mídia pendente</p>
             )}
           </CardContent>
@@ -378,7 +381,7 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xl">
-                    {event.eventName.charAt(0).toUpperCase()}
+                    {(event.eventName || 'E').charAt(0).toUpperCase()}
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -617,23 +620,31 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <h2 className="text-2xl font-bold text-gray-800">Todas as Mídias</h2>
                   <Button 
-                    onClick={() => window.open(`/#/evento/${events[0]?.id || ''}`, '_blank')}
+                    onClick={() => {
+                      if (events && events.length > 0) {
+                        window.open(`/#/evento/${events[0].id}`, '_blank');
+                      } else {
+                        toast.error('Crie um evento primeiro para testar o upload.');
+                      }
+                    }}
                     className="bg-purple-600 hover:bg-purple-700 w-full sm:w-auto"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Testar Upload
                   </Button>
                 </div>
-                {events.length > 0 ? (
+                {events && events.length > 0 ? (
                   <MediaWall
                     event={events[0]}
-                    media={media}
+                    media={media || []}
                     isAdmin={true}
                     onApprove={approveMedia}
                     onDelete={deleteMedia}
                   />
                 ) : (
-                  <p className="text-center text-gray-500 py-16">Nenhum evento criado ainda</p>
+                  <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
+                    <p className="text-gray-500">Nenhum evento criado ainda. Crie um evento para ver as mídias.</p>
+                  </div>
                 )}
               </div>
             )}

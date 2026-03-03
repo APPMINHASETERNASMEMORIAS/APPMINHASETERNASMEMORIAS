@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Event, MediaItem } from '@/types';
 import { useEvents } from '@/hooks/useEvents';
 import { Button } from '@/components/ui/button';
@@ -311,7 +311,11 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
                 />
                 <div className="flex-1">
                   <p className="font-medium text-gray-800">{item.uploadedBy || 'Convidado'}</p>
-                  <p className="text-sm text-gray-500">{item.uploadedAt ? new Date(item.uploadedAt).toLocaleDateString('pt-BR') : 'Data não informada'}</p>
+                  <p className="text-sm text-gray-500">
+                    {item.uploadedAt && !isNaN(new Date(item.uploadedAt).getTime()) 
+                      ? new Date(item.uploadedAt).toLocaleDateString('pt-BR') 
+                      : 'Data não informada'}
+                  </p>
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -452,7 +456,9 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
                 <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
                   <span className="flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
-                    {new Date(event.eventDate).toLocaleDateString('pt-BR')}
+                    {event.eventDate && !isNaN(new Date(event.eventDate).getTime()) 
+                      ? new Date(event.eventDate).toLocaleDateString('pt-BR') 
+                      : 'Data não informada'}
                   </span>
                   <span className="flex items-center gap-1">
                     <Image className="w-4 h-4" />

@@ -131,8 +131,13 @@ export function useEvents() {
       }
       
       if (savedMedia) {
-        const parsed = JSON.parse(savedMedia);
-        setMedia(parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : MOCK_MEDIA);
+        try {
+          const parsed = JSON.parse(savedMedia);
+          setMedia(parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : MOCK_MEDIA);
+        } catch (e) {
+          console.error('Failed to parse saved media:', e);
+          setMedia(MOCK_MEDIA);
+        }
       } else {
         setMedia(MOCK_MEDIA);
         localStorage.setItem('memorias_media', JSON.stringify(MOCK_MEDIA));
@@ -166,22 +171,15 @@ export function useEvents() {
     }
   }, [media, loading]);
 
-  const createEvent = useCallback((data: {
-    clientName: string;
-    eventName: string;
-    eventDate: string;
-    eventTime: string;
-    eventType: EventType;
-    description: string;
-  }): Event => {
+  const createEvent = useCallback((data: any): Event => {
     const id = uuidv4();
     const newEvent: Event = {
-      id,
       ...data,
+      id,
       qrCode: `${window.location.origin}/#/evento/${id}`,
       createdAt: new Date().toISOString(),
       status: 'active',
-      settings: DEFAULT_SETTINGS,
+      settings: data.settings || DEFAULT_SETTINGS,
       stats: {
         totalPhotos: 0,
         totalVideos: 0,

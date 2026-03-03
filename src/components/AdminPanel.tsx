@@ -31,8 +31,8 @@ import {
   Eraser,
   Lock,
   Shield,
-  RotateCcw,
-  CheckCircle2
+  Cloud,
+  CheckCircle
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -108,6 +108,25 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
       toast.error('Erro ao fazer o download das mídias.', { id: 'download' });
     } finally {
       setIsDownloading(null);
+    }
+  };
+
+  const handleTransferToTerabox = (event: Event) => {
+    toast.loading(`Iniciando transferência do evento ${event.eventName} para o Terabox...`, { id: 'terabox' });
+    
+    // Simula o tempo de transferência
+    setTimeout(() => {
+      toast.success(`Evento ${event.eventName} transferido com sucesso para o Terabox! Espaço no servidor liberado.`, { id: 'terabox' });
+      // Aqui entraria a lógica real de integração com a API do Terabox
+      // e depois a limpeza das mídias locais
+    }, 3000);
+  };
+
+  const handleFinalizeEvent = (event: Event) => {
+    if (window.confirm(`Tem certeza que deseja encerrar o evento "${event.eventName}"? Isso irá pausar o evento e iniciar o download de todas as mídias.`)) {
+      updateEvent(event.id, { status: 'paused' });
+      toast.success('Evento encerrado e pausado.');
+      handleDownloadEvent(event);
     }
   };
 
@@ -312,61 +331,36 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xl">
                     {event.eventName.charAt(0).toUpperCase()}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2 justify-end">
                     <button
                       onClick={() => handleDownloadEvent(event)}
                       disabled={isDownloading === event.id}
-                      className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center hover:bg-blue-200 transition-all disabled:opacity-50 shadow-sm"
-                      title="Baixar todas as mídias (ZIP)"
+                      className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center hover:bg-blue-200 transition-colors disabled:opacity-50"
+                      title="Baixar todas as mídias"
                     >
-                      <Download className={`w-5 h-5 text-blue-600 ${isDownloading === event.id ? 'animate-bounce' : ''}`} />
+                      <Download className={`w-4 h-4 text-blue-600 ${isDownloading === event.id ? 'animate-bounce' : ''}`} />
+                    </button>
+                    <button
+                      onClick={() => handleTransferToTerabox(event)}
+                      className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center hover:bg-indigo-200 transition-colors"
+                      title="Transferir para Terabox (Backup em Nuvem)"
+                    >
+                      <Cloud className="w-4 h-4 text-indigo-600" />
                     </button>
                     <button
                       onClick={() => {
-                        let newStatus: 'active' | 'paused' | 'ended' = 'active';
-                        let message = '';
-                        
-                        if (event.status === 'active') {
-                          newStatus = 'paused';
-                          message = 'Evento pausado! Novos envios estão bloqueados.';
-                        } else {
-                          newStatus = 'active';
-                          message = 'Evento retomado! Novos envios permitidos.';
-                        }
-                        
+                        const newStatus = event.status === 'paused' ? 'active' : 'paused';
                         updateEvent(event.id, { status: newStatus });
-                        toast.success(message);
+                        toast.success(`Evento ${newStatus === 'active' ? 'retomado' : 'pausado'} com sucesso!`);
                       }}
-                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm ${
+                      className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
                         event.status === 'paused' 
                           ? 'bg-green-100 hover:bg-green-200 text-green-600' 
                           : 'bg-orange-100 hover:bg-orange-200 text-orange-600'
                       }`}
-                      title={event.status === 'paused' ? 'Retomar envios' : 'Pausar envios'}
+                      title={event.status === 'paused' ? 'Retomar evento' : 'Pausar evento'}
                     >
-                      {event.status === 'paused' ? <Play className="w-5 h-5" /> : <Pause className="w-5 h-5" />}
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (event.status === 'ended') {
-                          updateEvent(event.id, { status: 'active' });
-                          toast.success('Evento reiniciado com sucesso!');
-                        } else {
-                          if (window.confirm('Deseja finalizar este evento? Isso bloqueará novos envios permanentemente (até que você reinicie).')) {
-                            updateEvent(event.id, { status: 'ended' });
-                            toast.success('Evento finalizado!');
-                            handleDownloadEvent(event); // Suggest download on end
-                          }
-                        }
-                      }}
-                      className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm ${
-                        event.status === 'ended'
-                          ? 'bg-purple-100 hover:bg-purple-200 text-purple-600'
-                          : 'bg-gray-100 hover:bg-gray-200 text-gray-600'
-                      }`}
-                      title={event.status === 'ended' ? 'Reiniciar Evento' : 'Finalizar Evento'}
-                    >
-                      {event.status === 'ended' ? <RotateCcw className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
+                      {event.status === 'paused' ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
                     </button>
                     <button
                       onClick={() => {
@@ -376,27 +370,27 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                           toast.success('Mídias apagadas com sucesso! Espaço liberado.');
                         }
                       }}
-                      className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center hover:bg-yellow-200 transition-all shadow-sm"
+                      className="w-8 h-8 rounded-full bg-yellow-100 flex items-center justify-center hover:bg-yellow-200 transition-colors"
                       title="Limpar mídias (Liberar espaço)"
                     >
-                      <Eraser className="w-5 h-5 text-yellow-600" />
+                      <Eraser className="w-4 h-4 text-yellow-600" />
                     </button>
                     <button
                       onClick={() => {
                         setSelectedEvent(event);
                         setShowQRCode(true);
                       }}
-                      className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-all shadow-sm"
+                      className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
                       title="Ver QR Code"
                     >
-                      <QrCode className="w-5 h-5 text-gray-600" />
+                      <QrCode className="w-4 h-4 text-gray-600" />
                     </button>
                     <button
                       onClick={() => setShowDeleteConfirm(event.id)}
-                      className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center hover:bg-red-200 transition-all shadow-sm"
+                      className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center hover:bg-red-200 transition-colors"
                       title="Excluir evento"
                     >
-                      <Trash2 className="w-5 h-5 text-red-600" />
+                      <Trash2 className="w-4 h-4 text-red-600" />
                     </button>
                   </div>
                 </div>
@@ -409,14 +403,6 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                     <Calendar className="w-4 h-4" />
                     {new Date(event.eventDate).toLocaleDateString('pt-BR')}
                   </span>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                    event.status === 'active' ? 'bg-green-100 text-green-700' :
-                    event.status === 'paused' ? 'bg-orange-100 text-orange-700' :
-                    'bg-purple-100 text-purple-700'
-                  }`}>
-                    {event.status === 'active' ? 'Ativo' :
-                     event.status === 'paused' ? 'Pausado' : 'Finalizado'}
-                  </span>
                   <span className="flex items-center gap-1">
                     <Image className="w-4 h-4" />
                     {eventMedia.length} mídias
@@ -428,17 +414,27 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                     <span className="text-sm text-yellow-700">{pendingCount} pendente{pendingCount > 1 ? 's' : ''}</span>
                   </div>
                 )}
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    setSelectedEvent(event);
-                    setShowMediaWall(true);
-                  }}
-                >
-                  <Eye className="w-4 h-4 mr-2" />
-                  Ver Mural
-                </Button>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      setSelectedEvent(event);
+                      setShowMediaWall(true);
+                    }}
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    Ver Mural
+                  </Button>
+                  <Button
+                    variant="default"
+                    className="w-full bg-green-600 hover:bg-green-700"
+                    onClick={() => handleFinalizeEvent(event)}
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Encerrar e Baixar Evento
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           );

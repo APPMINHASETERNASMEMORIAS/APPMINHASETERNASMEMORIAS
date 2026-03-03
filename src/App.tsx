@@ -1086,8 +1086,7 @@ function EventPage() {
   const { getEvent } = useEvents();
   
   const event = id ? getEvent(id) : undefined;
-  const isPaused = event?.status === 'paused' || event?.status === 'ended';
-  const isEnded = event?.status === 'ended';
+  const isPaused = event?.status === 'paused';
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -1114,11 +1113,9 @@ function EventPage() {
               {event ? event.eventName : 'Compartilhe seu momento!'}
             </h1>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              {isEnded
-                ? 'Este evento foi finalizado. Agradecemos a todos que compartilharam suas memórias!'
-                : isPaused 
-                  ? 'O recebimento de fotos para este evento foi pausado pelo administrador.' 
-                  : 'Tire uma foto ou grave um vídeo e deixe uma mensagem especial.'}
+              {isPaused 
+                ? 'O recebimento de fotos para este evento foi pausado pelo administrador.' 
+                : 'Tire uma foto ou grave um vídeo e deixe uma mensagem especial.'}
             </p>
           </div>
 

@@ -1,4 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import { Event, MediaItem } from '@/types';
 import { useEvents } from '@/hooks/useEvents';
 import { Button } from '@/components/ui/button';
@@ -7,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { MediaWall } from './MediaWall';
 import { QRCodeDisplay } from './QRCodeDisplay';
-import { CreateEventModal } from './CreateEventModal';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import toast from 'react-hot-toast';
@@ -30,18 +30,16 @@ import {
   Pause,
   Eraser,
   Lock,
-  ShieldCheck,
-  CreditCard
+  Shield
 } from 'lucide-react';
 
 interface AdminPanelProps {
   onClose: () => void;
-  onOpenTestPayment?: () => void;
 }
 
 type AdminView = 'dashboard' | 'events' | 'media' | 'settings';
 
-export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
+export function AdminPanel({ onClose }: AdminPanelProps) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [view, setView] = useState<AdminView>('dashboard');
@@ -51,7 +49,6 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
   const [showMediaWall, setShowMediaWall] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState<string | null>(null);
-  const [isTestModalOpen, setIsTestModalOpen] = useState(false);
 
   const {
     events,
@@ -64,60 +61,12 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
     stats
   } = useEvents();
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Senha padrão simples conforme solicitado
-    if (password === 'admin123') {
-      setIsAuthenticated(true);
-      toast.success('Acesso autorizado!');
-    } else {
-      toast.error('Senha incorreta!');
-    }
-  };
-
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md bg-white/10 backdrop-blur-md border-white/20 text-white">
-          <CardHeader className="text-center">
-            <div className="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <Lock className="w-8 h-8 text-white" />
-            </div>
-            <CardTitle className="text-2xl font-bold">Acesso Restrito</CardTitle>
-            <p className="text-gray-400 text-sm mt-2">Digite a senha para acessar o painel administrativo</p>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2">
-                <Input
-                  type="password"
-                  placeholder="Senha de acesso"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="bg-white/5 border-white/10 text-white placeholder:text-gray-500 h-12"
-                  autoFocus
-                />
-              </div>
-              <Button type="submit" className="w-full h-12 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 font-bold text-lg">
-                Entrar no Painel
-              </Button>
-              <Button type="button" variant="ghost" onClick={onClose} className="w-full text-gray-400 hover:text-white hover:bg-white/5">
-                Voltar para o Site
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
   const handleDownloadEvent = async (event: Event) => {
-    if (!event) return;
     try {
       setIsDownloading(event.id);
-      toast.loading(`Preparando download do evento ${event.eventName || 'evento'}...`, { id: 'download' });
+      toast.loading(`Preparando download do evento ${event.eventName}...`, { id: 'download' });
 
-      const eventMedia = (media || []).filter(m => m && m.eventId === event.id && m.status === 'approved');
+      const eventMedia = media.filter(m => m.eventId === event.id && m.status === 'approved');
       
       if (eventMedia.length === 0) {
         toast.error('Não há mídias aprovadas para baixar neste evento.', { id: 'download' });
@@ -126,8 +75,7 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
       }
 
       const zip = new JSZip();
-      const folderName = (event.eventName || 'evento').replace(/[^a-z0-9]/gi, '_').toLowerCase();
-      const folder = zip.folder(folderName);
+      const folder = zip.folder(event.eventName.replace(/[^a-z0-9]/gi, '_').toLowerCase());
 
       if (!folder) {
          throw new Error('Erro ao criar pasta no arquivo zip');
@@ -139,8 +87,7 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
           const response = await fetch(item.originalUrl || item.url);
           const blob = await response.blob();
           const extension = item.type === 'video' ? 'mp4' : 'jpg';
-          const uploader = (item.uploadedBy || 'convidado').replace(/[^a-z0-9]/gi, '_');
-          const filename = `${uploader}_${index + 1}.${extension}`;
+          const filename = `${item.uploadedBy.replace(/[^a-z0-9]/gi, '_')}_${index + 1}.${extension}`;
           folder.file(filename, blob);
         } catch (error) {
           console.error(`Erro ao baixar arquivo ${item.url}:`, error);
@@ -152,8 +99,7 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
       toast.loading('Compactando arquivos...', { id: 'download' });
       const content = await zip.generateAsync({ type: 'blob' });
       
-      const zipFilename = `${(event.eventName || 'evento').replace(/[^a-z0-9]/gi, '_').toLowerCase()}_memorias.zip`;
-      saveAs(content, zipFilename);
+      saveAs(content, `${event.eventName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_memorias.zip`);
       toast.success('Download concluído!', { id: 'download' });
     } catch (error) {
       console.error('Erro no download:', error);
@@ -164,49 +110,25 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
   };
 
   const filteredEvents = useMemo(() => {
-    return (events || []).filter(event =>
-      event && (
-        (event.eventName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (event.clientName || '').toLowerCase().includes(searchQuery.toLowerCase())
-      )
+    return events.filter(event =>
+      event.eventName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.clientName.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [events, searchQuery]);
 
   const pendingMediaCount = useMemo(() => {
-    return (media || []).filter(item => item && item.status === 'pending').length;
+    return media.filter(item => item.status === 'pending').length;
   }, [media]);
 
   const renderDashboard = () => (
     <div className="space-y-6">
-      {/* Admin Test Section */}
-      <Card className="border-2 border-dashed border-purple-200 bg-purple-50/50">
-        <CardContent className="p-6 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
-              <ShieldCheck className="w-6 h-6 text-purple-600" />
-            </div>
-            <div>
-              <h3 className="font-bold text-purple-900">Modo de Teste Admin</h3>
-              <p className="text-sm text-purple-700">Teste o fluxo completo de pagamento e criação de evento (R$ 1,00)</p>
-            </div>
-          </div>
-          <Button 
-            onClick={() => setIsTestModalOpen(true)}
-            className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-8"
-          >
-            <CreditCard className="w-4 h-4 mr-2" />
-            Iniciar Teste
-          </Button>
-        </CardContent>
-      </Card>
-
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="bg-gradient-to-br from-purple-500 to-pink-500 text-white border-none">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-white/80 text-sm">Total de Eventos</p>
-                <p className="text-3xl font-bold">{stats?.totalEvents || 0}</p>
+                <p className="text-3xl font-bold">{stats.totalEvents}</p>
               </div>
               <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
                 <Calendar className="w-6 h-6 text-white" />
@@ -220,7 +142,7 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-white/80 text-sm">Total de Mídias</p>
-                <p className="text-3xl font-bold">{stats?.totalMedia || 0}</p>
+                <p className="text-3xl font-bold">{stats.totalMedia}</p>
               </div>
               <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
                 <Image className="w-6 h-6 text-white" />
@@ -234,7 +156,7 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-white/80 text-sm">Pendentes</p>
-                <p className="text-3xl font-bold">{pendingMediaCount || 0}</p>
+                <p className="text-3xl font-bold">{pendingMediaCount}</p>
               </div>
               <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-white" />
@@ -248,7 +170,7 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-white/80 text-sm">Eventos Ativos</p>
-                <p className="text-3xl font-bold">{stats?.activeEvents || 0}</p>
+                <p className="text-3xl font-bold">{stats.activeEvents}</p>
               </div>
               <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
                 <Users className="w-6 h-6 text-white" />
@@ -267,7 +189,7 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {(events || []).filter(e => e).slice(0, 5).map(event => (
+            {events.slice(0, 5).map(event => (
               <div
                 key={event.id}
                 className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
@@ -278,17 +200,17 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
               >
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-semibold">
-                    {(event.eventName || 'E').charAt(0).toUpperCase()}
+                    {event.eventName.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="font-medium text-gray-800">{event.eventName || 'Evento sem nome'}</p>
-                    <p className="text-sm text-gray-500">{event.clientName || 'Cliente não informado'}</p>
+                    <p className="font-medium text-gray-800">{event.eventName}</p>
+                    <p className="text-sm text-gray-500">{event.clientName}</p>
                   </div>
                 </div>
                 <ChevronRight className="w-5 h-5 text-gray-400" />
               </div>
             ))}
-            {(!events || events.filter(e => e).length === 0) && (
+            {events.length === 0 && (
               <p className="text-center text-gray-500 py-8">Nenhum evento criado ainda</p>
             )}
           </CardContent>
@@ -302,7 +224,7 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {(media || []).filter(m => m && m.status === 'pending').slice(0, 5).map(item => (
+            {media.filter(m => m.status === 'pending').slice(0, 5).map(item => (
               <div key={item.id} className="flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg">
                 <img
                   src={item.thumbnailUrl}
@@ -310,12 +232,8 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
                   className="w-12 h-12 rounded-lg object-cover"
                 />
                 <div className="flex-1">
-                  <p className="font-medium text-gray-800">{item.uploadedBy || 'Convidado'}</p>
-                  <p className="text-sm text-gray-500">
-                    {item.uploadedAt && !isNaN(new Date(item.uploadedAt).getTime()) 
-                      ? new Date(item.uploadedAt).toLocaleDateString('pt-BR') 
-                      : 'Data não informada'}
-                  </p>
+                  <p className="font-medium text-gray-800">{item.uploadedBy}</p>
+                  <p className="text-sm text-gray-500">{new Date(item.uploadedAt).toLocaleDateString('pt-BR')}</p>
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -337,7 +255,7 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
                 </div>
               </div>
             ))}
-            {(!media || media.filter(m => m && m.status === 'pending').length === 0) && (
+            {pendingMediaCount === 0 && (
               <p className="text-center text-gray-500 py-8">Nenhuma mídia pendente</p>
             )}
           </CardContent>
@@ -382,16 +300,15 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredEvents.map(event => {
-          if (!event) return null;
-          const eventMedia = (media || []).filter(m => m && m.eventId === event.id);
-          const pendingCount = eventMedia.filter(m => m && m.status === 'pending').length;
+          const eventMedia = media.filter(m => m.eventId === event.id);
+          const pendingCount = eventMedia.filter(m => m.status === 'pending').length;
 
           return (
             <Card key={event.id} className="hover:shadow-lg transition-shadow">
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xl">
-                    {(event.eventName || 'E').charAt(0).toUpperCase()}
+                    {event.eventName.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex gap-2">
                     <button
@@ -456,9 +373,7 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
                 <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
                   <span className="flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
-                    {event.eventDate && !isNaN(new Date(event.eventDate).getTime()) 
-                      ? new Date(event.eventDate).toLocaleDateString('pt-BR') 
-                      : 'Data não informada'}
+                    {new Date(event.eventDate).toLocaleDateString('pt-BR')}
                   </span>
                   <span className="flex items-center gap-1">
                     <Image className="w-4 h-4" />
@@ -522,6 +437,65 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
       </Dialog>
     </div>
   );
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-3xl p-8 shadow-2xl w-full max-w-md text-center"
+        >
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center mx-auto mb-6 shadow-lg">
+            <Shield className="w-10 h-10 text-white" />
+          </div>
+          <h2 className="text-3xl font-bold text-gray-800 mb-2">Acesso Restrito</h2>
+          <p className="text-gray-500 mb-8">Digite a senha para acessar o painel administrativo</p>
+          
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (password === 'admin123') {
+                setIsAuthenticated(true);
+                toast.success('Bem-vindo ao painel!');
+              } else {
+                toast.error('Senha incorreta');
+              }
+            }}
+            className="space-y-4"
+          >
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Input
+                type="password"
+                placeholder="Senha de acesso"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="pl-10 h-12 rounded-xl text-lg"
+                autoFocus
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={onClose}
+                className="flex-1 h-12 rounded-xl"
+              >
+                Voltar
+              </Button>
+              <Button 
+                type="submit"
+                className="flex-1 h-12 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+              >
+                Entrar
+              </Button>
+            </div>
+          </form>
+        </motion.div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 pb-20 md:pb-0">
@@ -632,31 +606,23 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                   <h2 className="text-2xl font-bold text-gray-800">Todas as Mídias</h2>
                   <Button 
-                    onClick={() => {
-                      if (events && events.length > 0) {
-                        window.open(`/#/evento/${events[0].id}`, '_blank');
-                      } else {
-                        toast.error('Crie um evento primeiro para testar o upload.');
-                      }
-                    }}
+                    onClick={() => window.open(`/#/evento/${events[0]?.id || ''}`, '_blank')}
                     className="bg-purple-600 hover:bg-purple-700 w-full sm:w-auto"
                   >
                     <Plus className="w-4 h-4 mr-2" />
                     Testar Upload
                   </Button>
                 </div>
-                {events && events.length > 0 ? (
+                {events.length > 0 ? (
                   <MediaWall
                     event={events[0]}
-                    media={media || []}
+                    media={media}
                     isAdmin={true}
                     onApprove={approveMedia}
                     onDelete={deleteMedia}
                   />
                 ) : (
-                  <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
-                    <p className="text-gray-500">Nenhum evento criado ainda. Crie um evento para ver as mídias.</p>
-                  </div>
+                  <p className="text-center text-gray-500 py-16">Nenhum evento criado ainda</p>
                 )}
               </div>
             )}
@@ -664,23 +630,8 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold text-gray-800">Configurações</h2>
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Manutenção do Sistema</CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-6 space-y-4">
-                    <p className="text-gray-600">Se o sistema estiver apresentando lentidão ou erros de carregamento, você pode tentar limpar o cache local.</p>
-                    <Button 
-                      variant="destructive" 
-                      onClick={() => {
-                        if (window.confirm('ATENÇÃO: Isso apagará TODOS os eventos e mídias salvos localmente. Deseja continuar?')) {
-                          localStorage.clear();
-                          window.location.reload();
-                        }
-                      }}
-                    >
-                      <Eraser className="w-4 h-4 mr-2" />
-                      Resetar Todo o Sistema
-                    </Button>
+                  <CardContent className="p-6">
+                    <p className="text-gray-600">Configurações do sistema em desenvolvimento...</p>
                   </CardContent>
                 </Card>
               </div>
@@ -718,7 +669,7 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
               </div>
               <MediaWall
                 event={selectedEvent}
-                media={(media || []).filter(m => m && m.eventId === selectedEvent.id)}
+                media={media.filter(m => m.eventId === selectedEvent.id)}
                 isAdmin={true}
                 onApprove={approveMedia}
                 onDelete={deleteMedia}
@@ -727,20 +678,6 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
           )}
         </DialogContent>
       </Dialog>
-
-      {/* Test Event Modal */}
-      <CreateEventModal
-        isOpen={isTestModalOpen}
-        onClose={() => setIsTestModalOpen(false)}
-        selectedPlan="test"
-        isTestMode={true}
-        onCreate={(data) => {
-          createEvent(data);
-          setIsTestModalOpen(false);
-          setView('events');
-          toast.success('Evento de teste criado com sucesso!');
-        }}
-      />
     </div>
   );
 }

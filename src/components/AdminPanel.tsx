@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { MediaWall } from './MediaWall';
 import { QRCodeDisplay } from './QRCodeDisplay';
+import { CreateEventModal } from './CreateEventModal';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import toast from 'react-hot-toast';
@@ -50,6 +51,7 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
   const [showMediaWall, setShowMediaWall] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState<string | null>(null);
+  const [isTestModalOpen, setIsTestModalOpen] = useState(false);
 
   const {
     events,
@@ -186,7 +188,7 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
             </div>
           </div>
           <Button 
-            onClick={onOpenTestPayment}
+            onClick={() => setIsTestModalOpen(true)}
             className="bg-purple-600 hover:bg-purple-700 text-white font-bold px-8"
           >
             <CreditCard className="w-4 h-4 mr-2" />
@@ -652,8 +654,23 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold text-gray-800">Configurações</h2>
                 <Card>
-                  <CardContent className="p-6">
-                    <p className="text-gray-600">Configurações do sistema em desenvolvimento...</p>
+                  <CardHeader>
+                    <CardTitle>Manutenção do Sistema</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6 space-y-4">
+                    <p className="text-gray-600">Se o sistema estiver apresentando lentidão ou erros de carregamento, você pode tentar limpar o cache local.</p>
+                    <Button 
+                      variant="destructive" 
+                      onClick={() => {
+                        if (window.confirm('ATENÇÃO: Isso apagará TODOS os eventos e mídias salvos localmente. Deseja continuar?')) {
+                          localStorage.clear();
+                          window.location.reload();
+                        }
+                      }}
+                    >
+                      <Eraser className="w-4 h-4 mr-2" />
+                      Resetar Todo o Sistema
+                    </Button>
                   </CardContent>
                 </Card>
               </div>
@@ -700,6 +717,20 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Test Event Modal */}
+      <CreateEventModal
+        isOpen={isTestModalOpen}
+        onClose={() => setIsTestModalOpen(false)}
+        selectedPlan="test"
+        isTestMode={true}
+        onCreate={(data) => {
+          createEvent(data);
+          setIsTestModalOpen(false);
+          setView('events');
+          toast.success('Evento de teste criado com sucesso!');
+        }}
+      />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Component, ErrorInfo, ReactNode } from 'react';
 import { HashRouter as Router, Routes, Route, useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence, useScroll, useTransform, useSpring, useInView } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
@@ -39,6 +39,58 @@ import { CreateEventModal } from './components/CreateEventModal';
 import { QRCodeDisplay } from './components/QRCodeDisplay';
 import { AdminPanel } from './components/AdminPanel';
 import { Event } from './types';
+
+// Error Boundary Component
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-gray-900 flex items-center justify-center p-4 text-white text-center">
+          <div className="max-w-md">
+            <div className="w-20 h-20 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Lock className="w-10 h-10 text-red-500" />
+            </div>
+            <h2 className="text-2xl font-bold mb-4">Ops! Algo deu errado.</h2>
+            <p className="text-gray-400 mb-8">Ocorreu um erro ao carregar o painel administrativo. Isso pode ser causado por dados corrompidos no navegador.</p>
+            <div className="flex flex-col gap-3">
+              <Button 
+                onClick={() => {
+                  localStorage.clear();
+                  window.location.href = '/';
+                }}
+                className="bg-red-600 hover:bg-red-700 h-12 font-bold"
+              >
+                Limpar Tudo e Recomeçar
+              </Button>
+              <Button 
+                variant="ghost"
+                onClick={() => window.location.href = '/'}
+                className="text-gray-400 hover:text-white"
+              >
+                Voltar para o Início
+              </Button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
 
 // Animation Components
 function AnimatedSection({ children, className = '', delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
@@ -207,7 +259,6 @@ function FeatureRow({ icon: Icon, title, description, image, reverse = false, de
 function LandingPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
-  const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [createdEvent, setCreatedEvent] = useState<Event | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [refreshGallery, setRefreshGallery] = useState(0);
@@ -243,6 +294,8 @@ function LandingPage() {
   const heroY = useTransform(scrollY, [0, 500], [0, 150]);
   const heroOpacity = useTransform(scrollY, [0, 300], [1, 0]);
 
+  const navigate = useNavigate();
+
   useEffect(() => {
     // Barreiras contra cópia
     const handleContextMenu = (e: MouseEvent) => e.preventDefault();
@@ -265,15 +318,6 @@ function LandingPage() {
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
-
-  if (isAdminOpen) {
-    return (
-      <AdminPanel 
-        onClose={() => setIsAdminOpen(false)} 
-        onOpenTestPayment={() => openCreateModal('test', true)}
-      />
-    );
-  }
 
   return (
     <div className="min-h-screen bg-white overflow-x-hidden">
@@ -314,14 +358,6 @@ function LandingPage() {
 
             <div className="hidden md:flex items-center gap-4">
               <motion.button
-                onClick={() => setIsAdminOpen(true)}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="text-gray-600 hover:text-purple-600 font-medium"
-              >
-                Admin
-              </motion.button>
-              <motion.button
                 onClick={() => openCreateModal('festa')}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -360,15 +396,6 @@ function LandingPage() {
                     {item}
                   </button>
                 ))}
-                <button
-                  onClick={() => {
-                    setIsAdminOpen(true);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className="block w-full text-left py-3 px-4 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors font-medium"
-                >
-                  Admin
-                </button>
                 <button
                   onClick={() => {
                     openCreateModal('festa');
@@ -992,10 +1019,22 @@ function LandingPage() {
             <div>
               <h4 className="font-bold text-lg mb-4">Suporte</h4>
               <ul className="space-y-2 text-gray-400">
+                <li><button onClick={() => navigate('/admin')} className="hover:text-white transition-colors">Painel Admin</button></li>
+                <li>
+                  <button 
+                    onClick={() => {
+                      if (window.confirm('Isso limpará todos os dados locais. Deseja continuar?')) {
+                        localStorage.clear();
+                        window.location.reload();
+                      }
+                    }} 
+                    className="hover:text-red-400 transition-colors text-xs opacity-50"
+                  >
+                    Limpar Cache do Site
+                  </button>
+                </li>
                 <li><a href="#" className="hover:text-white transition-colors">Central de Ajuda</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Contato</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Termos de Uso</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Privacidade</a></li>
               </ul>
             </div>
             <div>
@@ -1102,6 +1141,11 @@ function App() {
       <Toaster position="top-center" />
       <Routes>
         <Route path="/" element={<LandingPage />} />
+        <Route path="/admin" element={
+          <ErrorBoundary>
+            <AdminPanel onClose={() => window.location.href = '/'} />
+          </ErrorBoundary>
+        } />
         <Route path="/evento/:id" element={<EventPage />} />
       </Routes>
     </Router>

@@ -123,14 +123,16 @@ export function useEvents() {
     
     try {
       if (savedEvents) {
-        setEvents(JSON.parse(savedEvents));
+        const parsed = JSON.parse(savedEvents);
+        setEvents(Array.isArray(parsed) ? parsed : MOCK_EVENTS);
       } else {
         setEvents(MOCK_EVENTS);
         localStorage.setItem('memorias_events', JSON.stringify(MOCK_EVENTS));
       }
       
       if (savedMedia) {
-        setMedia(JSON.parse(savedMedia));
+        const parsed = JSON.parse(savedMedia);
+        setMedia(parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : MOCK_MEDIA);
       } else {
         setMedia(MOCK_MEDIA);
         localStorage.setItem('memorias_media', JSON.stringify(MOCK_MEDIA));
@@ -146,13 +148,21 @@ export function useEvents() {
 
   useEffect(() => {
     if (!loading) {
-      localStorage.setItem('memorias_events', JSON.stringify(events));
+      try {
+        localStorage.setItem('memorias_events', JSON.stringify(events));
+      } catch (e) {
+        console.error('Failed to save events to localStorage:', e);
+      }
     }
   }, [events, loading]);
 
   useEffect(() => {
     if (!loading) {
-      localStorage.setItem('memorias_media', JSON.stringify(media));
+      try {
+        localStorage.setItem('memorias_media', JSON.stringify(media));
+      } catch (e) {
+        console.error('Failed to save media to localStorage:', e);
+      }
     }
   }, [media, loading]);
 
@@ -234,27 +244,72 @@ export function useEvents() {
   }, []);
 
   const getStats = useCallback(() => {
-    const allMedia = Object.values(media).flat().filter(Boolean) as MediaItem[];
-    const totalEvents = events.length;
-    const totalMedia = allMedia.length;
-    const totalStorage = allMedia.reduce((acc, item) => acc + (item?.fileSize || 0), 0);
-    const activeEvents = events.filter(e => e.status === 'active').length;
-    const recentUploads = [...allMedia]
-      .sort((a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime())
-      .slice(0, 10);
+    try {
+      const safeMedia = media || {};
+      const safeEvents = Array.isArray(events) ? events : [];
+      
+      // Manual flatten for better compatibility
+      const allMedia: MediaItem[] = [];
+      Object.values(safeMedia).forEach(mediaList => {
+        if (Array.isArray(mediaList)) {
+          mediaList.forEach(item => {
+            if (item && typeof item === 'object') {
+              allMedia.push(item);
+            }
+          });
+        }
+      });
 
-    return {
-      totalEvents,
-      totalMedia,
-      totalStorage,
-      activeEvents,
-      recentUploads,
-    };
+      const totalEvents = safeEvents.filter(e => e && typeof e === 'object').length;
+      const totalMedia = allMedia.length;
+      const totalStorage = allMedia.reduce((acc, item) => acc + (item?.fileSize || 0), 0);
+      const activeEvents = safeEvents.filter(e => e && typeof e === 'object' && e.status === 'active').length;
+      const recentUploads = [...allMedia]
+        .filter(item => item && item.uploadedAt)
+        .sort((a, b) => {
+          const dateA = new Date(a.uploadedAt).getTime();
+          const dateB = new Date(b.uploadedAt).getTime();
+          return (isNaN(dateB) ? 0 : dateB) - (isNaN(dateA) ? 0 : dateA);
+        })
+        .slice(0, 10);
+
+      return {
+        totalEvents,
+        totalMedia,
+        totalStorage,
+        activeEvents,
+        recentUploads,
+      };
+    } catch (error) {
+      console.error('Error calculating stats:', error);
+      return {
+        totalEvents: 0,
+        totalMedia: 0,
+        totalStorage: 0,
+        activeEvents: 0,
+        recentUploads: [],
+      };
+    }
   }, [events, media]);
 
+  const getFlattenedMedia = useCallback(() => {
+    const safeMedia = media || {};
+    const flattened: MediaItem[] = [];
+    Object.values(safeMedia).forEach(mediaList => {
+      if (Array.isArray(mediaList)) {
+        mediaList.forEach(item => {
+          if (item && typeof item === 'object') {
+            flattened.push(item);
+          }
+        });
+      }
+    });
+    return flattened;
+  }, [media]);
+
   return {
-    events,
-    media: Object.values(media).flat().filter(Boolean),
+    events: Array.isArray(events) ? events.filter(e => e && typeof e === 'object') : [],
+    media: getFlattenedMedia(),
     loading,
     createEvent,
     updateEvent,

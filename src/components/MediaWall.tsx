@@ -137,7 +137,8 @@ export function MediaWall({ event, media, isAdmin, onApprove, onDelete }: MediaW
     );
   }
 
-  const filteredMedia = media.filter((item) => {
+  const filteredMedia = (media || []).filter((item) => {
+    if (!item) return false;
     if (filter === 'all') return true;
     if (filter === 'pending') return item.status === 'pending';
     return item.type === filter;
@@ -180,7 +181,7 @@ export function MediaWall({ event, media, isAdmin, onApprove, onDelete }: MediaW
       {filteredMedia.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
           {filteredMedia.map((item, index) => (
-            <MediaItemCard key={item.id} item={item} event={event} isAdmin={isAdmin} onApprove={onApprove} onDelete={onDelete} onClick={() => setSelectedIndex(index)} />
+            item && <MediaItemCard key={item.id} item={item} event={event} isAdmin={isAdmin} onApprove={onApprove} onDelete={onDelete} onClick={() => setSelectedIndex(index)} />
           ))}
         </div>
       ) : (

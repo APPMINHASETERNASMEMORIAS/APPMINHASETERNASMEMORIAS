@@ -112,11 +112,12 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
   }
 
   const handleDownloadEvent = async (event: Event) => {
+    if (!event) return;
     try {
       setIsDownloading(event.id);
-      toast.loading(`Preparando download do evento ${event.eventName}...`, { id: 'download' });
+      toast.loading(`Preparando download do evento ${event.eventName || 'evento'}...`, { id: 'download' });
 
-      const eventMedia = media.filter(m => m.eventId === event.id && m.status === 'approved');
+      const eventMedia = (media || []).filter(m => m && m.eventId === event.id && m.status === 'approved');
       
       if (eventMedia.length === 0) {
         toast.error('Não há mídias aprovadas para baixar neste evento.', { id: 'download' });
@@ -163,14 +164,16 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
   };
 
   const filteredEvents = useMemo(() => {
-    return events.filter(event =>
-      (event.eventName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (event.clientName || '').toLowerCase().includes(searchQuery.toLowerCase())
+    return (events || []).filter(event =>
+      event && (
+        (event.eventName || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (event.clientName || '').toLowerCase().includes(searchQuery.toLowerCase())
+      )
     );
   }, [events, searchQuery]);
 
   const pendingMediaCount = useMemo(() => {
-    return media.filter(item => item.status === 'pending').length;
+    return (media || []).filter(item => item && item.status === 'pending').length;
   }, [media]);
 
   const renderDashboard = () => (
@@ -264,7 +267,7 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {(events || []).slice(0, 5).map(event => (
+            {(events || []).filter(e => e).slice(0, 5).map(event => (
               <div
                 key={event.id}
                 className="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors"
@@ -285,7 +288,7 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
                 <ChevronRight className="w-5 h-5 text-gray-400" />
               </div>
             ))}
-            {(!events || events.length === 0) && (
+            {(!events || events.filter(e => e).length === 0) && (
               <p className="text-center text-gray-500 py-8">Nenhum evento criado ainda</p>
             )}
           </CardContent>
@@ -375,8 +378,9 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredEvents.map(event => {
-          const eventMedia = media.filter(m => m.eventId === event.id);
-          const pendingCount = eventMedia.filter(m => m.status === 'pending').length;
+          if (!event) return null;
+          const eventMedia = (media || []).filter(m => m && m.eventId === event.id);
+          const pendingCount = eventMedia.filter(m => m && m.status === 'pending').length;
 
           return (
             <Card key={event.id} className="hover:shadow-lg transition-shadow">
@@ -708,7 +712,7 @@ export function AdminPanel({ onClose, onOpenTestPayment }: AdminPanelProps) {
               </div>
               <MediaWall
                 event={selectedEvent}
-                media={media.filter(m => m.eventId === selectedEvent.id)}
+                media={(media || []).filter(m => m && m.eventId === selectedEvent.id)}
                 isAdmin={true}
                 onApprove={approveMedia}
                 onDelete={deleteMedia}

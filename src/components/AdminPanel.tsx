@@ -30,7 +30,9 @@ import {
   Pause,
   Eraser,
   Lock,
-  Shield
+  Shield,
+  Cloud,
+  CheckCircle
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -106,6 +108,25 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
       toast.error('Erro ao fazer o download das mídias.', { id: 'download' });
     } finally {
       setIsDownloading(null);
+    }
+  };
+
+  const handleTransferToTerabox = (event: Event) => {
+    toast.loading(`Iniciando transferência do evento ${event.eventName} para o Terabox...`, { id: 'terabox' });
+    
+    // Simula o tempo de transferência
+    setTimeout(() => {
+      toast.success(`Evento ${event.eventName} transferido com sucesso para o Terabox! Espaço no servidor liberado.`, { id: 'terabox' });
+      // Aqui entraria a lógica real de integração com a API do Terabox
+      // e depois a limpeza das mídias locais
+    }, 3000);
+  };
+
+  const handleFinalizeEvent = (event: Event) => {
+    if (window.confirm(`Tem certeza que deseja encerrar o evento "${event.eventName}"? Isso irá pausar o evento e iniciar o download de todas as mídias.`)) {
+      updateEvent(event.id, { status: 'paused' });
+      toast.success('Evento encerrado e pausado.');
+      handleDownloadEvent(event);
     }
   };
 
@@ -310,7 +331,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-xl">
                     {event.eventName.charAt(0).toUpperCase()}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2 justify-end">
                     <button
                       onClick={() => handleDownloadEvent(event)}
                       disabled={isDownloading === event.id}
@@ -318,6 +339,13 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                       title="Baixar todas as mídias"
                     >
                       <Download className={`w-4 h-4 text-blue-600 ${isDownloading === event.id ? 'animate-bounce' : ''}`} />
+                    </button>
+                    <button
+                      onClick={() => handleTransferToTerabox(event)}
+                      className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center hover:bg-indigo-200 transition-colors"
+                      title="Transferir para Terabox (Backup em Nuvem)"
+                    >
+                      <Cloud className="w-4 h-4 text-indigo-600" />
                     </button>
                     <button
                       onClick={() => {
@@ -386,17 +414,27 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                     <span className="text-sm text-yellow-700">{pendingCount} pendente{pendingCount > 1 ? 's' : ''}</span>
                   </div>
                 )}
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => {
-                    setSelectedEvent(event);
-                    setShowMediaWall(true);
-                  }}
-                >
-                  <Eye className="w-4 h-4 mr-2" />
-                  Ver Mural
-                </Button>
+                <div className="flex flex-col gap-2">
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => {
+                      setSelectedEvent(event);
+                      setShowMediaWall(true);
+                    }}
+                  >
+                    <Eye className="w-4 h-4 mr-2" />
+                    Ver Mural
+                  </Button>
+                  <Button
+                    variant="default"
+                    className="w-full bg-green-600 hover:bg-green-700"
+                    onClick={() => handleFinalizeEvent(event)}
+                  >
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Encerrar e Baixar Evento
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           );

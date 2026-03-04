@@ -259,6 +259,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
                 value={formData.clientPhone}
                 onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
               />
+              <p className="text-xs text-gray-500">Obrigatório para receber notificações sobre sua galeria.</p>
             </div>
 
             <div className="space-y-2">

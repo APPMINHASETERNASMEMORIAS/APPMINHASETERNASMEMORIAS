@@ -39,6 +39,7 @@ import { CreateEventModal } from './components/CreateEventModal';
 import { QRCodeDisplay } from './components/QRCodeDisplay';
 import { AdminPanel } from './components/AdminPanel';
 import { ClientLoginModal } from './components/ClientLoginModal';
+import { CountdownTimer } from './components/CountdownTimer';
 import { Event } from './types';
 
 // Error Boundary Component
@@ -1060,6 +1061,11 @@ function LandingPage() {
         onCreate={handleCreateEvent}
       />
 
+      <ClientLoginModal
+        isOpen={isClientLoginModalOpen}
+        onClose={() => setIsClientLoginModalOpen(false)}
+      />
+
       {createdEvent && (
         <QRCodeDisplay
           eventId={createdEvent.id}
@@ -1097,6 +1103,15 @@ function EventPage() {
               Memórias
             </span>
           </div>
+          
+          {event && (
+            <div className="flex items-center gap-4">
+              <CountdownTimer 
+                createdAt={event.createdAt} 
+                clientPhone={event.clientPhone}
+              />
+            </div>
+          )}
         </div>
       </header>
 

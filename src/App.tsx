@@ -448,9 +448,16 @@ function LandingPage() {
       {/* Hero Section */}
       <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden">
         {/* Animated Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400">
+        <div className="absolute inset-0 bg-gray-900">
+          <img 
+            src="https://images.unsplash.com/photo-1519225421980-715cb0215aed?auto=format&fit=crop&w=1920&q=80" 
+            alt="Background" 
+            className="absolute inset-0 w-full h-full object-cover opacity-40 mix-blend-overlay"
+            referrerPolicy="no-referrer"
+          />
+          <div className="absolute inset-0 bg-gradient-to-br from-purple-600/90 via-pink-500/90 to-orange-400/90" />
           <ParticleBackground />
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-20" />
         </div>
 
         <motion.div 
@@ -659,14 +666,14 @@ function LandingPage() {
             icon={Users}
             title="Colaboração em Tempo Real"
             description="Todos os convidados podem enviar fotos e vídeos instantaneamente. Veja as memórias sendo criadas ao vivo durante seu evento especial."
-            image="https://picsum.photos/seed/familypark/800/600"
+            image="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=800&q=80"
             delay={0.1}
           />
           <FeatureRow
             icon={Clock}
             title="Linha do Tempo Mágica"
             description="Reúna todos os momentos especiais em um único lugar, organizados como um calendário mágico de lembranças inesquecíveis."
-            image="https://picsum.photos/seed/magicalcalendar/800/600"
+            image="https://images.unsplash.com/photo-1464349153735-7db50ed83c84?auto=format&fit=crop&w=800&q=80"
             reverse
             delay={0.2}
           />
@@ -674,14 +681,14 @@ function LandingPage() {
             icon={Heart}
             title="Amor Eternizado"
             description="Guarde o sentimento de cada momento. Suas memórias são tratadas com o maior carinho e segurança."
-            image="https://picsum.photos/seed/heartglow/800/600"
+            image="https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80"
             delay={0.3}
           />
           <FeatureRow
             icon={Camera}
             title="Momentos Românticos"
             description="Perfeito para casamentos, noivados e bodas. Capture a essência do seu amor com galerias dedicadas."
-            image="https://picsum.photos/seed/couplesunset/800/600"
+            image="https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=800&q=80"
             reverse
             delay={0.4}
           />
@@ -689,7 +696,7 @@ function LandingPage() {
             icon={Download}
             title="Download em Alta Qualidade"
             description="Baixe todas as fotos e vídeos em resolução original. Crie álbuns personalizados e compartilhe como quiser."
-            image="https://picsum.photos/seed/familygarden/800/600"
+            image="https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?auto=format&fit=crop&w=800&q=80"
             delay={0.5}
           />
         </div>
@@ -930,19 +937,19 @@ function LandingPage() {
                 name: 'Maria Santos',
                 event: 'Casamento',
                 text: 'Foi incrível ver todas as fotos do nosso casamento em um só lugar. Nossos convidados adoraram poder contribuir!',
-                image: 'https://picsum.photos/seed/maria/100/100'
+                image: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&h=100&q=80'
               },
               {
                 name: 'João Pedro',
                 event: 'Aniversário de 15 anos',
                 text: 'A festa da minha filha ficou ainda mais especial com o mural de fotos. Recomendo demais!',
-                image: 'https://picsum.photos/seed/joao/100/100'
+                image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&h=100&q=80'
               },
               {
                 name: 'Ana Carolina',
                 event: 'Chá de Bebê',
                 text: 'Conseguimos capturar momentos únicos do chá de bebê. Agora temos lembranças para toda a vida.',
-                image: 'https://picsum.photos/seed/ana/100/100'
+                image: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=100&h=100&q=80'
               }
             ].map((testimonial, index) => (
               <AnimatedSection key={index} delay={index * 0.1}>
@@ -978,8 +985,15 @@ function LandingPage() {
       <section className="py-24 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <AnimatedSection>
-            <div className="relative bg-gradient-to-r from-purple-600 to-pink-600 rounded-3xl p-12 md:p-16 text-center overflow-hidden">
-              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-30" />
+            <div className="relative bg-gray-900 rounded-3xl p-12 md:p-16 text-center overflow-hidden">
+              <img 
+                src="https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=1200&h=800&q=80" 
+                alt="Celebration" 
+                className="absolute inset-0 w-full h-full object-cover opacity-30 mix-blend-overlay"
+                referrerPolicy="no-referrer"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/90 to-pink-600/90" />
+              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48Y2lyY2xlIGN4PSIzMCIgY3k9IjMwIiByPSIyIi8+PC9nPjwvZz48L3N2Zz4=')] opacity-20" />
               <ParticleBackground />
               
               <h2 className="relative text-4xl md:text-5xl font-bold text-white mb-6">

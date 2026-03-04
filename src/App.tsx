@@ -38,6 +38,7 @@ import { useEvents } from './hooks/useEvents';
 import { CreateEventModal } from './components/CreateEventModal';
 import { QRCodeDisplay } from './components/QRCodeDisplay';
 import { AdminPanel } from './components/AdminPanel';
+import { ClientLoginModal } from './components/ClientLoginModal';
 import { Event } from './types';
 
 // Error Boundary Component
@@ -258,6 +259,7 @@ function FeatureRow({ icon: Icon, title, description, image, reverse = false, de
 
 function LandingPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isClientLoginModalOpen, setIsClientLoginModalOpen] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [createdEvent, setCreatedEvent] = useState<Event | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -357,6 +359,14 @@ function LandingPage() {
 
             <div className="hidden md:flex items-center gap-4">
               <motion.button
+                onClick={() => setIsClientLoginModalOpen(true)}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="text-purple-600 font-semibold hover:text-purple-800 transition-colors"
+              >
+                Acessar Minha Galeria
+              </motion.button>
+              <motion.button
                 onClick={() => openCreateModal('festa')}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
@@ -395,6 +405,15 @@ function LandingPage() {
                     {item}
                   </button>
                 ))}
+                <button
+                  onClick={() => {
+                    setIsClientLoginModalOpen(true);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className="w-full bg-purple-100 text-purple-600 px-6 py-3 rounded-full font-semibold mb-2"
+                >
+                  Acessar Minha Galeria
+                </button>
                 <button
                   onClick={() => {
                     openCreateModal('festa');
@@ -706,8 +725,8 @@ function LandingPage() {
                     <span>Galeria interativa em tempo real</span>
                   </li>
                   <li className="flex items-center text-gray-600">
-                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                    <span>Suporte via WhatsApp</span>
+                    <Clock className="w-5 h-5 text-purple-500 mr-3 flex-shrink-0" />
+                    <span>Evento dura <strong>12 horas</strong> a partir da criação</span>
                   </li>
                 </ul>
                 <button 
@@ -755,8 +774,8 @@ function LandingPage() {
                     <span>Galeria interativa em tempo real</span>
                   </li>
                   <li className="flex items-center text-white">
-                    <CheckCircle2 className="w-5 h-5 text-yellow-300 mr-3 flex-shrink-0" />
-                    <span>Suporte prioritário WhatsApp</span>
+                    <Clock className="w-5 h-5 text-yellow-300 mr-3 flex-shrink-0" />
+                    <span>Evento dura <strong>12 horas</strong> a partir da criação</span>
                   </li>
                   <li className="flex items-center text-white">
                     <CheckCircle2 className="w-5 h-5 text-yellow-300 mr-3 flex-shrink-0" />
@@ -805,8 +824,8 @@ function LandingPage() {
                     <span>Galeria interativa em tempo real</span>
                   </li>
                   <li className="flex items-center text-gray-600">
-                    <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                    <span>Suporte prioritário WhatsApp</span>
+                    <Clock className="w-5 h-5 text-purple-500 mr-3 flex-shrink-0" />
+                    <span>Evento dura <strong>12 horas</strong> a partir da criação</span>
                   </li>
                   <li className="flex items-center text-gray-600">
                     <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
@@ -855,8 +874,8 @@ function LandingPage() {
                     <span>Galeria interativa em tempo real</span>
                   </li>
                   <li className="flex items-center text-gray-300">
-                    <CheckCircle2 className="w-5 h-5 text-purple-400 mr-3 flex-shrink-0" />
-                    <span>Suporte VIP via WhatsApp</span>
+                    <Clock className="w-5 h-5 text-purple-400 mr-3 flex-shrink-0" />
+                    <span>Evento dura <strong>12 horas</strong> a partir da criação</span>
                   </li>
                   <li className="flex items-center text-gray-300">
                     <CheckCircle2 className="w-5 h-5 text-purple-400 mr-3 flex-shrink-0" />
@@ -1007,8 +1026,8 @@ function LandingPage() {
                     Limpar Cache do Site
                   </button>
                 </li>
+                <li><a href="mailto:linktestadoeaprovado@gmail.com" className="hover:text-white transition-colors">linktestadoeaprovado@gmail.com</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Central de Ajuda</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contato</a></li>
               </ul>
             </div>
             <div>

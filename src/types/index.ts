@@ -1,6 +1,7 @@
 export interface Event {
   id: string;
   clientName: string;
+  clientPhone?: string;
   eventName: string;
   eventDate: string;
   eventTime: string;
@@ -12,6 +13,7 @@ export interface Event {
   status: 'active' | 'paused' | 'ended';
   settings: EventSettings;
   stats: EventStats;
+  plan?: string;
 }
 
 export type EventType = 
@@ -32,6 +34,7 @@ export interface EventSettings {
   revealMode: 'immediate' | 'delayed' | 'manual';
   delayedRevealTime?: string;
   frameSettings?: FrameSettings;
+  clientPhone?: string;
 }
 
 export interface FrameSettings {

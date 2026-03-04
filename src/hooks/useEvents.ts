@@ -41,6 +41,7 @@ export function useEvents() {
       const mappedEvents: Event[] = (eventsData || []).map(row => ({
         id: row.id,
         clientName: row.client_name,
+        clientPhone: row.settings?.clientPhone || '',
         eventName: row.event_name,
         eventDate: row.event_date,
         eventTime: row.event_time,
@@ -136,7 +137,7 @@ export function useEvents() {
       qrCode: `${window.location.origin}/#/evento/${id}`,
       createdAt: new Date().toISOString(),
       status: 'active',
-      settings: data.settings || DEFAULT_SETTINGS,
+      settings: { ...(data.settings || DEFAULT_SETTINGS), clientPhone: data.clientPhone },
       stats: {
         totalPhotos: 0,
         totalVideos: 0,

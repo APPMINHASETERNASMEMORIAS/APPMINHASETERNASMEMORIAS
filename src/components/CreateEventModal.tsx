@@ -43,6 +43,7 @@ interface CreateEventModalProps {
   isTestMode?: boolean;
   onCreate: (data: {
     clientName: string;
+    clientPhone?: string;
     eventName: string;
     eventDate: string;
     eventTime: string;
@@ -100,6 +101,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     clientName: '',
+    clientPhone: '',
     eventName: '',
     eventDate: '',
     eventTime: '',
@@ -210,7 +212,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
     });
   };
 
-  const isStep1Valid = formData.clientName && formData.eventDate && formData.eventType;
+  const isStep1Valid = formData.clientName && formData.clientPhone && formData.eventDate && formData.eventType;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
@@ -251,6 +253,15 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
             </div>
 
             <div className="space-y-2">
+              <Label className="flex items-center gap-2"><User className="w-4 h-4" />Número de WhatsApp *</Label>
+              <Input
+                placeholder="Ex: (11) 99999-9999"
+                value={formData.clientPhone}
+                onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label className="flex items-center gap-2"><Camera className="w-4 h-4" />Tipo de Evento *</Label>
               <Select
                 value={formData.eventType}
@@ -276,7 +287,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
               <Clock className="w-5 h-5 text-purple-600 mt-0.5" />
               <div>
                 <h4 className="font-medium text-purple-900">Duração do Evento</h4>
-                <p className="text-sm text-purple-700">O evento durará 24 horas a partir da sua criação.</p>
+                <p className="text-sm text-purple-700">O evento durará 12 horas a partir da sua criação.</p>
               </div>
             </div>
 

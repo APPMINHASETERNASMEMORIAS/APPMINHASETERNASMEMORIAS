@@ -4,8 +4,8 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 // Create a mock client if keys are missing so the app doesn't crash
-export const supabase = supabaseUrl && supabaseAnonKey
+export const supabase = supabaseUrl && supabaseAnonKey && supabaseUrl !== '' && supabaseAnonKey !== ''
   ? createClient(supabaseUrl, supabaseAnonKey)
   : null;
 
-export const isSupabaseConfigured = !!supabase;
+export const isSupabaseConfigured = Boolean(supabase);

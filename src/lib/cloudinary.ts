@@ -27,7 +27,9 @@ export const uploadToCloudinary = async (file: File): Promise<string> => {
   return data.secure_url;
 };
 
-export const isCloudinaryConfigured = !!(
+export const isCloudinaryConfigured = Boolean(
   import.meta.env.VITE_CLOUDINARY_CLOUD_NAME &&
-  import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET
+  import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET &&
+  import.meta.env.VITE_CLOUDINARY_CLOUD_NAME !== '' &&
+  import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET !== ''
 );

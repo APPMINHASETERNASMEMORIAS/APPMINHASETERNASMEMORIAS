@@ -26,13 +26,7 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
     }
     
     if (!isCloudinaryConfigured || !isSupabaseConfigured) {
-      const missing = [];
-      if (!import.meta.env.VITE_CLOUDINARY_CLOUD_NAME) missing.push('Cloudinary Cloud Name');
-      if (!import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET) missing.push('Cloudinary Upload Preset');
-      if (!import.meta.env.VITE_SUPABASE_URL) missing.push('Supabase URL');
-      if (!import.meta.env.VITE_SUPABASE_ANON_KEY) missing.push('Supabase Anon Key');
-      
-      toast.error(`Faltam configurar: ${missing.join(', ')}`);
+      toast.error('O sistema não está totalmente configurado. Verifique as chaves do Supabase e Cloudinary.');
       return;
     }
 

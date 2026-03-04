@@ -1,108 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Event, EventType, EventSettings, MediaItem } from '@/types';
-
-const MOCK_EVENTS: Event[] = [
-  {
-    id: '1',
-    clientName: 'Maria e João',
-    eventName: 'Nosso Casamento',
-    eventDate: '2024-12-15',
-    eventTime: '16:00',
-    eventType: 'casamento',
-    description: 'O dia mais especial das nossas vidas!',
-    qrCode: 'https://minhasmemorias.com/event/1',
-    createdAt: '2024-11-01T10:00:00Z',
-    status: 'active',
-    settings: {
-      allowUploads: true,
-      requireApproval: false,
-      maxFileSize: 50,
-      allowedTypes: ['image', 'video'],
-      revealMode: 'immediate',
-    },
-    stats: {
-      totalPhotos: 156,
-      totalVideos: 23,
-      totalViews: 892,
-      totalDownloads: 45,
-      lastUploadAt: '2024-11-28T15:30:00Z',
-    },
-  },
-  {
-    id: '2',
-    clientName: 'Família Silva',
-    eventName: 'Aniversário da Vovó',
-    eventDate: '2024-11-20',
-    eventTime: '14:00',
-    eventType: 'aniversario',
-    description: '90 anos de amor e alegria!',
-    qrCode: 'https://minhasmemorias.com/event/2',
-    createdAt: '2024-10-15T08:00:00Z',
-    status: 'active',
-    settings: {
-      allowUploads: true,
-      requireApproval: true,
-      maxFileSize: 30,
-      allowedTypes: ['image'],
-      revealMode: 'delayed',
-      delayedRevealTime: '2024-11-21T10:00:00Z',
-    },
-    stats: {
-      totalPhotos: 89,
-      totalVideos: 0,
-      totalViews: 234,
-      totalDownloads: 12,
-      lastUploadAt: '2024-11-20T18:45:00Z',
-    },
-  },
-];
-
-const MOCK_MEDIA: Record<string, MediaItem[]> = {
-  '1': [
-    {
-      id: 'm1',
-      eventId: '1',
-      type: 'image',
-      url: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=800',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=400',
-      originalUrl: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1600',
-      caption: 'O primeiro olhar!',
-      uploadedBy: 'Convidado Anônimo',
-      uploadedAt: '2024-12-15T17:30:00Z',
-      status: 'approved',
-      fileSize: 2.5,
-    },
-    {
-      id: 'm2',
-      eventId: '1',
-      type: 'image',
-      url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=800',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400',
-      originalUrl: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=1600',
-      caption: 'Momento mágico',
-      uploadedBy: 'Carlos Fotógrafo',
-      uploadedAt: '2024-12-15T18:15:00Z',
-      status: 'approved',
-      fileSize: 1.8,
-    },
-  ],
-  '2': [
-    {
-      id: 'm3',
-      eventId: '2',
-      type: 'image',
-      url: 'https://images.unsplash.com/photo-1530103862676-de3c9a59aa38?w=800',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1530103862676-de3c9a59aa38?w=400',
-      originalUrl: 'https://images.unsplash.com/photo-1530103862676-de3c9a59aa38?w=1600',
-      caption: 'Família reunida!',
-      uploadedBy: 'Ana Paula',
-      uploadedAt: '2024-11-20T15:00:00Z',
-      status: 'approved',
-      fileSize: 3.2,
-    },
-  ],
-};
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
+import toast from 'react-hot-toast';
 
 const DEFAULT_SETTINGS: EventSettings = {
   allowUploads: true,
@@ -117,61 +17,118 @@ export function useEvents() {
   const [media, setMedia] = useState<Record<string, MediaItem[]>>({});
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const savedEvents = localStorage.getItem('memorias_events');
-    const savedMedia = localStorage.getItem('memorias_media');
-    
-    try {
-      if (savedEvents) {
-        const parsed = JSON.parse(savedEvents);
-        setEvents(Array.isArray(parsed) ? parsed : MOCK_EVENTS);
-      } else {
-        setEvents(MOCK_EVENTS);
-        localStorage.setItem('memorias_events', JSON.stringify(MOCK_EVENTS));
-      }
-      
-      if (savedMedia) {
-        try {
-          const parsed = JSON.parse(savedMedia);
-          setMedia(parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : MOCK_MEDIA);
-        } catch (e) {
-          console.error('Failed to parse saved media:', e);
-          setMedia(MOCK_MEDIA);
-        }
-      } else {
-        setMedia(MOCK_MEDIA);
-        localStorage.setItem('memorias_media', JSON.stringify(MOCK_MEDIA));
-      }
-    } catch (error) {
-      console.error('Error loading data from localStorage:', error);
-      setEvents(MOCK_EVENTS);
-      setMedia(MOCK_MEDIA);
+  const fetchEventsAndMedia = useCallback(async () => {
+    if (!isSupabaseConfigured) {
+      setLoading(false);
+      return;
     }
-    
-    setLoading(false);
+
+    try {
+      // Fetch events
+      const { data: eventsData, error: eventsError } = await supabase!
+        .from('events')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (eventsError) {
+        if (eventsError.message.includes('relation "public.events" does not exist')) {
+          console.error('A tabela "events" não existe no Supabase. Por favor, crie-a usando o SQL fornecido.');
+          return; // Stop execution if table doesn't exist
+        }
+        throw eventsError;
+      }
+
+      const mappedEvents: Event[] = (eventsData || []).map(row => ({
+        id: row.id,
+        clientName: row.client_name,
+        eventName: row.event_name,
+        eventDate: row.event_date,
+        eventTime: row.event_time,
+        eventType: row.event_type as EventType,
+        description: row.description || '',
+        qrCode: row.qr_code || `${window.location.origin}/#/evento/${row.id}`,
+        createdAt: row.created_at,
+        status: row.status as 'active' | 'paused' | 'ended',
+        settings: row.settings || DEFAULT_SETTINGS,
+        stats: row.stats || { totalPhotos: 0, totalVideos: 0, totalViews: 0, totalDownloads: 0 },
+      }));
+
+      setEvents(mappedEvents);
+
+      // Fetch media from memories table
+      const { data: memoriesData, error: memoriesError } = await supabase!
+        .from('memories')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (memoriesError) throw memoriesError;
+
+      const newMedia: Record<string, MediaItem[]> = {};
+      
+      (memoriesData || []).forEach(row => {
+        const eventId = row.event_id || 'global';
+        if (!newMedia[eventId]) newMedia[eventId] = [];
+        
+        newMedia[eventId].push({
+          id: row.id,
+          eventId: eventId,
+          type: row.type as 'image' | 'video',
+          url: row.url,
+          thumbnailUrl: row.url, // Cloudinary URL can be transformed, but we use original for now
+          originalUrl: row.url,
+          caption: row.message || undefined,
+          uploadedBy: row.uploader_name,
+          uploadedAt: row.created_at,
+          status: 'approved', // Default to approved since we don't have status in DB yet
+          fileSize: 0,
+        });
+      });
+
+      setMedia(newMedia);
+    } catch (error) {
+      console.error('Error fetching data from Supabase:', error);
+      toast.error('Erro ao carregar dados do servidor.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    if (!loading) {
-      try {
-        localStorage.setItem('memorias_events', JSON.stringify(events));
-      } catch (e) {
-        console.error('Failed to save events to localStorage:', e);
-      }
-    }
-  }, [events, loading]);
+    fetchEventsAndMedia();
 
-  useEffect(() => {
-    if (!loading) {
-      try {
-        localStorage.setItem('memorias_media', JSON.stringify(media));
-      } catch (e) {
-        console.error('Failed to save media to localStorage:', e);
-      }
-    }
-  }, [media, loading]);
+    if (!isSupabaseConfigured) return;
 
-  const createEvent = useCallback((data: any): Event => {
+    // Realtime subscription for events
+    const eventsChannel = supabase!
+      .channel('public:events')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'events' },
+        () => {
+          fetchEventsAndMedia();
+        }
+      )
+      .subscribe();
+
+    // Realtime subscription for memories
+    const memoriesChannel = supabase!
+      .channel('public:memories_admin')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'memories' },
+        () => {
+          fetchEventsAndMedia();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase!.removeChannel(eventsChannel);
+      supabase!.removeChannel(memoriesChannel);
+    };
+  }, [fetchEventsAndMedia]);
+
+  const createEvent = useCallback(async (data: any): Promise<Event> => {
     const id = uuidv4();
     const newEvent: Event = {
       ...data,
@@ -188,28 +145,94 @@ export function useEvents() {
       },
     };
 
+    // Optimistic update
     setEvents(prev => [newEvent, ...prev]);
-    setMedia(prev => ({ ...prev, [newEvent.id]: [] }));
-    
+
+    if (isSupabaseConfigured) {
+      try {
+        const { error } = await supabase!.from('events').insert([{
+          id: newEvent.id,
+          client_name: newEvent.clientName,
+          event_name: newEvent.eventName,
+          event_date: newEvent.eventDate,
+          event_time: newEvent.eventTime,
+          event_type: newEvent.eventType,
+          description: newEvent.description,
+          qr_code: newEvent.qrCode,
+          created_at: newEvent.createdAt,
+          status: newEvent.status,
+          settings: newEvent.settings,
+          stats: newEvent.stats,
+          plan: data.plan || 'festa'
+        }]);
+
+        if (error) throw error;
+      } catch (error) {
+        console.error('Error creating event in Supabase:', error);
+        toast.error('Erro ao salvar evento no servidor.');
+        // Revert optimistic update on error
+        setEvents(prev => prev.filter(e => e.id !== id));
+      }
+    }
+
     return newEvent;
   }, []);
 
-  const updateEvent = useCallback((id: string, updates: Partial<Event>) => {
+  const updateEvent = useCallback(async (id: string, updates: Partial<Event>) => {
+    // Optimistic update
     setEvents(prev =>
       prev.map(event =>
         event.id === id ? { ...event, ...updates } : event
       )
     );
-  }, []);
 
-  const deleteEvent = useCallback((id: string) => {
+    if (isSupabaseConfigured) {
+      try {
+        const dbUpdates: any = {};
+        if (updates.clientName) dbUpdates.client_name = updates.clientName;
+        if (updates.eventName) dbUpdates.event_name = updates.eventName;
+        if (updates.eventDate) dbUpdates.event_date = updates.eventDate;
+        if (updates.eventTime) dbUpdates.event_time = updates.eventTime;
+        if (updates.eventType) dbUpdates.event_type = updates.eventType;
+        if (updates.description !== undefined) dbUpdates.description = updates.description;
+        if (updates.status) dbUpdates.status = updates.status;
+        if (updates.settings) dbUpdates.settings = updates.settings;
+        if (updates.stats) dbUpdates.stats = updates.stats;
+
+        const { error } = await supabase!
+          .from('events')
+          .update(dbUpdates)
+          .eq('id', id);
+
+        if (error) throw error;
+      } catch (error) {
+        console.error('Error updating event in Supabase:', error);
+        toast.error('Erro ao atualizar evento no servidor.');
+        fetchEventsAndMedia(); // Revert on error
+      }
+    }
+  }, [fetchEventsAndMedia]);
+
+  const deleteEvent = useCallback(async (id: string) => {
+    // Optimistic update
     setEvents(prev => prev.filter(event => event.id !== id));
-    setMedia(prev => {
-      const newMedia = { ...prev };
-      delete newMedia[id];
-      return newMedia;
-    });
-  }, []);
+    
+    if (isSupabaseConfigured) {
+      try {
+        const { error } = await supabase!
+          .from('events')
+          .delete()
+          .eq('id', id);
+
+        if (error) throw error;
+        toast.success('Evento excluído com sucesso!');
+      } catch (error) {
+        console.error('Error deleting event in Supabase:', error);
+        toast.error('Erro ao excluir evento no servidor.');
+        fetchEventsAndMedia(); // Revert on error
+      }
+    }
+  }, [fetchEventsAndMedia]);
 
   const getEvent = useCallback((id: string): Event | undefined => {
     return events.find(event => event.id === id);
@@ -219,26 +242,39 @@ export function useEvents() {
     return media[eventId] || [];
   }, [media]);
 
-  const approveMedia = useCallback((id: string, approved: boolean) => {
-    setMedia(prev => {
-      const newMedia = { ...prev };
-      for (const eventId in newMedia) {
-        newMedia[eventId] = newMedia[eventId].map(item => 
-          item.id === id ? { ...item, status: approved ? 'approved' : 'rejected' } : item
-        );
+  const approveMedia = useCallback(async (id: string, approved: boolean) => {
+    // Since we don't have a status column in memories yet, we'll just delete if rejected
+    if (!approved && isSupabaseConfigured) {
+      try {
+        const { error } = await supabase!
+          .from('memories')
+          .delete()
+          .eq('id', id);
+          
+        if (error) throw error;
+        toast.success('Mídia rejeitada/excluída.');
+      } catch (error) {
+        console.error('Error deleting media:', error);
+        toast.error('Erro ao excluir mídia.');
       }
-      return newMedia;
-    });
+    }
   }, []);
 
-  const deleteMedia = useCallback((id: string) => {
-    setMedia(prev => {
-      const newMedia = { ...prev };
-      for (const eventId in newMedia) {
-        newMedia[eventId] = newMedia[eventId].filter(item => item.id !== id);
+  const deleteMedia = useCallback(async (id: string) => {
+    if (isSupabaseConfigured) {
+      try {
+        const { error } = await supabase!
+          .from('memories')
+          .delete()
+          .eq('id', id);
+          
+        if (error) throw error;
+        toast.success('Mídia excluída com sucesso.');
+      } catch (error) {
+        console.error('Error deleting media:', error);
+        toast.error('Erro ao excluir mídia.');
       }
-      return newMedia;
-    });
+    }
   }, []);
 
   const getStats = useCallback(() => {
@@ -246,7 +282,6 @@ export function useEvents() {
       const safeMedia = media || {};
       const safeEvents = Array.isArray(events) ? events : [];
       
-      // Manual flatten for better compatibility
       const allMedia: MediaItem[] = [];
       Object.values(safeMedia).forEach(mediaList => {
         if (Array.isArray(mediaList)) {

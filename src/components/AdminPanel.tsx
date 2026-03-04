@@ -716,8 +716,8 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
         onClose={() => setShowCreateModal(false)}
         selectedPlan="test"
         isTestMode={true}
-        onCreate={(data) => {
-          const newEvent = createEvent(data);
+        onCreate={async (data) => {
+          const newEvent = await createEvent(data);
           setSelectedEvent(newEvent);
           setShowQRCode(true);
         }}

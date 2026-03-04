@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   Calendar, 
   Clock, 
@@ -123,9 +123,16 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
 
-  const activePlan = isTestMode ? 'test' : selectedPlan;
+  const [localPlan, setLocalPlan] = useState(selectedPlan);
+
+  // Sync localPlan when selectedPlan prop changes
+  useEffect(() => {
+    setLocalPlan(selectedPlan);
+  }, [selectedPlan]);
+
+  const activePlan = localPlan || 'festa';
   const planDetails = PLANS[activePlan as keyof typeof PLANS] || PLANS.festa;
-  const totalPrice = planDetails.price + (frameSettings.enabled ? 9.99 : 0);
+  const totalPrice = isTestMode ? 1.00 : (planDetails.price + (frameSettings.enabled ? 9.99 : 0));
 
   const handleGeneratePayment = async () => {
     setIsSubmitting(true);
@@ -161,8 +168,13 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
     await new Promise(resolve => setTimeout(resolve, 1500));
     toast.success('Pagamento aprovado!');
     
+    const generatedEventName = `${EVENT_TYPES.find(t => t.value === formData.eventType)?.label || 'Evento'} de ${formData.clientName}`;
+    const generatedEventTime = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
     onCreate({ 
       ...formData, 
+      eventName: generatedEventName,
+      eventTime: generatedEventTime,
       settings: { ...settings, frameSettings: frameSettings.enabled ? frameSettings : undefined }, 
       plan: activePlan 
     });
@@ -198,7 +210,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
     });
   };
 
-  const isStep1Valid = formData.clientName && formData.eventName && formData.eventDate && formData.eventTime && formData.eventType;
+  const isStep1Valid = formData.clientName && formData.eventDate && formData.eventType;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
@@ -239,15 +251,6 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
             </div>
 
             <div className="space-y-2">
-              <Label className="flex items-center gap-2"><TypeIcon className="w-4 h-4" />Nome do Evento *</Label>
-              <Input
-                placeholder="Ex: Nosso Casamento"
-                value={formData.eventName}
-                onChange={(e) => setFormData({ ...formData, eventName: e.target.value })}
-              />
-            </div>
-
-            <div className="space-y-2">
               <Label className="flex items-center gap-2"><Camera className="w-4 h-4" />Tipo de Evento *</Label>
               <Select
                 value={formData.eventType}
@@ -264,14 +267,16 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
               </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2"><Calendar className="w-4 h-4" />Data *</Label>
-                <Input type="date" value={formData.eventDate} onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })} />
-              </div>
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2"><Clock className="w-4 h-4" />Horário *</Label>
-                <Input type="time" value={formData.eventTime} onChange={(e) => setFormData({ ...formData, eventTime: e.target.value })} />
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2"><Calendar className="w-4 h-4" />Data *</Label>
+              <Input type="date" value={formData.eventDate} onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })} />
+            </div>
+
+            <div className="p-4 bg-purple-50 rounded-lg border border-purple-100 flex items-start gap-3">
+              <Clock className="w-5 h-5 text-purple-600 mt-0.5" />
+              <div>
+                <h4 className="font-medium text-purple-900">Duração do Evento</h4>
+                <p className="text-sm text-purple-700">O evento durará 24 horas a partir da sua criação.</p>
               </div>
             </div>
 
@@ -312,14 +317,17 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
             </div>
 
             <div className="space-y-2">
-              <Label>Tamanho Máximo do Arquivo</Label>
-              <Select value={settings.maxFileSize.toString()} onValueChange={(value) => setSettings({ ...settings, maxFileSize: parseInt(value) })}>
+              <Label>Pacote do Evento</Label>
+              <Select value={activePlan} onValueChange={(value) => setLocalPlan(value)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="10">10 MB</SelectItem>
-                  <SelectItem value="30">30 MB</SelectItem>
-                  <SelectItem value="50">50 MB</SelectItem>
-                  <SelectItem value="100">100 MB</SelectItem>
+                  {Object.entries(PLANS)
+                    .filter(([key]) => key !== 'test')
+                    .map(([key, plan]) => (
+                    <SelectItem key={key} value={key}>
+                      {plan.name} - {plan.limit === 'Ilimitados' ? 'Fotos Ilimitadas' : `Até ${plan.limit} fotos`} ({plan.storage})
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

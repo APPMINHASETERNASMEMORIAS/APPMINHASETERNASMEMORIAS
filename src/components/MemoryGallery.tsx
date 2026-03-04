@@ -9,6 +9,7 @@ interface Memory {
   type: 'image' | 'video';
   uploader_name: string;
   message: string | null;
+  event_id: string | null;
 }
 
 export function MemoryGallery({ eventId, refreshTrigger }: { eventId?: string, refreshTrigger: number }) {
@@ -36,11 +37,12 @@ export function MemoryGallery({ eventId, refreshTrigger }: { eventId?: string, r
           
         if (eventId) {
           query = query.eq('event_id', eventId);
-        } else {
-          query = query.is('event_id', null);
         }
+        // Se não tiver eventId (página principal), busca TODAS as memórias
 
         const { data, error } = await query;
+        
+        console.log('[MemoryGallery] Fetch result:', { data, error, eventId });
 
         if (error) {
           if (error.message.includes('event_id')) {
@@ -115,10 +117,16 @@ export function MemoryGallery({ eventId, refreshTrigger }: { eventId?: string, r
           event: 'INSERT',
           schema: 'public',
           table: 'memories',
-          filter: eventId ? `event_id=eq.${eventId}` : undefined,
         },
         (payload) => {
           const newMemory = payload.new as Memory;
+          
+          // Filtra localmente para garantir que a memória pertence a este mural
+          if (eventId) {
+            if (newMemory.event_id !== eventId) return;
+          }
+          // Se não tiver eventId (página principal), aceita TODAS as memórias
+
           setMemories((current) => {
             if (current.some(m => m.id === newMemory.id)) return current;
             return [newMemory, ...current];

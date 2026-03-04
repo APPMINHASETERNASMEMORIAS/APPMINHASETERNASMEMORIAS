@@ -134,7 +134,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
 
   const activePlan = localPlan || 'festa';
   const planDetails = PLANS[activePlan as keyof typeof PLANS] || PLANS.festa;
-  const totalPrice = isTestMode ? 1.00 : (planDetails.price + (frameSettings.enabled ? 9.99 : 0));
+  const totalPrice = isTestMode ? 0.00 : (planDetails.price + (frameSettings.enabled ? 9.99 : 0));
 
   const handleGeneratePayment = async () => {
     setIsSubmitting(true);
@@ -165,24 +165,32 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
     }
   };
 
-  const handleSimulatePaymentSuccess = async () => {
+  const handleCreateFreeEvent = async () => {
     setIsSubmitting(true);
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    toast.success('Pagamento aprovado!');
-    
-    const generatedEventName = `${EVENT_TYPES.find(t => t.value === formData.eventType)?.label || 'Evento'} de ${formData.clientName}`;
-    const generatedEventTime = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    try {
+      // Simulate a small delay for better UX
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      const generatedEventName = `${EVENT_TYPES.find(t => t.value === formData.eventType)?.label || 'Evento'} de ${formData.clientName}`;
+      const generatedEventTime = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-    onCreate({ 
-      ...formData, 
-      eventName: generatedEventName,
-      eventTime: generatedEventTime,
-      settings: { ...settings, frameSettings: frameSettings.enabled ? frameSettings : undefined }, 
-      plan: activePlan 
-    });
-    setIsSubmitting(false);
-    resetForm();
-    onClose();
+      onCreate({ 
+        ...formData, 
+        eventName: generatedEventName,
+        eventTime: generatedEventTime,
+        settings: { ...settings, frameSettings: frameSettings.enabled ? frameSettings : undefined }, 
+        plan: activePlan 
+      });
+      
+      toast.success('Evento de teste criado com sucesso!');
+      resetForm();
+      onClose();
+    } catch (error) {
+      console.error(error);
+      toast.error('Erro ao criar evento de teste');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const resetForm = () => {
@@ -545,7 +553,21 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
               )}
             </div>
 
-            {!paymentUrl ? (
+            {isTestMode ? (
+              <div className="space-y-4">
+                <p className="text-center text-gray-600 text-sm">
+                  Você está no modo de teste administrativo. O evento será criado instantaneamente sem cobrança.
+                </p>
+                <Button 
+                  onClick={handleCreateFreeEvent} 
+                  disabled={isSubmitting} 
+                  className="w-full h-14 text-lg bg-purple-600 hover:bg-purple-700 text-white font-bold"
+                >
+                  {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : <CheckCircle2 className="w-6 h-6 mr-2" />}
+                  {isSubmitting ? 'Criando...' : 'Criar Evento de Teste'}
+                </Button>
+              </div>
+            ) : !paymentUrl ? (
               <div className="space-y-4">
                 <p className="text-center text-gray-600 text-sm">
                   Você será redirecionado para o ambiente seguro para concluir o pagamento via Pix ou Cartão de Crédito.
@@ -578,7 +600,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
                 </a>
                 
                 <button 
-                  onClick={handleSimulatePaymentSuccess}
+                  onClick={handleCreateFreeEvent}
                   disabled={isSubmitting}
                   className="text-sm text-gray-400 underline hover:text-gray-600"
                 >

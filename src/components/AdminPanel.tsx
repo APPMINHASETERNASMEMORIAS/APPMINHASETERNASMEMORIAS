@@ -4,6 +4,7 @@ import { Event, MediaItem } from '@/types';
 import { useEvents } from '@/hooks/useEvents';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { MediaWall } from './MediaWall';
@@ -53,6 +54,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isFreeTestMode, setIsFreeTestMode] = useState(false);
 
   const {
     events,
@@ -280,13 +282,22 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
             className="pl-10"
           />
         </div>
-        <Button
-          onClick={() => setShowCreateModal(true)}
-          className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Novo Evento
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-4 items-center">
+          <div className="flex items-center gap-2 bg-white border border-gray-200 px-4 py-2 rounded-lg shadow-sm">
+            <span className="text-sm font-medium text-gray-700">Modo Grátis (Admin)</span>
+            <Switch 
+              checked={isFreeTestMode} 
+              onCheckedChange={setIsFreeTestMode}
+            />
+          </div>
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Novo Evento
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -714,8 +725,8 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
       <CreateEventModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
-        selectedPlan="test"
-        isTestMode={true}
+        selectedPlan={isFreeTestMode ? 'test' : 'festa'}
+        isTestMode={isFreeTestMode}
         onCreate={async (data) => {
           const newEvent = await createEvent(data);
           setSelectedEvent(newEvent);

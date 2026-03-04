@@ -11,6 +11,16 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
   const [message, setMessage] = useState('');
   const [isUploading, setIsUploading] = useState(false);
 
+  // Get or create a persistent uploader ID for this browser
+  const getUploaderId = () => {
+    let id = localStorage.getItem('memory_uploader_id');
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem('memory_uploader_id', id);
+    }
+    return id;
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setFile(e.target.files[0]);
@@ -77,6 +87,7 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
           uploader_name: name,
           message: message || null,
           event_id: eventId || null,
+          uploader_id: getUploaderId(),
         }
       ]);
 

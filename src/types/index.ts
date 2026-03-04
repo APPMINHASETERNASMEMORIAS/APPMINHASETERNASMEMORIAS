@@ -63,6 +63,8 @@ export interface MediaItem {
   caption?: string;
   uploadedBy: string;
   uploadedAt: string;
+  uploaderId?: string;
+  likesCount?: number;
   status: 'pending' | 'approved' | 'rejected';
   fileSize: number;
   dimensions?: {

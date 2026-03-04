@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
-import { Heart, MessageCircle, PlayCircle } from 'lucide-react';
+import { Heart, MessageCircle, PlayCircle, Trash2 } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 interface Memory {
   id: string;
@@ -10,12 +11,60 @@ interface Memory {
   uploader_name: string;
   message: string | null;
   event_id: string | null;
+  likes_count: number;
+  uploader_id: string | null;
 }
 
 export function MemoryGallery({ eventId, refreshTrigger }: { eventId?: string, refreshTrigger: number }) {
   const [memories, setMemories] = useState<Memory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const memoriesRef = useRef<Memory[]>([]);
+  const uploaderId = localStorage.getItem('memory_uploader_id');
+
+  const handleLike = async (memoryId: string, currentLikes: number) => {
+    if (!isSupabaseConfigured) return;
+    
+    // Optimistic update
+    setMemories(prev => prev.map(m => 
+      m.id === memoryId ? { ...m, likes_count: (m.likes_count || 0) + 1 } : m
+    ));
+
+    try {
+      const { error } = await supabase!
+        .from('memories')
+        .update({ likes_count: (currentLikes || 0) + 1 })
+        .eq('id', memoryId);
+      
+      if (error) throw error;
+    } catch (error) {
+      console.error('Erro ao curtir:', error);
+      // Rollback
+      setMemories(prev => prev.map(m => 
+        m.id === memoryId ? { ...m, likes_count: currentLikes } : m
+      ));
+    }
+  };
+
+  const handleDelete = async (memoryId: string) => {
+    if (!isSupabaseConfigured) return;
+    if (!window.confirm('Tem certeza que deseja excluir esta memória?')) return;
+
+    try {
+      const { error } = await supabase!
+        .from('memories')
+        .delete()
+        .eq('id', memoryId)
+        .eq('uploader_id', uploaderId); // Security check
+
+      if (error) throw error;
+      
+      setMemories(prev => prev.filter(m => m.id !== memoryId));
+      toast.success('Memória excluída com sucesso.');
+    } catch (error) {
+      console.error('Erro ao excluir:', error);
+      toast.error('Não foi possível excluir a memória.');
+    }
+  };
 
   // Keep ref in sync with state for use in callbacks
   useEffect(() => {
@@ -177,50 +226,93 @@ export function MemoryGallery({ eventId, refreshTrigger }: { eventId?: string, r
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-      {memories.map((memory) => (
-        <div key={memory.id} className="bg-white rounded-2xl overflow-hidden shadow-lg border border-gray-100 hover:shadow-xl transition-shadow group">
-          {/* Media Container */}
-          <div className="relative aspect-square bg-gray-100 overflow-hidden">
-            {memory.type === 'video' ? (
-              <>
-                <video
-                  src={memory.url}
-                  className="w-full h-full object-cover"
-                  controls
-                />
-                <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full text-white pointer-events-none">
-                  <PlayCircle className="w-5 h-5" />
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 grid-flow-dense gap-0.5 bg-gray-200 p-0.5 rounded-3xl overflow-hidden shadow-2xl">
+      {memories.map((memory, index) => {
+        // Lógica para o Bento Grid: alguns itens ocupam mais espaço
+        const isFeatured = index % 10 === 0; // A cada 10 fotos, uma fica grande
+        const isWide = index % 7 === 0 && !isFeatured; // Algumas ficam largas
+        
+        return (
+          <div 
+            key={memory.id} 
+            className={`relative bg-white overflow-hidden group transition-all duration-500 hover:z-10 hover:scale-[1.02] ${
+              isFeatured ? 'col-span-2 row-span-2' : isWide ? 'col-span-2' : ''
+            }`}
+          >
+            {/* Media Container */}
+            <div className="w-full h-full aspect-square bg-gray-100">
+              {memory.type === 'video' ? (
+                <div className="relative w-full h-full">
+                  <video
+                    src={memory.url}
+                    className="w-full h-full object-cover"
+                    muted
+                    loop
+                    onMouseOver={(e) => e.currentTarget.play()}
+                    onMouseOut={(e) => e.currentTarget.pause()}
+                  />
+                  <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full text-white pointer-events-none">
+                    <PlayCircle className="w-5 h-5" />
+                  </div>
                 </div>
-              </>
-            ) : (
-              <img
-                src={memory.url}
-                alt={`Memória de ${memory.uploader_name}`}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                loading="lazy"
-              />
-            )}
-          </div>
-
-          {/* Content Container */}
-          <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <span className="font-semibold text-gray-900">{memory.uploader_name}</span>
-              <span className="text-xs text-gray-500">
-                {new Date(memory.created_at).toLocaleDateString('pt-BR')}
-              </span>
+              ) : (
+                <img
+                  src={memory.url}
+                  alt={`Memória de ${memory.uploader_name}`}
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  loading="lazy"
+                />
+              )}
             </div>
-            
-            {memory.message && (
-              <div className="flex items-start gap-3 text-gray-600 bg-purple-50/50 p-4 rounded-xl">
-                <MessageCircle className="w-5 h-5 text-purple-400 shrink-0 mt-0.5" />
-                <p className="text-sm italic">"{memory.message}"</p>
+
+            {/* Overlay: Message Preview & Actions */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
+              {/* Message Preview */}
+              {memory.message && (
+                <div className="mb-3 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                  <p className="text-white text-sm font-medium line-clamp-3 italic bg-black/30 backdrop-blur-sm p-2 rounded-lg border border-white/10">
+                    "{memory.message}"
+                  </p>
+                </div>
+              )}
+
+              {/* Footer Info & Actions */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex flex-col">
+                  <span className="text-white font-bold text-xs truncate max-w-[100px]">
+                    {memory.uploader_name}
+                  </span>
+                  <span className="text-white/60 text-[10px]">
+                    {new Date(memory.created_at).toLocaleDateString('pt-BR')}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  {/* Like Button */}
+                  <button 
+                    onClick={() => handleLike(memory.id, memory.likes_count)}
+                    className="flex items-center gap-1 bg-white/20 backdrop-blur-md hover:bg-red-500/80 text-white px-2 py-1 rounded-full text-xs transition-colors"
+                  >
+                    <Heart className={`w-3.5 h-3.5 ${memory.likes_count > 0 ? 'fill-current text-red-400' : ''}`} />
+                    <span>{memory.likes_count || 0}</span>
+                  </button>
+
+                  {/* Delete Button (Only for uploader) */}
+                  {uploaderId === memory.uploader_id && (
+                    <button 
+                      onClick={() => handleDelete(memory.id)}
+                      className="p-1.5 bg-white/20 backdrop-blur-md hover:bg-red-600 text-white rounded-full transition-colors"
+                      title="Excluir minha foto"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
-            )}
+            </div>
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

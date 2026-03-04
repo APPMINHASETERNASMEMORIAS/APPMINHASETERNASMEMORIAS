@@ -1131,15 +1131,9 @@ function EventPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div className="lg:col-span-4">
-              <div className="sticky top-24">
-                <UploadMemory eventId={id} isPaused={isPaused} onUploadSuccess={() => setRefreshGallery(prev => prev + 1)} />
-              </div>
-            </div>
-            <div className="lg:col-span-8">
-              <MemoryGallery eventId={id} refreshTrigger={refreshGallery} />
-            </div>
+          <div className="space-y-8">
+            <UploadMemory eventId={id} isPaused={isPaused} onUploadSuccess={() => setRefreshGallery(prev => prev + 1)} />
+            <MemoryGallery eventId={id} refreshTrigger={refreshGallery} />
           </div>
         </div>
       </main>

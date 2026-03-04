@@ -300,13 +300,26 @@ function LandingPage() {
 
   useEffect(() => {
     // Barreiras contra cópia
-    const handleContextMenu = (e: MouseEvent) => e.preventDefault();
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      // Opcional: Mostrar um alerta discreto
+      // toast.error('Conteúdo protegido por direitos autorais.');
+    };
+    
+    const handleDragStart = (e: DragEvent) => {
+      if ((e.target as HTMLElement).tagName === 'IMG') {
+        e.preventDefault();
+      }
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Bloquear F12, Ctrl+Shift+I, Ctrl+U
+      // Bloquear F12, Ctrl+Shift+I, Ctrl+U, Ctrl+S, Ctrl+P, Ctrl+C (opcional)
       if (
         e.key === 'F12' || 
         (e.ctrlKey && e.shiftKey && e.key === 'I') || 
-        (e.ctrlKey && e.key === 'u')
+        (e.ctrlKey && e.key === 'u') ||
+        (e.ctrlKey && e.key === 's') ||
+        (e.ctrlKey && e.key === 'p')
       ) {
         e.preventDefault();
       }
@@ -314,10 +327,12 @@ function LandingPage() {
 
     document.addEventListener('contextmenu', handleContextMenu);
     document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('dragstart', handleDragStart);
 
     return () => {
       document.removeEventListener('contextmenu', handleContextMenu);
       document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('dragstart', handleDragStart);
     };
   }, []);
 
@@ -1047,7 +1062,19 @@ function LandingPage() {
             </div>
           </div>
           <div className="border-t border-gray-800 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Minhas Eternas Memórias. Todos os direitos reservados.</p>
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4 mb-4 text-xs">
+              <span className="flex items-center gap-1"><Shield className="w-3 h-3" /> Proteção Anti-Cópia Ativa</span>
+              <span className="hidden md:inline">•</span>
+              <span className="flex items-center gap-1"><Lock className="w-3 h-3" /> Dados Criptografados</span>
+              <span className="hidden md:inline">•</span>
+              <span className="flex items-center gap-1"><CheckCircle2 className="w-3 h-3" /> Uso Exclusivo para Eventos</span>
+            </div>
+            <p className="mb-2">&copy; 2024 Minhas Eternas Memórias. Todos os direitos reservados.</p>
+            <p className="text-[10px] opacity-50 max-w-2xl mx-auto">
+              Diretrizes de Proteção: É estritamente proibida a reprodução, cópia ou distribuição não autorizada de qualquer conteúdo visual ou textual deste site. 
+              As imagens e vídeos carregados são de propriedade de seus respectivos autores e protegidos por leis internacionais de copyright. 
+              O uso indevido de scripts para extração de dados resultará em bloqueio imediato do IP.
+            </p>
           </div>
         </div>
       </footer>

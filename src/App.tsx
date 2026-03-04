@@ -268,8 +268,8 @@ function LandingPage() {
   const [isTestMode, setIsTestMode] = useState(false);
   const { events, createEvent } = useEvents();
 
-  const handleCreateEvent = (data: any) => {
-    const event = createEvent(data);
+  const handleCreateEvent = async (data: any) => {
+    const event = await createEvent(data);
     setCreatedEvent(event);
     setIsCreateModalOpen(false);
     setIsQRModalOpen(true);

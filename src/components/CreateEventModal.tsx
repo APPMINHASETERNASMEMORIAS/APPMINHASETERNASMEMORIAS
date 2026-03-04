@@ -190,6 +190,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
     setPaymentUrl(null);
     setFormData({
       clientName: '',
+      clientPhone: '',
       eventName: '',
       eventDate: '',
       eventTime: '',

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import { Heart, MessageCircle, PlayCircle } from 'lucide-react';
 
@@ -14,6 +14,12 @@ interface Memory {
 export function MemoryGallery({ eventId, refreshTrigger }: { eventId?: string, refreshTrigger: number }) {
   const [memories, setMemories] = useState<Memory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const memoriesRef = useRef<Memory[]>([]);
+
+  // Keep ref in sync with state for use in callbacks
+  useEffect(() => {
+    memoriesRef.current = memories;
+  }, [memories]);
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -21,7 +27,7 @@ export function MemoryGallery({ eventId, refreshTrigger }: { eventId?: string, r
       return;
     }
 
-    const fetchMemories = async () => {
+    const fetchMemories = async (isBackground = false) => {
       try {
         let query = supabase!
           .from('memories')
@@ -46,20 +52,85 @@ export function MemoryGallery({ eventId, refreshTrigger }: { eventId?: string, r
               .order('created_at', { ascending: false });
             const { data: fallbackData, error: fallbackError } = await fallbackQuery;
             if (fallbackError) throw fallbackError;
-            setMemories(fallbackData || []);
+            
+            mergeMemories(fallbackData || []);
             return;
           }
           throw error;
         }
-        setMemories(data || []);
+        
+        mergeMemories(data || []);
       } catch (error) {
         console.error('Erro ao buscar memórias:', error);
       } finally {
-        setIsLoading(false);
+        if (!isBackground) {
+          setIsLoading(false);
+        }
       }
     };
 
+    // Memória Inteligente (Merge): Mantém fotos recém-chegadas (últimos 15s) que ainda não estão no banco
+    const mergeMemories = (fetchedMemories: Memory[]) => {
+      const now = new Date().getTime();
+      const currentMemories = memoriesRef.current;
+      
+      // Encontra memórias locais que são muito recentes (menos de 15 segundos)
+      const recentLocalMemories = currentMemories.filter(localMem => {
+        const memTime = new Date(localMem.created_at).getTime();
+        const isRecent = (now - memTime) < 15000; // 15 segundos
+        // Verifica se essa memória já veio no fetch do banco
+        const existsInDb = fetchedMemories.some(dbMem => dbMem.id === localMem.id);
+        
+        return isRecent && !existsInDb;
+      });
+
+      // Mescla as memórias do banco com as recentes locais
+      const merged = [...recentLocalMemories, ...fetchedMemories];
+      
+      // Ordena por data de criação (mais recentes primeiro)
+      merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      
+      // Remove duplicatas baseadas no ID
+      const uniqueMemories = merged.filter((mem, index, self) => 
+        index === self.findIndex((m) => m.id === mem.id)
+      );
+
+      setMemories(uniqueMemories);
+    };
+
+    // Busca inicial
     fetchMemories();
+
+    // Sincronização Blindada: Atualização automática a cada 5 segundos
+    const pollInterval = setInterval(() => {
+      fetchMemories(true);
+    }, 5000);
+
+    // Conexão Direta (Socket): Escuta novos inserts em tempo real
+    const channel = supabase!
+      .channel('public:memories')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'memories',
+          filter: eventId ? `event_id=eq.${eventId}` : undefined,
+        },
+        (payload) => {
+          const newMemory = payload.new as Memory;
+          setMemories((current) => {
+            if (current.some(m => m.id === newMemory.id)) return current;
+            return [newMemory, ...current];
+          });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      clearInterval(pollInterval);
+      supabase!.removeChannel(channel);
+    };
   }, [refreshTrigger, eventId]);
 
   if (!isSupabaseConfigured) {

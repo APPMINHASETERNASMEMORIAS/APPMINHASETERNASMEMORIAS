@@ -46,9 +46,8 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
       let fileToUpload = file;
       const isVideo = file.type.startsWith('video/');
 
+      // Real upload logic
       if (isVideo) {
-        // Check video size (Cloudinary free tier unsigned upload limit is usually 10MB or 100MB)
-        // Let's enforce a 10MB limit for all files just to be safe with the free tier
         const maxSize = 10 * 1024 * 1024; // 10MB
         if (file.size > maxSize) {
           toast.error('O vídeo é muito grande. O tamanho máximo permitido é 10MB.');
@@ -56,7 +55,6 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
           return;
         }
       } else if (file.type.startsWith('image/')) {
-        // Compress image if it's larger than 1MB
         if (file.size > 1024 * 1024) {
           const options = {
             maxSizeMB: 2,
@@ -70,22 +68,14 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
           } catch (error) {
             console.error('Erro ao comprimir imagem:', error);
             toast.dismiss('compress');
-            // Continue with original file if compression fails, but check size
-            if (file.size > 10 * 1024 * 1024) {
-               toast.error('A imagem é muito grande. O tamanho máximo permitido é 10MB.');
-               setIsUploading(false);
-               return;
-            }
           }
         }
       }
       
-      // 1. Upload to Cloudinary
       toast.loading('Enviando arquivo...', { id: 'upload' });
       const fileUrl = await uploadToCloudinary(fileToUpload);
       toast.dismiss('upload');
       
-      // 2. Save to Supabase
       const { error } = await supabase!.from('memories').insert([
         {
           url: fileUrl,
@@ -96,27 +86,7 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
         }
       ]);
 
-      if (error) {
-        if (error.message.includes('event_id')) {
-          // Fallback: Try to insert without event_id if the column doesn't exist
-          console.warn('Aviso: Coluna event_id não encontrada. Tentando salvar sem vincular ao evento.');
-          const { error: fallbackError } = await supabase!.from('memories').insert([
-            {
-              url: fileUrl,
-              type: isVideo ? 'video' : 'image',
-              uploader_name: name,
-              message: message || null,
-            }
-          ]);
-          
-          if (fallbackError) {
-             throw fallbackError;
-          }
-        } else {
-          throw error;
-        }
-      }
-
+      if (error) throw error;
       toast.success('Memória enviada com sucesso! Obrigado por compartilhar.');
       
       // Reset form

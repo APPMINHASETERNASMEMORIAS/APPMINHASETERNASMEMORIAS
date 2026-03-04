@@ -719,7 +719,7 @@ function LandingPage() {
                   </li>
                   <li className="flex items-center text-gray-600">
                     <Clock className="w-5 h-5 text-purple-500 mr-3 flex-shrink-0" />
-                    <span>Fotos guardadas por <strong>7 dias</strong></span>
+                    <span>Acessos guardados por <strong>7 dias</strong></span>
                   </li>
                   <li className="flex items-center text-gray-600">
                     <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
@@ -768,7 +768,7 @@ function LandingPage() {
                   </li>
                   <li className="flex items-center text-white">
                     <Clock className="w-5 h-5 text-yellow-300 mr-3 flex-shrink-0" />
-                    <span>Fotos guardadas por <strong>30 dias</strong></span>
+                    <span>Acessos guardados por <strong>30 dias</strong></span>
                   </li>
                   <li className="flex items-center text-white">
                     <CheckCircle2 className="w-5 h-5 text-yellow-300 mr-3 flex-shrink-0" />
@@ -780,7 +780,7 @@ function LandingPage() {
                   </li>
                   <li className="flex items-center text-white">
                     <CheckCircle2 className="w-5 h-5 text-yellow-300 mr-3 flex-shrink-0" />
-                    <span>Moderação de fotos (opcional)</span>
+                    <span>Moderação de acessos (opcional)</span>
                   </li>
                 </ul>
                 <button 
@@ -818,7 +818,7 @@ function LandingPage() {
                   </li>
                   <li className="flex items-center text-gray-600">
                     <Clock className="w-5 h-5 text-purple-500 mr-3 flex-shrink-0" />
-                    <span>Fotos guardadas por <strong>90 dias</strong></span>
+                    <span>Acessos guardados por <strong>90 dias</strong></span>
                   </li>
                   <li className="flex items-center text-gray-600">
                     <CheckCircle2 className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
@@ -868,7 +868,7 @@ function LandingPage() {
                   </li>
                   <li className="flex items-center text-gray-300">
                     <Clock className="w-5 h-5 text-purple-400 mr-3 flex-shrink-0" />
-                    <span>Fotos guardadas por <strong>6 meses</strong></span>
+                    <span>Acessos guardados por <strong>6 meses</strong></span>
                   </li>
                   <li className="flex items-center text-gray-300">
                     <CheckCircle2 className="w-5 h-5 text-purple-400 mr-3 flex-shrink-0" />
@@ -1072,6 +1072,7 @@ function LandingPage() {
           eventName={createdEvent.eventName}
           isOpen={isQRModalOpen}
           onClose={() => setIsQRModalOpen(false)}
+          frameSettings={createdEvent.settings.frameSettings}
         />
       )}
     </div>

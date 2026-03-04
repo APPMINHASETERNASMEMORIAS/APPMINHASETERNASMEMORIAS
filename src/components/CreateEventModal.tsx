@@ -338,7 +338,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
                     .filter(([key]) => key !== 'test')
                     .map(([key, plan]) => (
                     <SelectItem key={key} value={key}>
-                      {plan.name} - {plan.limit === 'Ilimitados' ? 'Fotos Ilimitadas' : `Até ${plan.limit} fotos`} ({plan.storage})
+                      {plan.name} - {plan.limit === 'Ilimitados' ? 'Acessos Ilimitados' : `Até ${plan.limit} acessos`} ({plan.storage})
                     </SelectItem>
                   ))}
                 </SelectContent>

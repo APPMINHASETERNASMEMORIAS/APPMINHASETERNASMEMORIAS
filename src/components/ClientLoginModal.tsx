@@ -8,8 +8,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { useEvents } from '@/hooks/useEvents';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { User, Phone, Edit2, Calendar, Clock, Camera, ArrowLeft, Save } from 'lucide-react';
+import { User, Phone, Edit2, Calendar, Clock, Camera, ArrowLeft, Save, QrCode } from 'lucide-react';
 import { Event, EventType } from '@/types';
+import { QRCodeDisplay } from './QRCodeDisplay';
 
 interface ClientLoginModalProps {
   isOpen: boolean;
@@ -33,6 +34,7 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
   const [inputValue, setInputValue] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [editFormData, setEditFormData] = useState<Partial<Event>>({});
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   
   const { events, updateEvent } = useEvents();
   const navigate = useNavigate();
@@ -103,189 +105,209 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold text-center">
-            {mode === 'login' && 'Acessar Minha Galeria'}
-            {mode === 'manage' && 'Minha Galeria'}
-            {mode === 'edit' && 'Editar Evento'}
-          </DialogTitle>
-        </DialogHeader>
-        
-        {mode === 'login' && (
-          <>
-            <div className="flex gap-2 mb-4">
-              <Button
-                type="button"
-                variant={loginMethod === 'phone' ? 'default' : 'outline'}
-                className={`flex-1 ${loginMethod === 'phone' ? 'bg-purple-600 hover:bg-purple-700 text-white' : ''}`}
-                onClick={() => {
-                  setLoginMethod('phone');
-                  setInputValue('');
-                }}
-              >
-                <Phone className="w-4 h-4 mr-2" />
-                Telefone
-              </Button>
-              <Button
-                type="button"
-                variant={loginMethod === 'name' ? 'default' : 'outline'}
-                className={`flex-1 ${loginMethod === 'name' ? 'bg-purple-600 hover:bg-purple-700 text-white' : ''}`}
-                onClick={() => {
-                  setLoginMethod('name');
-                  setInputValue('');
-                }}
-              >
-                <User className="w-4 h-4 mr-2" />
-                Nome
-              </Button>
-            </div>
+    <>
+      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-center">
+              {mode === 'login' && 'Acessar Minha Galeria'}
+              {mode === 'manage' && 'Minha Galeria'}
+              {mode === 'edit' && 'Editar Evento'}
+            </DialogTitle>
+          </DialogHeader>
+          
+          {mode === 'login' && (
+            <>
+              <div className="flex gap-2 mb-4">
+                <Button
+                  type="button"
+                  variant={loginMethod === 'phone' ? 'default' : 'outline'}
+                  className={`flex-1 ${loginMethod === 'phone' ? 'bg-purple-600 hover:bg-purple-700 text-white' : ''}`}
+                  onClick={() => {
+                    setLoginMethod('phone');
+                    setInputValue('');
+                  }}
+                >
+                  <Phone className="w-4 h-4 mr-2" />
+                  Telefone
+                </Button>
+                <Button
+                  type="button"
+                  variant={loginMethod === 'name' ? 'default' : 'outline'}
+                  className={`flex-1 ${loginMethod === 'name' ? 'bg-purple-600 hover:bg-purple-700 text-white' : ''}`}
+                  onClick={() => {
+                    setLoginMethod('name');
+                    setInputValue('');
+                  }}
+                >
+                  <User className="w-4 h-4 mr-2" />
+                  Nome
+                </Button>
+              </div>
 
-            <form onSubmit={handleLogin} className="space-y-4">
+              <form onSubmit={handleLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label>
+                    {loginMethod === 'phone' ? 'Seu número de WhatsApp' : 'Seu Nome'}
+                  </Label>
+                  <Input
+                    placeholder={loginMethod === 'phone' ? 'Ex: (11) 99999-9999' : 'Ex: Maria Silva'}
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    autoFocus
+                  />
+                </div>
+                
+                <Button type="submit" className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white">
+                  Buscar Galeria
+                </Button>
+              </form>
+            </>
+          )}
+
+          {mode === 'manage' && selectedEvent && (
+            <div className="space-y-6">
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                <h3 className="font-bold text-lg text-purple-700 mb-1">{selectedEvent.eventName}</h3>
+                <p className="text-sm text-gray-500 mb-4">{selectedEvent.clientName}</p>
+                
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Calendar className="w-4 h-4" />
+                    {new Date(selectedEvent.eventDate).toLocaleDateString('pt-BR')}
+                  </div>
+                  <div className="flex items-center gap-2 text-gray-600">
+                    <Clock className="w-4 h-4" />
+                    {selectedEvent.eventTime}
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-3">
+                <Button 
+                  onClick={() => setIsQRModalOpen(true)}
+                  className="w-full bg-purple-100 text-purple-700 hover:bg-purple-200 border border-purple-200"
+                >
+                  <QrCode className="w-4 h-4 mr-2" />
+                  QR Code do Evento
+                </Button>
+
+                <Button 
+                  onClick={() => {
+                    onClose();
+                    navigate(`/evento/${selectedEvent.id}`);
+                  }}
+                  className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                >
+                  Ver Galeria
+                </Button>
+
+                {!hasStarted(selectedEvent) ? (
+                  <Button 
+                    variant="outline" 
+                    onClick={handleStartEdit}
+                    className="w-full border-purple-200 text-purple-700 hover:bg-purple-50"
+                  >
+                    <Edit2 className="w-4 h-4 mr-2" />
+                    Editar Detalhes
+                  </Button>
+                ) : (
+                  <p className="text-xs text-center text-gray-400 italic">
+                    O evento já iniciou ou passou, alterações não são mais permitidas.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {mode === 'edit' && (
+            <div className="space-y-4">
               <div className="space-y-2">
-                <Label>
-                  {loginMethod === 'phone' ? 'Seu número de WhatsApp' : 'Seu Nome'}
-                </Label>
-                <Input
-                  placeholder={loginMethod === 'phone' ? 'Ex: (11) 99999-9999' : 'Ex: Maria Silva'}
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  autoFocus
+                <Label>Nome do Evento</Label>
+                <Input 
+                  value={editFormData.eventName}
+                  onChange={(e) => setEditFormData({ ...editFormData, eventName: e.target.value })}
                 />
               </div>
-              
-              <Button type="submit" className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white">
-                Buscar Galeria
-              </Button>
-            </form>
-          </>
-        )}
 
-        {mode === 'manage' && selectedEvent && (
-          <div className="space-y-6">
-            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-              <h3 className="font-bold text-lg text-purple-700 mb-1">{selectedEvent.eventName}</h3>
-              <p className="text-sm text-gray-500 mb-4">{selectedEvent.clientName}</p>
-              
-              <div className="grid grid-cols-2 gap-4 text-sm">
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Calendar className="w-4 h-4" />
-                  {new Date(selectedEvent.eventDate).toLocaleDateString('pt-BR')}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Data</Label>
+                  <Input 
+                    type="date"
+                    value={editFormData.eventDate}
+                    onChange={(e) => setEditFormData({ ...editFormData, eventDate: e.target.value })}
+                  />
                 </div>
-                <div className="flex items-center gap-2 text-gray-600">
-                  <Clock className="w-4 h-4" />
-                  {selectedEvent.eventTime}
+                <div className="space-y-2">
+                  <Label>Hora</Label>
+                  <Input 
+                    type="time"
+                    value={editFormData.eventTime}
+                    onChange={(e) => setEditFormData({ ...editFormData, eventTime: e.target.value })}
+                  />
                 </div>
               </div>
-            </div>
 
-            <div className="flex flex-col gap-3">
-              <Button 
-                onClick={() => {
-                  onClose();
-                  navigate(`/evento/${selectedEvent.id}`);
-                }}
-                className="w-full bg-purple-600 hover:bg-purple-700 text-white"
-              >
-                Ver Galeria
-              </Button>
+              <div className="space-y-2">
+                <Label>Tipo de Evento</Label>
+                <Select 
+                  value={editFormData.eventType}
+                  onValueChange={(val) => setEditFormData({ ...editFormData, eventType: val as EventType })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {EVENT_TYPES.map(type => (
+                      <SelectItem key={type.value} value={type.value}>
+                        {type.emoji} {type.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-              {!hasStarted(selectedEvent) ? (
+              <div className="space-y-2">
+                <Label>Descrição</Label>
+                <Textarea 
+                  value={editFormData.description}
+                  onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
+                  rows={3}
+                />
+              </div>
+
+              <div className="flex gap-3 pt-4">
                 <Button 
                   variant="outline" 
-                  onClick={handleStartEdit}
-                  className="w-full border-purple-200 text-purple-700 hover:bg-purple-50"
+                  onClick={() => setMode('manage')}
+                  className="flex-1"
                 >
-                  <Edit2 className="w-4 h-4 mr-2" />
-                  Editar Detalhes
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Voltar
                 </Button>
-              ) : (
-                <p className="text-xs text-center text-gray-400 italic">
-                  O evento já iniciou ou passou, alterações não são mais permitidas.
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {mode === 'edit' && (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Nome do Evento</Label>
-              <Input 
-                value={editFormData.eventName}
-                onChange={(e) => setEditFormData({ ...editFormData, eventName: e.target.value })}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Data</Label>
-                <Input 
-                  type="date"
-                  value={editFormData.eventDate}
-                  onChange={(e) => setEditFormData({ ...editFormData, eventDate: e.target.value })}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Hora</Label>
-                <Input 
-                  type="time"
-                  value={editFormData.eventTime}
-                  onChange={(e) => setEditFormData({ ...editFormData, eventTime: e.target.value })}
-                />
+                <Button 
+                  onClick={handleSaveEdit}
+                  className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white"
+                >
+                  <Save className="w-4 h-4 mr-2" />
+                  Salvar
+                </Button>
               </div>
             </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
-            <div className="space-y-2">
-              <Label>Tipo de Evento</Label>
-              <Select 
-                value={editFormData.eventType}
-                onValueChange={(val) => setEditFormData({ ...editFormData, eventType: val as EventType })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {EVENT_TYPES.map(type => (
-                    <SelectItem key={type.value} value={type.value}>
-                      {type.emoji} {type.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Descrição</Label>
-              <Textarea 
-                value={editFormData.description}
-                onChange={(e) => setEditFormData({ ...editFormData, description: e.target.value })}
-                rows={3}
-              />
-            </div>
-
-            <div className="flex gap-3 pt-4">
-              <Button 
-                variant="outline" 
-                onClick={() => setMode('manage')}
-                className="flex-1"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Voltar
-              </Button>
-              <Button 
-                onClick={handleSaveEdit}
-                className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 text-white"
-              >
-                <Save className="w-4 h-4 mr-2" />
-                Salvar
-              </Button>
-            </div>
-          </div>
-        )}
-      </DialogContent>
-    </Dialog>
+      {selectedEvent && (
+        <QRCodeDisplay
+          eventId={selectedEvent.id}
+          eventName={selectedEvent.eventName}
+          isOpen={isQRModalOpen}
+          onClose={() => setIsQRModalOpen(false)}
+          frameSettings={selectedEvent.settings.frameSettings}
+        />
+      )}
+    </>
   );
 }

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { MediaWall } from './MediaWall';
 import { QRCodeDisplay } from './QRCodeDisplay';
+import { CreateEventModal } from './CreateEventModal';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import toast from 'react-hot-toast';
@@ -51,6 +52,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
   const [showMediaWall, setShowMediaWall] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [isDownloading, setIsDownloading] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   const {
     events,
@@ -279,20 +281,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
           />
         </div>
         <Button
-          onClick={() => {
-            const eventName = prompt('Nome do evento:');
-            if (eventName) {
-              const clientName = prompt('Nome do cliente:') || 'Anônimo';
-              createEvent({
-                eventName,
-                clientName,
-                eventDate: new Date().toISOString().split('T')[0],
-                eventTime: '18:00',
-                eventType: 'outro',
-                description: '',
-              });
-            }
-          }}
+          onClick={() => setShowCreateModal(true)}
           className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -720,6 +709,19 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Create Event Modal */}
+      <CreateEventModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        selectedPlan="test"
+        isTestMode={true}
+        onCreate={(data) => {
+          const newEvent = createEvent(data);
+          setSelectedEvent(newEvent);
+          setShowQRCode(true);
+        }}
+      />
     </div>
   );
 }

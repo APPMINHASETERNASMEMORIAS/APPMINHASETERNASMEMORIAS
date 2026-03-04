@@ -261,7 +261,6 @@ function LandingPage() {
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [createdEvent, setCreatedEvent] = useState<Event | null>(null);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [refreshGallery, setRefreshGallery] = useState(0);
   const [selectedPlan, setSelectedPlan] = useState('festa');
   const [isTestMode, setIsTestMode] = useState(false);
   const { events, createEvent } = useEvents();
@@ -658,31 +657,6 @@ function LandingPage() {
             image="https://picsum.photos/seed/familygarden/800/600"
             delay={0.5}
           />
-        </div>
-      </section>
-
-      {/* Live Gallery Section */}
-      <section id="gallery" className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <AnimatedSection className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-playfair font-bold text-gray-900 mb-6">
-              Mural de Memórias
-            </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Veja as fotos e vídeos enviados em tempo real. Compartilhe o seu momento também!
-            </p>
-          </AnimatedSection>
-
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-            <div className="lg:col-span-4">
-              <div className="sticky top-24">
-                <UploadMemory onUploadSuccess={() => setRefreshGallery(prev => prev + 1)} />
-              </div>
-            </div>
-            <div className="lg:col-span-8">
-              <MemoryGallery refreshTrigger={refreshGallery} />
-            </div>
-          </div>
         </div>
       </section>
 

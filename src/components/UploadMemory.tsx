@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Upload, Image as ImageIcon, Video, Loader2, Camera, Plus } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Upload, Image as ImageIcon, Video, Loader2, Camera, Plus, X as CloseIcon } from 'lucide-react';
 import { uploadToCloudinary, isCloudinaryConfigured } from '../lib/cloudinary';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -18,6 +18,26 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
   const [message, setMessage] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  // Clean up preview URL when component unmounts or file changes
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
+
+  // Clear preview when dialog closes
+  useEffect(() => {
+    if (!isOpen) {
+      setFile(null);
+      setPreviewUrl(null);
+      setName('');
+      setMessage('');
+    }
+  }, [isOpen]);
 
   // Get or create a persistent uploader ID for this browser
   const getUploaderId = () => {
@@ -31,7 +51,14 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+      const selectedFile = e.target.files[0];
+      setFile(selectedFile);
+      
+      // Create preview URL
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      setPreviewUrl(URL.createObjectURL(selectedFile));
     }
   };
 
@@ -104,6 +131,7 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
       
       // Reset form
       setFile(null);
+      setPreviewUrl(null);
       setName('');
       setMessage('');
       setIsOpen(false);
@@ -159,7 +187,7 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
                 />
                 <label
                   htmlFor="file-upload"
-                  className={`flex flex-col items-center justify-center w-full h-40 border-2 border-dashed rounded-2xl transition-colors ${
+                  className={`flex flex-col items-center justify-center w-full min-h-[160px] border-2 border-dashed rounded-2xl transition-all overflow-hidden relative ${
                     isPaused 
                       ? 'border-gray-200 bg-gray-100 cursor-not-allowed opacity-60' 
                       : file 
@@ -167,17 +195,54 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
                         : 'border-gray-300 bg-gray-50 hover:bg-gray-100 cursor-pointer'
                   }`}
                 >
-                  {file ? (
-                    <div className="text-center p-4">
+                  {file && previewUrl ? (
+                    <div className="w-full h-full flex flex-col items-center justify-center relative group/preview">
                       {file.type.startsWith('video/') ? (
-                        <Video className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                        <div className="relative w-full aspect-video bg-black flex items-center justify-center">
+                          <video 
+                            src={previewUrl} 
+                            className="max-h-full max-w-full"
+                            muted
+                            playsInline
+                            onMouseOver={(e) => e.currentTarget.play()}
+                            onMouseOut={(e) => e.currentTarget.pause()}
+                          />
+                          <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover/preview:bg-black/40 transition-colors">
+                            <Video className="w-12 h-12 text-white opacity-80" />
+                          </div>
+                        </div>
                       ) : (
-                        <ImageIcon className="w-8 h-8 text-purple-600 mx-auto mb-2" />
+                        <div className="relative w-full aspect-video bg-gray-100 flex items-center justify-center overflow-hidden">
+                          <img 
+                            src={previewUrl} 
+                            alt="Preview" 
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover/preview:bg-black/20 transition-colors flex items-center justify-center">
+                            <ImageIcon className="w-12 h-12 text-white opacity-0 group-hover/preview:opacity-80 transition-opacity" />
+                          </div>
+                        </div>
                       )}
-                      <p className="text-sm font-medium text-purple-900 truncate max-w-[200px]">
-                        {file.name}
-                      </p>
-                      <p className="text-xs text-purple-600 mt-1">Clique para trocar</p>
+                      
+                      <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/60 to-transparent text-white">
+                        <p className="text-xs font-medium truncate">
+                          {file.name}
+                        </p>
+                        <p className="text-[10px] opacity-80">Clique para trocar</p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setFile(null);
+                          setPreviewUrl(null);
+                        }}
+                        className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-black/70 rounded-full text-white transition-colors z-10"
+                      >
+                        <CloseIcon className="w-4 h-4" />
+                      </button>
                     </div>
                   ) : (
                     <div className="text-center p-4">

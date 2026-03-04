@@ -159,7 +159,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
       }
     } catch (error) {
       console.error(error);
-      toast.error('Erro ao conectar com a InfinitePay');
+      toast.error('Erro ao conectar com o servidor de pagamento');
     } finally {
       setIsSubmitting(false);
     }
@@ -548,7 +548,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
             {!paymentUrl ? (
               <div className="space-y-4">
                 <p className="text-center text-gray-600 text-sm">
-                  Você será redirecionado para o ambiente seguro da InfinitePay para concluir o pagamento via Pix ou Cartão de Crédito.
+                  Você será redirecionado para o ambiente seguro para concluir o pagamento via Pix ou Cartão de Crédito.
                 </p>
                 <Button 
                   onClick={handleGeneratePayment} 
@@ -556,7 +556,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
                   className="w-full h-14 text-lg bg-[#00E676] hover:bg-[#00C853] text-black font-bold"
                 >
                   {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : <CreditCard className="w-6 h-6 mr-2" />}
-                  {isSubmitting ? 'Gerando...' : 'Pagar com InfinitePay'}
+                  {isSubmitting ? 'Gerando...' : 'Clique aqui para pagar'}
                 </Button>
               </div>
             ) : (
@@ -564,9 +564,9 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <CheckCircle2 className="w-8 h-8 text-green-600" />
                 </div>
-                <h3 className="text-xl font-bold text-gray-900">Link Gerado!</h3>
+                <h3 className="text-xl font-bold text-gray-900">Link de Pagamento Pronto!</h3>
                 <p className="text-gray-600 mb-6">
-                  Clique no botão abaixo para abrir a página de pagamento. Seu evento será liberado automaticamente após a confirmação.
+                  Escolha sua forma de pagamento (Pix ou Cartão) na página seguinte. Seu evento será liberado automaticamente após a confirmação.
                 </p>
                 <a 
                   href={paymentUrl} 
@@ -574,7 +574,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
                   rel="noopener noreferrer"
                   className="block w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 rounded-xl transition-colors mb-4"
                 >
-                  Abrir Página de Pagamento
+                  Ir para Pagamento (Pix ou Cartão)
                 </a>
                 
                 <button 
@@ -588,7 +588,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
             )}
 
             <div className="flex justify-start pt-4 border-t">
-              <Button variant="ghost" onClick={() => setStep(3)} disabled={isSubmitting || !!paymentUrl}>
+              <Button variant="ghost" onClick={() => { setStep(3); setPaymentUrl(null); }} disabled={isSubmitting}>
                 Voltar
               </Button>
             </div>

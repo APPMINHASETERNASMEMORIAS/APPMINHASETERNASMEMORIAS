@@ -220,7 +220,17 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
                             alt="Preview" 
                             className="w-full h-full object-cover"
                           />
-                          <div className="absolute inset-0 bg-black/0 group-hover/preview:bg-black/20 transition-colors flex items-center justify-center">
+                          {selectedFrame && (
+                            <div className="absolute inset-0 pointer-events-none z-10">
+                              <img 
+                                src={selectedFrame} 
+                                alt="Moldura" 
+                                className="w-full h-full object-cover opacity-70"
+                                referrerPolicy="no-referrer"
+                              />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black/0 group-hover/preview:bg-black/20 transition-colors flex items-center justify-center z-20">
                             <ImageIcon className="w-12 h-12 text-white opacity-0 group-hover/preview:opacity-80 transition-opacity" />
                           </div>
                         </div>

@@ -24,6 +24,7 @@ export function FrameSelection({ onSelect }: { onSelect: (frameUrl: string | nul
       <h3 className="text-sm font-medium text-gray-700">Escolha uma Moldura (Opcional)</h3>
       <div className="grid grid-cols-3 gap-2">
         <button
+          type="button"
           onClick={() => {
             setSelectedFrame(null);
             onSelect(null);
@@ -37,6 +38,7 @@ export function FrameSelection({ onSelect }: { onSelect: (frameUrl: string | nul
         {FRAME_OPTIONS.map((frame, index) => (
           <button
             key={index}
+            type="button"
             onClick={() => {
               setSelectedFrame(frame);
               onSelect(frame);

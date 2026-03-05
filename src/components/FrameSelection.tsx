@@ -2,15 +2,15 @@ import React, { useState } from 'react';
 
 // Replace these with the actual image URLs from the user's Google Drive or hosted elsewhere
 const FRAME_OPTIONS = [
-  'https://drive.google.com/uc?export=view&id=120rNh5NBi9PvY_39RhBXHPtgO-ebEQtN',
-  'https://drive.google.com/uc?export=view&id=1MiTQtunEjExr5rt-E29Rfe641KIl6pzy',
-  'https://drive.google.com/uc?export=view&id=1Pj5xIiA8pgwcsJNWiITHw98q1C8E8dAW',
-  'https://drive.google.com/uc?export=view&id=1T_RFshRXK3evgOfKvPWnGxMWiEaVhgZM',
-  'https://drive.google.com/uc?export=view&id=1ceyIu5_XyhpmtOCRYZ0ognvR5U9ZXNEB',
-  'https://drive.google.com/uc?export=view&id=1lJK0OCBDafda1kedU3lt-If7us1iWAzg',
-  'https://drive.google.com/uc?export=view&id=1mKl3ZdyBgE8-UTsXX0uTD2u7tPwwwntc',
-  'https://drive.google.com/uc?export=view&id=1nvo26DLV5IfVnC5Buwhg33xL4IeHY0cq',
-  'https://drive.google.com/uc?export=view&id=1qfiljJNdrCpTm2KS0HqjM6_JL_0BkdDr',
+  'https://lh3.googleusercontent.com/d/120rNh5NBi9PvY_39RhBXHPtgO-ebEQtN',
+  'https://lh3.googleusercontent.com/d/1MiTQtunEjExr5rt-E29Rfe641KIl6pzy',
+  'https://lh3.googleusercontent.com/d/1Pj5xIiA8pgwcsJNWiITHw98q1C8E8dAW',
+  'https://lh3.googleusercontent.com/d/1T_RFshRXK3evgOfKvPWnGxMWiEaVhgZM',
+  'https://lh3.googleusercontent.com/d/1ceyIu5_XyhpmtOCRYZ0ognvR5U9ZXNEB',
+  'https://lh3.googleusercontent.com/d/1lJK0OCBDafda1kedU3lt-If7us1iWAzg',
+  'https://lh3.googleusercontent.com/d/1mKl3ZdyBgE8-UTsXX0uTD2u7tPwwwntc',
+  'https://lh3.googleusercontent.com/d/1nvo26DLV5IfVnC5Buwhg33xL4IeHY0cq',
+  'https://lh3.googleusercontent.com/d/1qfiljJNdrCpTm2KS0HqjM6_JL_0BkdDr',
 ];
 
 export function FrameSelection({ onSelect }: { onSelect: (frameUrl: string | null) => void }) {

@@ -151,10 +151,12 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
         
         const duration = await new Promise<number>((resolve, reject) => {
           video.onloadedmetadata = () => {
+            console.log('Metadados carregados, duração:', video.duration);
             resolve(video.duration);
             URL.revokeObjectURL(video.src);
           };
-          video.onerror = () => {
+          video.onerror = (e) => {
+            console.error('Erro ao ler metadados do vídeo:', e);
             reject(new Error('Erro ao ler metadados do vídeo'));
             URL.revokeObjectURL(video.src);
           };
@@ -212,7 +214,7 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
       
     } catch (error: any) {
       console.error('Erro upload:', error);
-      toast.error('Erro ao enviar.');
+      toast.error(`Erro ao enviar: ${error.message || 'Erro desconhecido'}`);
     } finally {
       setIsUploading(false);
     }

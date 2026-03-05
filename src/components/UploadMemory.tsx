@@ -25,18 +25,11 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const rotation = 0;
+  const [rotation, setRotation] = useState(0);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
   const [isCropping, setIsCropping] = useState(false);
   const [croppedImage, setCroppedImage] = useState<Blob | null>(null);
-
-  // Reset crop when file changes
-  useEffect(() => {
-    if (file) {
-      setCrop({ x: 0, y: 0 });
-      setZoom(1);
-    }
-  }, [file]);
+  const [aspect, setAspect] = useState(16 / 9); // Matches the aspect-video container
 
   const onCropComplete = useCallback((_croppedArea: any, croppedAreaPixels: any) => {
     setCroppedAreaPixels(croppedAreaPixels);
@@ -214,110 +207,14 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
             </span>
           </button>
         </DialogTrigger>
-        <DialogContent className={`w-[calc(100%-2rem)] ${isCropping ? 'sm:max-w-3xl' : 'sm:max-w-md'} rounded-3xl border-none p-0 overflow-hidden bg-white max-h-[95vh] flex flex-col transition-all duration-300`}>
-          <div className="p-4 sm:p-8 overflow-y-auto custom-scrollbar flex-1">
+        <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md rounded-3xl border-none p-0 overflow-hidden bg-white max-h-[90vh] flex flex-col">
+          <div className="p-4 sm:p-8 overflow-y-auto custom-scrollbar">
             <DialogHeader className="text-center mb-4 sm:mb-6">
-              <DialogTitle className="text-lg sm:text-2xl font-playfair font-bold text-gray-900">
-                {isCropping ? 'Ajuste o Enquadramento' : 'Compartilhe uma Memória'}
-              </DialogTitle>
-              <p className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-2">
-                {isCropping ? 'Arraste a foto para cima ou para baixo para centralizar no mural.' : 'Envie suas fotos ou vídeos deste momento especial.'}
-              </p>
+              <DialogTitle className="text-lg sm:text-2xl font-playfair font-bold text-gray-900">Compartilhe uma Memória</DialogTitle>
+              <p className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-2">Envie suas fotos ou vídeos deste momento especial.</p>
             </DialogHeader>
 
             <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-              {/* Cropping Overlay */}
-              {isCropping && previewUrl && (
-                <div className="absolute inset-0 z-[100] bg-gray-950 flex flex-col">
-                  <div className="flex-1 relative bg-black flex items-center justify-center p-4 sm:p-8">
-                    <div className="relative w-full aspect-square max-w-[500px] max-h-[500px] shadow-[0_0_50px_rgba(0,0,0,0.5)] rounded-2xl overflow-hidden border border-white/10">
-                      <Cropper
-                        image={previewUrl}
-                        crop={crop}
-                        zoom={zoom}
-                        rotation={rotation}
-                        aspect={1}
-                        onCropChange={setCrop}
-                        onZoomChange={setZoom}
-                        onCropComplete={onCropComplete}
-                        showGrid={true}
-                        zoomWithScroll={true}
-                        restrictPosition={true}
-                        minZoom={1}
-                        maxZoom={3}
-                        objectFit="cover"
-                        style={{
-                          containerStyle: { background: '#000' },
-                          cropAreaStyle: { border: '2px solid rgba(255,255,255,0.3)' }
-                        }}
-                      />
-                      {selectedFrame && (
-                        <div className="absolute inset-0 pointer-events-none z-[60] select-none touch-none">
-                          <img 
-                            src={selectedFrame} 
-                            alt="Moldura" 
-                            className="w-full h-full object-fill opacity-90"
-                            referrerPolicy="no-referrer"
-                          />
-                        </div>
-                      )}
-                      
-                      {/* Zoom Control Overlay */}
-                      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-3/4 bg-black/80 backdrop-blur-xl px-5 py-3 rounded-2xl z-[70] flex flex-col gap-2 border border-white/20 shadow-2xl">
-                        <div className="flex justify-between items-center">
-                          <span className="text-white text-[10px] font-bold tracking-widest opacity-60">ZOOM</span>
-                          <span className="text-white/90 text-[10px] font-mono">{Math.round(zoom * 100)}%</span>
-                        </div>
-                        <input
-                          type="range"
-                          value={zoom}
-                          min={1}
-                          max={3}
-                          step={0.01}
-                          onChange={(e) => setZoom(Number(e.target.value))}
-                          className="w-full accent-purple-500 h-1.5 cursor-pointer"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="bg-gray-900/90 backdrop-blur-md p-6 border-t border-white/10">
-                    <div className="max-w-md mx-auto space-y-4">
-                      <div className="flex items-center justify-center gap-3 text-white/60">
-                        <div className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center">
-                          <Maximize2 className="w-4 h-4" />
-                        </div>
-                        <p className="text-xs font-medium">Arraste para ajustar o enquadramento perfeito</p>
-                      </div>
-                      
-                      <div className="flex gap-3">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCrop({ x: 0, y: 0 });
-                            setZoom(1);
-                          }}
-                          className="flex-1 bg-white/5 hover:bg-white/10 text-white px-4 py-3.5 rounded-2xl transition-all font-bold text-sm border border-white/10"
-                        >
-                          Resetar
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleConfirmCrop();
-                          }}
-                          className="flex-[2] bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-xl hover:brightness-110 transition-all font-bold text-sm active:scale-95"
-                        >
-                          <Check className="w-5 h-5" />
-                          Confirmar
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               {/* File Input */}
               <div className="relative">
                 <input
@@ -355,36 +252,105 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
                           </div>
                         </div>
                       ) : (
-                        <div className="relative w-full aspect-square bg-gray-100 flex items-center justify-center overflow-hidden transition-all duration-300 rounded-xl shadow-inner">
-                          <img 
-                            src={croppedImage ? URL.createObjectURL(croppedImage) : previewUrl} 
-                            alt="Preview" 
-                            className="w-full h-full object-cover"
-                          />
-                          {selectedFrame && (
-                            <div className="absolute inset-0 pointer-events-none z-10">
-                              <img 
-                                src={selectedFrame} 
-                                alt="Moldura" 
-                                className="w-full h-full object-fill"
-                                referrerPolicy="no-referrer"
-                              />
+                        <div className="relative w-full aspect-video bg-gray-100 flex items-center justify-center overflow-hidden">
+                          {isCropping ? (
+                            <div className="absolute inset-0 z-50 bg-black flex flex-col">
+                              <div className="relative flex-1">
+                                <Cropper
+                                  image={previewUrl}
+                                  crop={crop}
+                                  zoom={zoom}
+                                  rotation={rotation}
+                                  aspect={aspect}
+                                  onCropChange={setCrop}
+                                  onRotationChange={setRotation}
+                                  onCropComplete={onCropComplete}
+                                  onZoomChange={setZoom}
+                                  showGrid={false}
+                                />
+                                {selectedFrame && (
+                                  <div className="absolute inset-0 pointer-events-none z-10">
+                                    <img 
+                                      src={selectedFrame} 
+                                      alt="Moldura" 
+                                      className="w-full h-full object-fill"
+                                      referrerPolicy="no-referrer"
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                              
+                              <div className="bg-black/80 p-4 space-y-4 z-[60]">
+                                <div className="flex items-center gap-4">
+                                  <span className="text-white text-xs font-bold">Zoom</span>
+                                  <input
+                                    type="range"
+                                    value={zoom}
+                                    min={1}
+                                    max={3}
+                                    step={0.1}
+                                    onChange={(e) => setZoom(Number(e.target.value))}
+                                    className="flex-1 h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                                  />
+                                </div>
+                                
+                                <div className="flex justify-between items-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => setRotation((prev) => (prev + 90) % 360)}
+                                    className="text-white text-xs flex items-center gap-2 hover:text-purple-400 transition-colors"
+                                  >
+                                    <Upload className="w-4 h-4 rotate-90" />
+                                    Girar 90°
+                                  </button>
+                                  
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleConfirmCrop();
+                                    }}
+                                    className="bg-purple-600 text-white px-6 py-2 rounded-full flex items-center gap-2 shadow-lg hover:bg-purple-700 transition-colors font-bold text-sm"
+                                  >
+                                    <Check className="w-4 h-4" />
+                                    Confirmar
+                                  </button>
+                                </div>
+                              </div>
                             </div>
+                          ) : (
+                            <>
+                              <img 
+                                src={croppedImage ? URL.createObjectURL(croppedImage) : previewUrl} 
+                                alt="Preview" 
+                                className="w-full h-full object-cover"
+                              />
+                              {selectedFrame && (
+                                <div className="absolute inset-0 pointer-events-none z-10">
+                                  <img 
+                                    src={selectedFrame} 
+                                    alt="Moldura" 
+                                    className="w-full h-full object-fill"
+                                    referrerPolicy="no-referrer"
+                                  />
+                                </div>
+                              )}
+                              <div className="absolute inset-0 bg-black/0 group-hover/preview:bg-black/20 transition-colors flex items-center justify-center z-20">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setIsCropping(true);
+                                  }}
+                                  className="bg-white/90 text-purple-600 px-4 py-2 rounded-full shadow-lg opacity-0 group-hover/preview:opacity-100 transition-all hover:scale-105 flex items-center gap-2"
+                                >
+                                  <Maximize2 className="w-4 h-4" />
+                                  <span className="text-sm font-bold">Ajustar Enquadramento</span>
+                                </button>
+                              </div>
+                            </>
                           )}
-                          <div className="absolute inset-0 bg-black/0 group-hover/preview:bg-black/20 transition-colors flex items-center justify-center z-20">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setIsCropping(true);
-                              }}
-                              className="bg-white/90 text-purple-600 px-4 py-2 rounded-full shadow-lg opacity-0 group-hover/preview:opacity-100 transition-all hover:scale-105 flex items-center gap-2"
-                            >
-                              <Maximize2 className="w-4 h-4" />
-                              <span className="text-sm font-bold">Ajustar Enquadramento</span>
-                            </button>
-                          </div>
                         </div>
                       )}
                       

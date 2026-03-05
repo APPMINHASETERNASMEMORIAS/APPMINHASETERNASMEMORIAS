@@ -271,14 +271,15 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
     <>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 grid-flow-dense gap-0.5 bg-gray-200 p-0.5 rounded-3xl overflow-hidden shadow-2xl">
         {memories.map((memory, index) => {
-          // Lógica para o Bento Grid: alguns itens ocupam mais espaço (sempre mantendo o aspecto quadrado)
-          const isFeatured = index % 10 === 0; // A cada 10 fotos, uma fica grande (2x2)
+          // Lógica para o Bento Grid: alguns itens ocupam mais espaço
+          const isFeatured = index % 10 === 0; // A cada 10 fotos, uma fica grande
+          const isWide = index % 7 === 0 && !isFeatured; // Algumas ficam largas
           
           return (
             <div 
               key={memory.id} 
               className={`relative bg-white overflow-hidden group transition-all duration-500 hover:z-10 hover:scale-[1.02] cursor-pointer ${
-                isFeatured ? 'col-span-2 row-span-2' : ''
+                isFeatured ? 'col-span-2 row-span-2' : isWide ? 'col-span-2' : ''
               }`}
               onClick={() => setSelectedMemory(memory)}
             >

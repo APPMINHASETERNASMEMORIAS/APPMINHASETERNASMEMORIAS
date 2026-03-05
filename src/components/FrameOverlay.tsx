@@ -22,6 +22,12 @@ export function FrameOverlay({ settings, className = '', children }: FrameOverla
         return 'border-[3px] shadow-[0_0_20px_currentcolor,inset_0_0_10px_currentcolor]';
       case 'romance':
         return 'border-[10px] rounded-[50px] border-double shadow-[0_0_15px_rgba(255,182,193,0.3)]';
+      case 'floral':
+        return 'border-[16px] border-solid border-green-500/30';
+      case 'vintage':
+        return 'border-[20px] border-double border-amber-700';
+      case 'gold':
+        return 'border-[12px] border-solid border-yellow-500';
       default:
         return 'border-[4px]';
     }

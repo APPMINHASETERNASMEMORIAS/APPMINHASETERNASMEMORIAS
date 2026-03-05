@@ -91,6 +91,9 @@ const FRAME_TEMPLATES = [
   { id: 'retro', name: 'Retro', preview: 'border-[10px] border-b-[35px] shadow-lg bg-white/5' },
   { id: 'neon', name: 'Neon', preview: 'border-[2px] shadow-[0_0_15px_currentcolor,inset_0_0_8px_currentcolor]' },
   { id: 'romance', name: 'Romance', preview: 'border-[6px] rounded-[25px] border-double shadow-[0_0_10px_rgba(255,182,193,0.3)]' },
+  { id: 'floral', name: 'Floral', preview: 'border-[8px] border-solid border-green-500/30' },
+  { id: 'vintage', name: 'Vintage', preview: 'border-[12px] border-double border-amber-700' },
+  { id: 'gold', name: 'Dourado', preview: 'border-[6px] border-solid border-yellow-500' },
 ];
 
 const COLORS = [

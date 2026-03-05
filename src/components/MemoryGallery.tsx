@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
-import { Heart, MessageCircle, PlayCircle, Trash2, Camera } from 'lucide-react';
+import { Heart, MessageCircle, PlayCircle, Trash2, Camera, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { FrameOverlay } from './FrameOverlay';
 import { Event } from '../types';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface Memory {
   id: string;
@@ -44,14 +45,40 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
   const [isLoading, setIsLoading] = useState(true);
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
   const [isLightboxVideoPlaying, setIsLightboxVideoPlaying] = useState(false);
+  const [featuredIndex, setFeaturedIndex] = useState(0);
+  const [numCols, setNumCols] = useState(2);
+  
   const memoriesRef = useRef<Memory[]>([]);
   const lightboxVideoRef = useRef<HTMLVideoElement>(null);
   const uploaderId = localStorage.getItem('memory_uploader_id');
 
+  // Responsive Columns for Masonry
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      if (width >= 1280) setNumCols(5);
+      else if (width >= 1024) setNumCols(4);
+      else if (width >= 768) setNumCols(3);
+      else setNumCols(2);
+    };
+    
+    handleResize(); // Initial check
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Rotate Featured Memory
+  useEffect(() => {
+    if (memories.length === 0) return;
+    const interval = setInterval(() => {
+      setFeaturedIndex(prev => (prev + 1) % memories.length);
+    }, 8000); // Change every 8 seconds
+    return () => clearInterval(interval);
+  }, [memories.length]);
+
   // Auto-play video when lightbox opens
   useEffect(() => {
     if (selectedMemory?.type === 'video') {
-      // Give it a tiny bit of time to mount
       const timer = setTimeout(() => {
         if (lightboxVideoRef.current) {
           lightboxVideoRef.current.play().catch(err => {
@@ -66,7 +93,6 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
   const handleLike = async (memoryId: string, currentLikes: number) => {
     if (!isSupabaseConfigured) return;
     
-    // Optimistic update
     setMemories(prev => prev.map(m => 
       m.id === memoryId ? { ...m, likes_count: (m.likes_count || 0) + 1 } : m
     ));
@@ -80,7 +106,6 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
       if (error) throw error;
     } catch (error) {
       console.error('Erro ao curtir:', error);
-      // Rollback
       setMemories(prev => prev.map(m => 
         m.id === memoryId ? { ...m, likes_count: currentLikes } : m
       ));
@@ -96,7 +121,7 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
         .from('memories')
         .delete()
         .eq('id', memoryId)
-        .eq('uploader_id', uploaderId); // Security check
+        .eq('uploader_id', uploaderId);
 
       if (error) throw error;
       
@@ -108,7 +133,6 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
     }
   };
 
-  // Keep ref in sync with state for use in callbacks
   useEffect(() => {
     memoriesRef.current = memories;
   }, [memories]);
@@ -129,23 +153,17 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
         if (eventId) {
           query = query.eq('event_id', eventId);
         }
-        // Se não tiver eventId (página principal), busca TODAS as memórias
 
         const { data, error } = await query;
         
-        console.log('[MemoryGallery] Fetch result:', { data, error, eventId });
-
         if (error) {
           if (error.message.includes('event_id')) {
-            console.error('O banco de dados precisa ser atualizado. Por favor, adicione a coluna "event_id" (tipo TEXT) na tabela "memories" do seu Supabase.');
-            // Fallback to fetch without event_id if the column doesn't exist yet
             const fallbackQuery = supabase!
               .from('memories')
               .select('*')
               .order('created_at', { ascending: false });
             const { data: fallbackData, error: fallbackError } = await fallbackQuery;
             if (fallbackError) throw fallbackError;
-            
             mergeMemories(fallbackData || []);
             return;
           }
@@ -162,28 +180,20 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
       }
     };
 
-    // Memória Inteligente (Merge): Mantém fotos recém-chegadas (últimos 15s) que ainda não estão no banco
     const mergeMemories = (fetchedMemories: Memory[]) => {
       const now = new Date().getTime();
       const currentMemories = memoriesRef.current;
       
-      // Encontra memórias locais que são muito recentes (menos de 15 segundos)
       const recentLocalMemories = currentMemories.filter(localMem => {
         const memTime = new Date(localMem.created_at).getTime();
-        const isRecent = (now - memTime) < 15000; // 15 segundos
-        // Verifica se essa memória já veio no fetch do banco
+        const isRecent = (now - memTime) < 15000;
         const existsInDb = fetchedMemories.some(dbMem => dbMem.id === localMem.id);
-        
         return isRecent && !existsInDb;
       });
 
-      // Mescla as memórias do banco com as recentes locais
       const merged = [...recentLocalMemories, ...fetchedMemories];
-      
-      // Ordena por data de criação (mais recentes primeiro)
       merged.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       
-      // Remove duplicatas baseadas no ID
       const uniqueMemories = merged.filter((mem, index, self) => 
         index === self.findIndex((m) => m.id === mem.id)
       );
@@ -191,15 +201,12 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
       setMemories(uniqueMemories);
     };
 
-    // Busca inicial
     fetchMemories();
 
-    // Sincronização Blindada: Atualização automática a cada 5 segundos
     const pollInterval = setInterval(() => {
       fetchMemories(true);
     }, 5000);
 
-    // Conexão Direta (Socket): Escuta novos inserts em tempo real
     const channel = supabase!
       .channel('public:memories')
       .on(
@@ -211,12 +218,7 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
         },
         (payload) => {
           const newMemory = payload.new as Memory;
-          
-          // Filtra localmente para garantir que a memória pertence a este mural
-          if (eventId) {
-            if (newMemory.event_id !== eventId) return;
-          }
-          // Se não tiver eventId (página principal), aceita TODAS as memórias
+          if (eventId && newMemory.event_id !== eventId) return;
 
           setMemories((current) => {
             if (current.some(m => m.id === newMemory.id)) return current;
@@ -231,6 +233,14 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
       supabase!.removeChannel(channel);
     };
   }, [refreshTrigger, eventId]);
+
+  // Distribute memories into columns for Masonry
+  const columns = Array.from({ length: numCols }, () => [] as Memory[]);
+  memories.forEach((mem, i) => {
+    columns[i % numCols].push(mem);
+  });
+
+  const featuredMemory = memories.length > 0 ? memories[featuredIndex % memories.length] : null;
 
   if (!isSupabaseConfigured) {
     return (
@@ -268,97 +278,174 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
   }
 
   return (
-    <>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 grid-flow-dense gap-0.5 bg-gray-200 p-0.5 rounded-3xl overflow-hidden shadow-2xl">
-        {memories.map((memory, index) => {
-          // Lógica para o Bento Grid: alguns itens ocupam mais espaço (sempre mantendo o aspecto quadrado)
-          const isFeatured = index % 10 === 0; // A cada 10 fotos, uma fica grande (2x2)
-          
-          return (
-            <div 
-              key={memory.id} 
-              className={`relative bg-white overflow-hidden group transition-all duration-500 hover:z-10 hover:scale-[1.02] cursor-pointer ${
-                isFeatured ? 'col-span-2 row-span-2' : ''
-              }`}
-              onClick={() => setSelectedMemory(memory)}
+    <div className="space-y-0">
+      {/* Hero / Featured Section */}
+      <div className="relative w-full h-[50vh] md:h-[60vh] overflow-hidden bg-black group mb-0">
+        <div className="absolute inset-0 bg-black/40 z-10" />
+        
+        {/* Animated Background Image */}
+        <AnimatePresence mode="wait">
+          {featuredMemory && (
+            <motion.div 
+              key={featuredMemory.id} 
+              className="absolute inset-0"
+              initial={{ opacity: 0, scale: 1.1 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.5 }}
             >
-              {/* Media Container */}
-              <div className="w-full h-full aspect-square bg-gray-100">
-                {memory.type === 'video' ? (
-                  <div className="relative w-full h-full">
+               {featuredMemory.type === 'video' ? (
+                  <video
+                    src={featuredMemory.url}
+                    className="w-full h-full object-cover opacity-60 blur-sm"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                  />
+               ) : (
+                  <motion.img
+                    src={featuredMemory.url}
+                    alt="Destaque"
+                    className="w-full h-full object-cover opacity-60 blur-sm"
+                    animate={{ scale: [1, 1.1] }}
+                    transition={{ duration: 10, ease: "linear", repeat: Infinity, repeatType: "reverse" }}
+                  />
+               )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Main Featured Content */}
+        <AnimatePresence mode="wait">
+          {featuredMemory && (
+            <div className="absolute inset-0 z-20 flex items-center justify-center p-4">
+              <motion.div 
+                key={featuredMemory.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.8 }}
+                className="relative max-h-full max-w-4xl shadow-2xl cursor-pointer"
+                onClick={() => setSelectedMemory(featuredMemory)}
+              >
+                <FrameOverlay settings={getMemoryFrame(featuredMemory, event?.settings?.frameSettings)} className="rounded-lg overflow-hidden shadow-2xl border-4 border-white/20">
+                  {featuredMemory.type === 'video' ? (
                     <video
-                      src={memory.url}
-                      className="w-full h-full object-cover"
+                      src={featuredMemory.url}
+                      className="max-h-[40vh] md:max-h-[50vh] w-auto object-contain rounded-lg"
+                      autoPlay
                       muted
                       loop
                       playsInline
-                      onMouseOver={(e) => e.currentTarget.play()}
-                      onMouseOut={(e) => e.currentTarget.pause()}
                     />
-                    <div className="absolute top-4 right-4 bg-black/50 backdrop-blur-sm p-2 rounded-full text-white pointer-events-none">
-                      <PlayCircle className="w-5 h-5" />
-                    </div>
-                  </div>
-                ) : (
-                  <FrameOverlay settings={getMemoryFrame(memory, event?.settings?.frameSettings)} className="w-full h-full">
+                  ) : (
                     <img
-                      src={memory.url}
-                      alt={`Memória de ${memory.uploader_name}`}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      loading="lazy"
+                      src={featuredMemory.url}
+                      alt="Destaque Principal"
+                      className="max-h-[40vh] md:max-h-[50vh] w-auto object-contain rounded-lg"
                     />
-                  </FrameOverlay>
-                )}
-              </div>
-
-              {/* Overlay: Message Preview & Actions */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
-                {/* Message Preview */}
-                {getCleanMessage(memory.message) && (
-                  <div className="mb-3 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
-                    <p className="text-white text-sm font-medium line-clamp-3 italic bg-black/30 backdrop-blur-sm p-2 rounded-lg border border-white/10">
-                      "{getCleanMessage(memory.message)}"
+                  )}
+                </FrameOverlay>
+                
+                {/* Featured Caption */}
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 text-white text-center">
+                  <p className="font-playfair text-2xl md:text-3xl font-bold mb-2 drop-shadow-lg">
+                    {featuredMemory.uploader_name}
+                  </p>
+                  {getCleanMessage(featuredMemory.message) && (
+                    <p className="text-white/90 italic text-lg drop-shadow-md">
+                      "{getCleanMessage(featuredMemory.message)}"
                     </p>
-                  </div>
-                )}
+                  )}
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+      </div>
 
-                {/* Footer Info & Actions */}
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex flex-col">
-                    <span className="text-white font-bold text-xs truncate max-w-[100px]">
+      {/* Masonry Grid - No Gaps */}
+      <div className="flex gap-0">
+        {columns.map((col, colIndex) => (
+          <div key={colIndex} className="flex-1 flex flex-col gap-0">
+            {col.map((memory) => (
+              <div 
+                key={memory.id} 
+                className="relative group cursor-pointer overflow-hidden bg-gray-100"
+                onClick={() => setSelectedMemory(memory)}
+              >
+                {/* Media */}
+                <div className="w-full">
+                  {memory.type === 'video' ? (
+                    <div className="relative w-full aspect-[3/4]">
+                      <video
+                        src={memory.url}
+                        className="w-full h-full object-cover"
+                        muted
+                        loop
+                        playsInline
+                        onMouseOver={(e) => e.currentTarget.play()}
+                        onMouseOut={(e) => e.currentTarget.pause()}
+                      />
+                      <div className="absolute top-2 right-2 bg-black/50 backdrop-blur-sm p-1.5 rounded-full text-white pointer-events-none">
+                        <PlayCircle className="w-4 h-4" />
+                      </div>
+                    </div>
+                  ) : (
+                    <FrameOverlay settings={getMemoryFrame(memory, event?.settings?.frameSettings)} className="w-full h-auto">
+                      <img
+                        src={memory.url}
+                        alt={`Memória de ${memory.uploader_name}`}
+                        className="w-full h-auto block transition-transform duration-700 group-hover:scale-105"
+                        loading="lazy"
+                      />
+                    </FrameOverlay>
+                  )}
+                </div>
+
+                {/* Overlay Info */}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
+                  <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
+                    <p className="text-white font-bold text-sm truncate">
                       {memory.uploader_name}
-                    </span>
-                    <span className="text-white/60 text-[10px]">
-                      {new Date(memory.created_at).toLocaleDateString('pt-BR')}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                    {/* Like Button */}
-                    <button 
-                      onClick={() => handleLike(memory.id, memory.likes_count)}
-                      className="flex items-center gap-1 bg-white/20 backdrop-blur-md hover:bg-red-500/80 text-white px-2 py-1 rounded-full text-xs transition-colors"
-                    >
-                      <Heart className={`w-3.5 h-3.5 ${memory.likes_count > 0 ? 'fill-current text-red-400' : ''}`} />
-                      <span>{memory.likes_count || 0}</span>
-                    </button>
-
-                    {/* Delete Button (Only for uploader) */}
-                    {uploaderId === memory.uploader_id && (
-                      <button 
-                        onClick={() => handleDelete(memory.id)}
-                        className="p-1.5 bg-white/20 backdrop-blur-md hover:bg-red-600 text-white rounded-full transition-colors"
-                        title="Excluir minha foto"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
+                    </p>
+                    {getCleanMessage(memory.message) && (
+                      <p className="text-white/80 text-xs line-clamp-2 italic mt-0.5">
+                        {getCleanMessage(memory.message)}
+                      </p>
                     )}
+                    
+                    <div className="flex items-center justify-between mt-2">
+                       <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLike(memory.id, memory.likes_count);
+                        }}
+                        className="flex items-center gap-1 text-white hover:text-red-400 transition-colors"
+                      >
+                        <Heart className={`w-4 h-4 ${memory.likes_count > 0 ? 'fill-current text-red-500' : ''}`} />
+                        <span className="text-xs">{memory.likes_count || 0}</span>
+                      </button>
+                      
+                      {uploaderId === memory.uploader_id && (
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDelete(memory.id);
+                          }}
+                          className="text-white/60 hover:text-red-500 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          );
-        })}
+            ))}
+          </div>
+        ))}
       </div>
 
       {/* Lightbox Modal */}
@@ -371,9 +458,7 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
             className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors z-10"
             onClick={() => setSelectedMemory(null)}
           >
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="w-8 h-8" />
           </button>
 
           <div 
@@ -403,19 +488,6 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
                       }
                     }}
                   />
-                  {!isLightboxVideoPlaying && (
-                    <div 
-                      className="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none transition-opacity duration-300"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        lightboxVideoRef.current?.play();
-                      }}
-                    >
-                      <div className="bg-white/20 backdrop-blur-md p-6 rounded-full border border-white/30 shadow-2xl transform scale-110">
-                        <PlayCircle className="w-16 h-16 text-white fill-white/20" />
-                      </div>
-                    </div>
-                  )}
                 </>
               ) : (
                 <div className="relative inline-block max-w-full max-h-[70vh]">
@@ -464,6 +536,6 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { Upload, Image as ImageIcon, Video, Loader2, Camera, Plus, X as CloseIcon, Check, Maximize2 } from 'lucide-react';
 import Cropper from 'react-easy-crop';
 import getCroppedImg from '../lib/cropImage';
@@ -249,59 +250,25 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
                         </div>
                       ) : (
                         <div className="relative w-full aspect-video bg-gray-100 flex items-center justify-center overflow-hidden">
-                          {isCropping ? (
-                            <div className="absolute inset-0 z-50 bg-black flex flex-col">
-                              <div className="relative flex-1">
-                                <Cropper
-                                  image={previewUrl}
-                                  crop={crop}
-                                  zoom={1}
-                                  rotation={0}
-                                  aspect={aspect}
-                                  onCropChange={setCrop}
-                                  onCropComplete={onCropComplete}
-                                  showGrid={false}
-                                  maxZoom={1}
-                                />
-                              </div>
-                              
-                              <div className="bg-black/80 p-4 z-[60] flex justify-center">
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleConfirmCrop();
-                                  }}
-                                  className="bg-purple-600 text-white px-8 py-3 rounded-full flex items-center gap-2 shadow-lg hover:bg-purple-700 transition-colors font-bold text-sm"
-                                >
-                                  <Check className="w-4 h-4" />
-                                  Confirmar
-                                </button>
-                              </div>
-                            </div>
-                          ) : (
-                            <>
-                              <img 
-                                src={croppedImage ? URL.createObjectURL(croppedImage) : previewUrl} 
-                                alt="Preview" 
-                                className="w-full h-full object-cover"
-                              />
-                              <div className="absolute inset-0 bg-black/0 group-hover/preview:bg-black/20 transition-colors flex items-center justify-center z-20">
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    setIsCropping(true);
-                                  }}
-                                  className="bg-white/90 text-purple-600 px-4 py-2 rounded-full shadow-lg opacity-0 group-hover/preview:opacity-100 transition-all hover:scale-105 flex items-center gap-2"
-                                >
-                                  <Maximize2 className="w-4 h-4" />
-                                  <span className="text-sm font-bold">Ajustar Enquadramento</span>
-                                </button>
-                              </div>
-                            </>
-                          )}
+                          <img 
+                            src={croppedImage ? URL.createObjectURL(croppedImage) : previewUrl} 
+                            alt="Preview" 
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/0 group-hover/preview:bg-black/20 transition-colors flex items-center justify-center z-20">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setIsCropping(true);
+                              }}
+                              className="bg-white/90 text-purple-600 px-4 py-2 rounded-full shadow-lg opacity-0 group-hover/preview:opacity-100 transition-all hover:scale-105 flex items-center gap-2"
+                            >
+                              <Maximize2 className="w-4 h-4" />
+                              <span className="text-sm font-bold">Ajustar Enquadramento</span>
+                            </button>
+                          </div>
                         </div>
                       )}
                       
@@ -393,6 +360,47 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
           </div>
         </DialogContent>
       </Dialog>
+
+      {isCropping && previewUrl && createPortal(
+        <div className="fixed inset-0 z-[100] bg-black flex flex-col animate-in fade-in duration-300">
+          <div className="relative flex-1 w-full h-full">
+            <Cropper
+              image={previewUrl}
+              crop={crop}
+              zoom={1}
+              rotation={0}
+              aspect={aspect}
+              onCropChange={setCrop}
+              onCropComplete={onCropComplete}
+              showGrid={false}
+              maxZoom={1}
+              objectFit="contain"
+            />
+          </div>
+          
+          <div className="bg-black/90 p-6 pb-8 z-[101] flex justify-center gap-4 safe-area-bottom">
+            <button
+              type="button"
+              onClick={() => setIsCropping(false)}
+              className="bg-gray-800 text-white px-6 py-3 rounded-full font-bold text-sm hover:bg-gray-700 transition-colors"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleConfirmCrop();
+              }}
+              className="bg-purple-600 text-white px-8 py-3 rounded-full flex items-center gap-2 shadow-lg hover:bg-purple-700 transition-colors font-bold text-sm"
+            >
+              <Check className="w-4 h-4" />
+              Confirmar
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

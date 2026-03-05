@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Upload, Image as ImageIcon, Video, Loader2, Camera, Plus, X as CloseIcon, Check, Maximize2 } from 'lucide-react';
+import { Upload, Image as ImageIcon, Video, Loader2, Camera, Plus, X as CloseIcon, Check, Maximize2, RectangleHorizontal, RectangleVertical } from 'lucide-react';
 import Cropper from 'react-easy-crop';
 import getCroppedImg from '../lib/cropImage';
 import { uploadToCloudinary, isCloudinaryConfigured } from '../lib/cloudinary';
@@ -249,7 +249,10 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
                           </div>
                         </div>
                       ) : (
-                        <div className="relative w-full aspect-video bg-gray-100 flex items-center justify-center overflow-hidden">
+                        <div 
+                          className="relative w-full bg-gray-100 flex items-center justify-center overflow-hidden transition-all duration-300"
+                          style={{ aspectRatio: aspect }}
+                        >
                           <img 
                             src={croppedImage ? URL.createObjectURL(croppedImage) : previewUrl} 
                             alt="Preview" 
@@ -363,6 +366,33 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
 
       {isCropping && previewUrl && createPortal(
         <div className="fixed inset-0 z-[100] bg-black flex flex-col animate-in fade-in duration-300">
+          <div className="absolute top-4 left-0 right-0 z-[102] flex justify-center gap-4">
+            <button
+              type="button"
+              onClick={() => setAspect(16 / 9)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all ${
+                aspect === 16 / 9 
+                  ? 'bg-white text-black shadow-lg scale-105' 
+                  : 'bg-black/50 text-white hover:bg-black/70'
+              }`}
+            >
+              <RectangleHorizontal className="w-4 h-4" />
+              <span>Horizontal</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setAspect(9 / 16)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all ${
+                aspect === 9 / 16 
+                  ? 'bg-white text-black shadow-lg scale-105' 
+                  : 'bg-black/50 text-white hover:bg-black/70'
+              }`}
+            >
+              <RectangleVertical className="w-4 h-4" />
+              <span>Vertical</span>
+            </button>
+          </div>
+
           <div className="relative flex-1 w-full h-full">
             <Cropper
               image={previewUrl}

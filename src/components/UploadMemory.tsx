@@ -29,18 +29,6 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
   const [isCropping, setIsCropping] = useState(false);
   const [croppedImage, setCroppedImage] = useState<Blob | null>(null);
-  const [croppedPreviewUrl, setCroppedPreviewUrl] = useState<string | null>(null);
-
-  // Manage cropped preview URL
-  useEffect(() => {
-    if (croppedImage) {
-      const url = URL.createObjectURL(croppedImage);
-      setCroppedPreviewUrl(url);
-      return () => URL.revokeObjectURL(url);
-    } else {
-      setCroppedPreviewUrl(null);
-    }
-  }, [croppedImage]);
 
   // Reset crop when file changes
   useEffect(() => {
@@ -102,21 +90,16 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
     }
   };
 
-  const [isProcessingCrop, setIsProcessingCrop] = useState(false);
-
   const handleConfirmCrop = async () => {
     if (previewUrl && croppedAreaPixels) {
       try {
-        setIsProcessingCrop(true);
         const cropped = await getCroppedImg(previewUrl, croppedAreaPixels, rotation);
         setCroppedImage(cropped);
         setIsCropping(false);
         toast.success('Enquadramento definido!');
-      } catch (e: any) {
-        console.error('Erro no recorte:', e);
-        toast.error(e.message || 'Erro ao processar imagem');
-      } finally {
-        setIsProcessingCrop(false);
+      } catch (e) {
+        console.error(e);
+        toast.error('Erro ao processar imagem');
       }
     }
   };
@@ -320,19 +303,14 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
                         </button>
                         <button
                           type="button"
-                          disabled={isProcessingCrop}
                           onClick={(e) => {
                             e.stopPropagation();
                             handleConfirmCrop();
                           }}
-                          className="flex-[2] bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-xl hover:brightness-110 transition-all font-bold text-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="flex-[2] bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-xl hover:brightness-110 transition-all font-bold text-sm active:scale-95"
                         >
-                          {isProcessingCrop ? (
-                            <Loader2 className="w-5 h-5 animate-spin" />
-                          ) : (
-                            <Check className="w-5 h-5" />
-                          )}
-                          {isProcessingCrop ? 'Processando...' : 'Confirmar'}
+                          <Check className="w-5 h-5" />
+                          Confirmar
                         </button>
                       </div>
                     </div>
@@ -379,7 +357,7 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
                       ) : (
                         <div className="relative w-full aspect-square bg-gray-100 flex items-center justify-center overflow-hidden transition-all duration-300 rounded-xl shadow-inner">
                           <img 
-                            src={croppedPreviewUrl || previewUrl} 
+                            src={croppedImage ? URL.createObjectURL(croppedImage) : previewUrl} 
                             alt="Preview" 
                             className="w-full h-full object-cover"
                           />

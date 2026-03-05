@@ -260,6 +260,7 @@ function FeatureRow({ icon: Icon, title, description, image, reverse = false, de
 
 function LandingPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
   const [isClientLoginModalOpen, setIsClientLoginModalOpen] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [createdEvent, setCreatedEvent] = useState<Event | null>(null);
@@ -528,6 +529,7 @@ function LandingPage() {
               Criar Minha Galeria
             </motion.button>
             <motion.button
+              onClick={() => setIsVideoModalOpen(true)}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="bg-white/10 backdrop-blur-sm text-white border-2 border-white/30 px-8 py-4 rounded-full font-bold text-lg hover:bg-white/20 transition-colors flex items-center justify-center gap-2"
@@ -536,6 +538,20 @@ function LandingPage() {
               Ver Como Funciona
             </motion.button>
           </motion.div>
+
+          {/* Video Modal */}
+          <Dialog open={isVideoModalOpen} onOpenChange={setIsVideoModalOpen}>
+            <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black border-none">
+              <div className="aspect-video w-full">
+                <iframe
+                  src="https://drive.google.com/file/d/1wPusunuiHGiF8dlP8_02oiL9r7MCeLcX/preview"
+                  className="w-full h-full"
+                  allow="autoplay; encrypted-media"
+                  allowFullScreen
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {/* Stats */}
           <motion.div

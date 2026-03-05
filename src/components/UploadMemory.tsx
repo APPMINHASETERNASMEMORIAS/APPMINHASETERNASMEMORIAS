@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Upload, Image as ImageIcon, Video, Loader2, Camera, Plus, X as CloseIcon, Check, Maximize2, RectangleHorizontal, RectangleVertical } from 'lucide-react';
+import { Upload, Image as ImageIcon, Video, Loader2, Camera, Plus, X as CloseIcon, Check, Maximize2 } from 'lucide-react';
 import Cropper from 'react-easy-crop';
 import getCroppedImg from '../lib/cropImage';
 import { uploadToCloudinary, isCloudinaryConfigured } from '../lib/cloudinary';
@@ -373,44 +373,7 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
 
       {isCropping && previewUrl && createPortal(
         <div className="fixed inset-0 z-[9999] bg-black flex flex-col animate-in fade-in duration-300">
-          <div className="absolute top-4 left-0 right-0 z-[102] flex justify-center gap-4">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setAspect(16 / 9);
-                setCrop({ x: 0, y: 0 });
-              }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all ${
-                aspect === 16 / 9 
-                  ? 'bg-white text-black shadow-lg scale-105' 
-                  : 'bg-black/50 text-white hover:bg-black/70'
-              }`}
-            >
-              <RectangleHorizontal className="w-4 h-4" />
-              <span>Horizontal</span>
-            </button>
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setAspect(9 / 16);
-                setCrop({ x: 0, y: 0 });
-              }}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all ${
-                aspect === 9 / 16 
-                  ? 'bg-white text-black shadow-lg scale-105' 
-                  : 'bg-black/50 text-white hover:bg-black/70'
-              }`}
-            >
-              <RectangleVertical className="w-4 h-4" />
-              <span>Vertical</span>
-            </button>
-          </div>
-
-          <div className="relative flex-1 w-full h-full">
+            <div className="relative flex-1 w-full h-full">
             <Cropper
               key={aspect}
               image={previewUrl}
@@ -418,9 +381,14 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
               aspect={aspect}
               onCropChange={setCrop}
               onCropComplete={onCropComplete}
+              onMediaLoaded={(mediaSize) => {
+                // Automatically set aspect ratio to match the image's natural dimensions
+                setAspect(mediaSize.naturalWidth / mediaSize.naturalHeight);
+              }}
               showGrid={false}
-              objectFit="auto-cover"
-              disableZoom={true}
+              objectFit="contain"
+              minZoom={1}
+              maxZoom={1}
             />
           </div>
           

@@ -4,6 +4,7 @@ import { uploadToCloudinary, isCloudinaryConfigured } from '../lib/cloudinary';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import imageCompression from 'browser-image-compression';
+import { FrameSelection } from './FrameSelection';
 import {
   Dialog,
   DialogContent,
@@ -16,6 +17,7 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState('');
   const [message, setMessage] = useState('');
+  const [selectedFrame, setSelectedFrame] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -120,7 +122,7 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
           url: fileUrl,
           type: isVideo ? 'video' : 'image',
           uploader_name: name,
-          message: message || null,
+          message: (message || selectedFrame) ? (message + (selectedFrame ? `\nFrame: ${selectedFrame}` : '')) : null,
           event_id: eventId || null,
           uploader_id: getUploaderId(),
         }
@@ -290,6 +292,9 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
                   className="w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors resize-none disabled:bg-gray-100 disabled:text-gray-500"
                 />
               </div>
+
+              {/* Frame Selection */}
+              <FrameSelection onSelect={setSelectedFrame} />
 
               {/* Submit Button */}
               <button

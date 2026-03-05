@@ -365,11 +365,15 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
       </Dialog>
 
       {isCropping && previewUrl && createPortal(
-        <div className="fixed inset-0 z-[100] bg-black flex flex-col animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[9999] bg-black flex flex-col animate-in fade-in duration-300">
           <div className="absolute top-4 left-0 right-0 z-[102] flex justify-center gap-4">
             <button
               type="button"
-              onClick={() => setAspect(16 / 9)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setAspect(16 / 9);
+              }}
               className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all ${
                 aspect === 16 / 9 
                   ? 'bg-white text-black shadow-lg scale-105' 
@@ -381,7 +385,11 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
             </button>
             <button
               type="button"
-              onClick={() => setAspect(9 / 16)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setAspect(9 / 16);
+              }}
               className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all ${
                 aspect === 9 / 16 
                   ? 'bg-white text-black shadow-lg scale-105' 

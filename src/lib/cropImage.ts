@@ -2,8 +2,13 @@ export const createImage = (url: string): Promise<HTMLImageElement> =>
   new Promise((resolve, reject) => {
     const image = new Image();
     image.addEventListener('load', () => resolve(image));
-    image.addEventListener('error', (error) => reject(error));
-    image.setAttribute('crossOrigin', 'anonymous'); // needed to avoid cross-origin issues on CodeSandbox
+    image.addEventListener('error', (error) => {
+      console.error('Error loading image for cropping:', error);
+      reject(new Error('Falha ao carregar imagem para recorte'));
+    });
+    if (!url.startsWith('blob:')) {
+      image.setAttribute('crossOrigin', 'anonymous');
+    }
     image.src = url;
   });
 
@@ -39,7 +44,7 @@ export default async function getCroppedImg(
   const ctx = canvas.getContext('2d');
 
   if (!ctx) {
-    return null;
+    throw new Error('Não foi possível obter o contexto do canvas');
   }
 
   const rotRad = getRadianAngle(rotation);
@@ -61,29 +66,40 @@ export default async function getCroppedImg(
   ctx.scale(flip.horizontal ? -1 : 1, flip.vertical ? -1 : 1);
   ctx.drawImage(image, -image.width / 2, -image.height / 2);
 
+  // Validate pixelCrop dimensions
+  if (pixelCrop.width <= 0 || pixelCrop.height <= 0) {
+    throw new Error('Dimensões de recorte inválidas');
+  }
+
   // croppedAreaPixels values are bounding box relative
   // extract the cropped image using these values
-  const data = ctx.getImageData(
-    pixelCrop.x,
-    pixelCrop.y,
-    pixelCrop.width,
-    pixelCrop.height
-  );
+  try {
+    const data = ctx.getImageData(
+      pixelCrop.x,
+      pixelCrop.y,
+      pixelCrop.width,
+      pixelCrop.height
+    );
 
-  // set canvas width to final desired crop size - this will clear existing context
-  canvas.width = pixelCrop.width;
-  canvas.height = pixelCrop.height;
+    // set canvas width to final desired crop size - this will clear existing context
+    canvas.width = pixelCrop.width;
+    canvas.height = pixelCrop.height;
 
-  // paste generated rotate image at the top left corner
-  ctx.putImageData(data, 0, 0);
+    // paste generated rotate image at the top left corner
+    ctx.putImageData(data, 0, 0);
 
-  // As Base64 string
-  // return canvas.toDataURL('image/jpeg');
-
-  // As a blob
-  return new Promise((resolve, reject) => {
-    canvas.toBlob((file) => {
-      resolve(file);
-    }, 'image/jpeg');
-  });
+    // As a blob
+    return new Promise((resolve, reject) => {
+      canvas.toBlob((file) => {
+        if (file) {
+          resolve(file);
+        } else {
+          reject(new Error('Falha ao gerar o arquivo de imagem (Blob)'));
+        }
+      }, 'image/jpeg', 0.95);
+    });
+  } catch (error) {
+    console.error('Error during canvas manipulation:', error);
+    throw new Error('Erro ao processar os pixels da imagem');
+  }
 }

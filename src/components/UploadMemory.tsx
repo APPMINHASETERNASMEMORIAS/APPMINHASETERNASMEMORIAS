@@ -102,16 +102,21 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
     }
   };
 
+  const [isProcessingCrop, setIsProcessingCrop] = useState(false);
+
   const handleConfirmCrop = async () => {
     if (previewUrl && croppedAreaPixels) {
       try {
+        setIsProcessingCrop(true);
         const cropped = await getCroppedImg(previewUrl, croppedAreaPixels, rotation);
         setCroppedImage(cropped);
         setIsCropping(false);
         toast.success('Enquadramento definido!');
-      } catch (e) {
-        console.error(e);
-        toast.error('Erro ao processar imagem');
+      } catch (e: any) {
+        console.error('Erro no recorte:', e);
+        toast.error(e.message || 'Erro ao processar imagem');
+      } finally {
+        setIsProcessingCrop(false);
       }
     }
   };
@@ -315,14 +320,19 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
                         </button>
                         <button
                           type="button"
+                          disabled={isProcessingCrop}
                           onClick={(e) => {
                             e.stopPropagation();
                             handleConfirmCrop();
                           }}
-                          className="flex-[2] bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-xl hover:brightness-110 transition-all font-bold text-sm active:scale-95"
+                          className="flex-[2] bg-gradient-to-r from-purple-600 to-pink-600 text-white px-8 py-3.5 rounded-2xl flex items-center justify-center gap-2 shadow-xl hover:brightness-110 transition-all font-bold text-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          <Check className="w-5 h-5" />
-                          Confirmar
+                          {isProcessingCrop ? (
+                            <Loader2 className="w-5 h-5 animate-spin" />
+                          ) : (
+                            <Check className="w-5 h-5" />
+                          )}
+                          {isProcessingCrop ? 'Processando...' : 'Confirmar'}
                         </button>
                       </div>
                     </div>

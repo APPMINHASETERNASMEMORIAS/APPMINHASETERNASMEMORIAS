@@ -262,9 +262,11 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
                                   zoom={zoom}
                                   rotation={rotation}
                                   aspect={aspect}
-                                  onCropChange={(c) => setCrop({ x: 0, y: c.y })}
+                                  onCropChange={(c) => setCrop({ x: 0, y: c?.y ?? 0 })}
                                   onCropComplete={onCropComplete}
                                   showGrid={false}
+                                  zoomWithScroll={false}
+                                  restrictPosition={true}
                                 />
                                 {selectedFrame && (
                                   <div className="absolute inset-0 pointer-events-none z-10">

@@ -88,15 +88,13 @@ const FONTS = [
 ];
 
 const FRAME_TEMPLATES = [
-  { id: 'frame1', name: '', imageUrl: 'https://lh3.googleusercontent.com/d/120rNh5NBi9PvY_39RhBXHPtgO-ebEQtN' },
-  { id: 'frame2', name: '', imageUrl: 'https://lh3.googleusercontent.com/d/1MiTQtunEjExr5rt-E29Rfe641KIl6pzy' },
-  { id: 'frame3', name: '', imageUrl: 'https://lh3.googleusercontent.com/d/1Pj5xIiA8pgwcsJNWiITHw98q1C8E8dAW' },
-  { id: 'frame4', name: '', imageUrl: 'https://lh3.googleusercontent.com/d/1T_RFshRXK3evgOfKvPWnGxMWiEaVhgZM' },
-  { id: 'frame5', name: '', imageUrl: 'https://lh3.googleusercontent.com/d/1ceyIu5_XyhpmtOCRYZ0ognvR5U9ZXNEB' },
-  { id: 'frame6', name: '', imageUrl: 'https://lh3.googleusercontent.com/d/1lJK0OCBDafda1kedU3lt-If7us1iWAzg' },
-  { id: 'frame7', name: '', imageUrl: 'https://lh3.googleusercontent.com/d/1mKl3ZdyBgE8-UTsXX0uTD2u7tPwwwntc' },
-  { id: 'frame8', name: '', imageUrl: 'https://lh3.googleusercontent.com/d/1nvo26DLV5IfVnC5Buwhg33xL4IeHY0cq' },
-  { id: 'frame9', name: '', imageUrl: 'https://lh3.googleusercontent.com/d/1qfiljJNdrCpTm2KS0HqjM6_JL_0BkdDr' },
+  { id: 'luxury', name: 'Luxo', preview: 'border-[8px] border-double shadow-[inset_0_0_15px_rgba(0,0,0,0.2)]' },
+  { id: 'retro', name: 'Retro', preview: 'border-[10px] border-b-[35px] shadow-lg bg-white/5' },
+  { id: 'neon', name: 'Neon', preview: 'border-[2px] shadow-[0_0_15px_currentcolor,inset_0_0_8px_currentcolor]' },
+  { id: 'romance', name: 'Romance', preview: 'border-[6px] rounded-[25px] border-double shadow-[0_0_10px_rgba(255,182,193,0.3)]' },
+  { id: 'floral', name: 'Floral', preview: 'border-[8px] border-solid border-green-500/30' },
+  { id: 'vintage', name: 'Vintage', preview: 'border-[12px] border-double border-amber-700' },
+  { id: 'gold', name: 'Dourado', preview: 'border-[6px] border-solid border-yellow-500' },
 ];
 
 const COLORS = [
@@ -126,8 +124,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
     color: '#FFD700',
     font: 'font-playfair',
     text: '',
-    templateId: 'frame1',
-    imageUrl: 'https://lh3.googleusercontent.com/d/120rNh5NBi9PvY_39RhBXHPtgO-ebEQtN',
+    templateId: 'luxury',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
@@ -224,8 +221,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
       color: '#FFD700',
       font: 'font-playfair',
       text: '',
-      templateId: 'frame1',
-      imageUrl: 'https://lh3.googleusercontent.com/d/120rNh5NBi9PvY_39RhBXHPtgO-ebEQtN',
+      templateId: 'luxury',
     });
   };
 
@@ -450,23 +446,27 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
                       {FRAME_TEMPLATES.map((t) => (
                         <button
                           key={t.id}
-                          onClick={() => setFrameSettings({ ...frameSettings, templateId: t.id, imageUrl: t.imageUrl })}
+                          onClick={() => setFrameSettings({ ...frameSettings, templateId: t.id })}
                           className={`relative aspect-video rounded-xl border-2 transition-all overflow-hidden group ${
                             frameSettings.templateId === t.id ? 'border-purple-600 ring-2 ring-purple-600/20' : 'border-gray-100 hover:border-gray-300'
                           }`}
                         >
                           {/* Visual Preview of the Frame */}
                           <div className="absolute inset-0 bg-gray-50 flex items-center justify-center">
-                            <img 
-                              src={t.imageUrl} 
-                              alt="Moldura" 
-                              className="absolute inset-0 w-full h-full object-cover"
-                              referrerPolicy="no-referrer"
+                            <div 
+                              className={`absolute inset-0 pointer-events-none ${t.preview}`}
+                              style={{ borderColor: frameSettings.color, color: frameSettings.color }}
                             />
+                            <Camera className="w-6 h-6 text-gray-200" />
+                          </div>
+                          
+                          {/* Selection Indicator */}
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/40 backdrop-blur-sm py-1 text-center">
+                            <span className="text-[10px] text-white font-medium uppercase tracking-wider">{t.name}</span>
                           </div>
                           
                           {frameSettings.templateId === t.id && (
-                            <div className="absolute top-1 right-1 bg-purple-600 text-white rounded-full p-0.5 shadow-sm z-10">
+                            <div className="absolute top-1 right-1 bg-purple-600 text-white rounded-full p-0.5 shadow-sm">
                               <CheckCircle2 className="w-3 h-3" />
                             </div>
                           )}

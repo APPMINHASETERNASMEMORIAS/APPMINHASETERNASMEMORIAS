@@ -497,8 +497,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
           <form 
             onSubmit={(e) => {
               e.preventDefault();
-              const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123';
-              if (password === adminPassword) {
+              if (password === 'admin123') {
                 setIsAuthenticated(true);
                 toast.success('Bem-vindo ao painel!');
               } else {

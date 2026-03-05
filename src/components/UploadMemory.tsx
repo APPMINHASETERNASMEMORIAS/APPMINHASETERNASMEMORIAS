@@ -24,7 +24,7 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
   const [isOpen, setIsOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const zoom = 1;
+  const [zoom, setZoom] = useState(1);
   const rotation = 0;
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
   const [isCropping, setIsCropping] = useState(false);
@@ -266,10 +266,11 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
                                   zoom={zoom}
                                   rotation={rotation}
                                   aspect={aspect}
-                                  onCropChange={(c) => setCrop({ x: 0, y: c?.y ?? 0 })}
+                                  onCropChange={setCrop}
+                                  onZoomChange={setZoom}
                                   onCropComplete={onCropComplete}
                                   showGrid={true}
-                                  zoomWithScroll={false}
+                                  zoomWithScroll={true}
                                   restrictPosition={true}
                                   style={{
                                     containerStyle: { background: '#000' },
@@ -286,10 +287,25 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
                                     />
                                   </div>
                                 )}
-                                {/* Visual Guide for Vertical Movement */}
+                                {/* Visual Guide for Movement */}
                                 <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 opacity-50 pointer-events-none">
                                   <div className="w-1 h-8 bg-white rounded-full animate-bounce" />
                                   <div className="w-1 h-8 bg-white rounded-full animate-bounce delay-100" />
+                                </div>
+                                
+                                {/* Zoom Slider Overlay */}
+                                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 w-2/3 bg-black/60 backdrop-blur-md px-4 py-2 rounded-full z-[70] flex items-center gap-3 border border-white/10">
+                                  <span className="text-white text-[10px] font-bold">ZOOM</span>
+                                  <input
+                                    type="range"
+                                    value={zoom}
+                                    min={1}
+                                    max={3}
+                                    step={0.1}
+                                    aria-labelledby="Zoom"
+                                    onChange={(e) => setZoom(Number(e.target.value))}
+                                    className="flex-1 accent-purple-500 h-1"
+                                  />
                                 </div>
                               </div>
                               
@@ -297,7 +313,7 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
                                 <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
                                   <div className="flex items-center gap-2 text-white/70">
                                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                                    <p className="text-xs font-medium">Visualização em tempo real do mural</p>
+                                    <p className="text-xs font-medium">Arraste para ajustar o enquadramento</p>
                                   </div>
                                   <button
                                     type="button"

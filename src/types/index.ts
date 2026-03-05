@@ -43,6 +43,7 @@ export interface FrameSettings {
   font: string;
   text: string;
   templateId?: string;
+  imageUrl?: string;
 }
 
 export interface EventStats {

@@ -245,6 +245,22 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
     );
   }
 
+  // Helper to extract frame and clean message
+  const getMemoryContent = (memory: Memory) => {
+    let frameUrl = null;
+    let cleanMessage = memory.message;
+
+    if (memory.message && memory.message.includes('Frame: ')) {
+      const parts = memory.message.split('Frame: ');
+      if (parts.length > 1) {
+        cleanMessage = parts[0].trim();
+        frameUrl = parts[1].trim();
+      }
+    }
+
+    return { cleanMessage, frameUrl };
+  };
+
   return (
     <>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 grid-flow-dense gap-0.5 bg-gray-200 p-0.5 rounded-3xl overflow-hidden shadow-2xl">
@@ -253,6 +269,11 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
           const isFeatured = index % 10 === 0; // A cada 10 fotos, uma fica grande
           const isWide = index % 7 === 0 && !isFeatured; // Algumas ficam largas
           
+          const { cleanMessage, frameUrl } = getMemoryContent(memory);
+          const effectiveFrameSettings = frameUrl 
+            ? { enabled: true, imageUrl: frameUrl, color: '', font: '', text: '' }
+            : event?.settings?.frameSettings;
+
           return (
             <div 
               key={memory.id} 
@@ -279,7 +300,7 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
                     </div>
                   </div>
                 ) : (
-                  <FrameOverlay settings={event?.settings?.frameSettings} className="w-full h-full">
+                  <FrameOverlay settings={effectiveFrameSettings} className="w-full h-full">
                     <img
                       src={memory.url}
                       alt={`Memória de ${memory.uploader_name}`}
@@ -293,10 +314,10 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
               {/* Overlay: Message Preview & Actions */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-4">
                 {/* Message Preview */}
-                {memory.message && (
+                {cleanMessage && (
                   <div className="mb-3 transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300">
                     <p className="text-white text-sm font-medium line-clamp-3 italic bg-black/30 backdrop-blur-sm p-2 rounded-lg border border-white/10">
-                      "{memory.message}"
+                      "{cleanMessage}"
                     </p>
                   </div>
                 )}
@@ -346,6 +367,14 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
           className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 sm:p-8"
           onClick={() => setSelectedMemory(null)}
         >
+          {(() => {
+             const { cleanMessage, frameUrl } = getMemoryContent(selectedMemory);
+             const effectiveFrameSettings = frameUrl 
+               ? { enabled: true, imageUrl: frameUrl, color: '', font: '', text: '' }
+               : event?.settings?.frameSettings;
+             
+             return (
+               <>
           <button 
             className="absolute top-6 right-6 text-white/70 hover:text-white transition-colors z-10"
             onClick={() => setSelectedMemory(null)}
@@ -397,7 +426,7 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
                   )}
                 </>
               ) : (
-                <FrameOverlay settings={event?.settings?.frameSettings} className="max-w-full max-h-[70vh]">
+                <FrameOverlay settings={effectiveFrameSettings} className="max-w-full max-h-[70vh]">
                   <img
                     src={selectedMemory.url}
                     alt={`Memória de ${selectedMemory.uploader_name}`}
@@ -408,9 +437,9 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
             </div>
 
             <div className="w-full max-w-2xl text-center space-y-4">
-              {selectedMemory.message && (
+              {cleanMessage && (
                 <p className="text-white text-lg sm:text-xl font-medium italic leading-relaxed">
-                  "{selectedMemory.message}"
+                  "{cleanMessage}"
                 </p>
               )}
               <div className="flex flex-col items-center gap-1">
@@ -439,6 +468,9 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
               </div>
             </div>
           </div>
+               </>
+             );
+          })()}
         </div>
       )}
     </>

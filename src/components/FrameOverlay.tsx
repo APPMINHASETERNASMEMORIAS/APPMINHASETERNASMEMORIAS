@@ -13,6 +13,32 @@ export function FrameOverlay({ settings, className = '', children }: FrameOverla
     return <>{children}</>;
   }
 
+  if (settings.imageUrl) {
+    return (
+      <div className={`relative w-full h-full overflow-hidden ${className}`}>
+        {children}
+        <div className="absolute inset-0 pointer-events-none z-10">
+          <img 
+            src={settings.imageUrl} 
+            alt="Frame" 
+            className="w-full h-full object-fill opacity-90"
+            referrerPolicy="no-referrer"
+          />
+        </div>
+        {settings.text && (
+          <div className={`absolute left-0 right-0 text-center px-4 bottom-8 z-20`}>
+            <p 
+              className={`${settings.font} text-xl md:text-2xl font-bold drop-shadow-lg`}
+              style={{ color: settings.color }}
+            >
+              {settings.text}
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   const getTemplateStyles = () => {
     switch (settings.templateId) {
       case 'luxury':

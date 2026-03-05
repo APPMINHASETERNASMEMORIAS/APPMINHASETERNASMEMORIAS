@@ -13,6 +13,21 @@ interface MediaWallProps {
   onDelete?: (mediaId: string) => void;
 }
 
+// Helper to extract frame and clean caption
+const getMediaContent = (item: MediaItem) => {
+  let frameUrl = null;
+  let cleanCaption = item.caption;
+
+  if (item.caption && item.caption.includes('Frame: ')) {
+    const parts = item.caption.split('Frame: ');
+    if (parts.length > 1) {
+      cleanCaption = parts[0].trim();
+      frameUrl = parts[1].trim();
+    }
+  }
+  return { cleanCaption, frameUrl };
+};
+
 function MediaItemCard({ item, event, isAdmin, onApprove, onDelete, onClick }: {
   item: MediaItem;
   event?: Event;
@@ -23,6 +38,11 @@ function MediaItemCard({ item, event, isAdmin, onApprove, onDelete, onClick }: {
 }) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  
+  const { cleanCaption, frameUrl } = getMediaContent(item);
+  const effectiveFrameSettings = frameUrl 
+    ? { enabled: true, imageUrl: frameUrl, color: '', font: '', text: '' }
+    : event?.settings?.frameSettings;
 
   return (
     <div
@@ -38,10 +58,10 @@ function MediaItemCard({ item, event, isAdmin, onApprove, onDelete, onClick }: {
       )}
 
       {item.type === 'image' ? (
-        <FrameOverlay settings={event?.settings?.frameSettings} className="w-full h-full">
+        <FrameOverlay settings={effectiveFrameSettings} className="w-full h-full">
           <img
             src={item.thumbnailUrl}
-            alt={item.caption || 'Foto do evento'}
+            alt={cleanCaption || 'Foto do evento'}
             className={`w-full h-full object-cover transition-all duration-300 ${isLoaded ? 'opacity-100' : 'opacity-0'} ${isHovered ? 'scale-110' : 'scale-100'}`}
             loading="lazy"
             onLoad={() => setIsLoaded(true)}
@@ -58,7 +78,7 @@ function MediaItemCard({ item, event, isAdmin, onApprove, onDelete, onClick }: {
       )}
 
       <div className={`absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
-        {item.caption && <div className="absolute bottom-16 left-4 right-4"><p className="text-white text-sm line-clamp-2">{item.caption}</p></div>}
+        {cleanCaption && <div className="absolute bottom-16 left-4 right-4"><p className="text-white text-sm line-clamp-2">{cleanCaption}</p></div>}
         <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
           <span className="text-white/80 text-xs">{item.uploadedBy}</span>
           {isAdmin && (
@@ -94,6 +114,11 @@ function Lightbox({ item, event, isOpen, onClose, onNext, onPrev, hasNext, hasPr
 }) {
   if (!item) return null;
 
+  const { cleanCaption, frameUrl } = getMediaContent(item);
+  const effectiveFrameSettings = frameUrl 
+    ? { enabled: true, imageUrl: frameUrl, color: '', font: '', text: '' }
+    : event?.settings?.frameSettings;
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-6xl w-full h-[90vh] p-0 bg-black/95 border-none">
@@ -102,8 +127,8 @@ function Lightbox({ item, event, isOpen, onClose, onNext, onPrev, hasNext, hasPr
           {hasPrev && <button onClick={onPrev} className="absolute left-4 z-50 w-12 h-12 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"><span className="text-white text-2xl">‹</span></button>}
           {hasNext && <button onClick={onNext} className="absolute right-4 z-50 w-12 h-12 rounded-full bg-white/10 flex items-center justify-center hover:bg-white/20 transition-colors"><span className="text-white text-2xl">›</span></button>}
           {item.type === 'image' ? (
-            <FrameOverlay settings={event?.settings?.frameSettings} className="max-w-full max-h-full">
-              <img src={item.originalUrl} alt={item.caption || 'Foto'} className="w-full h-full object-contain" />
+            <FrameOverlay settings={effectiveFrameSettings} className="max-w-full max-h-full">
+              <img src={item.originalUrl} alt={cleanCaption || 'Foto'} className="w-full h-full object-contain" />
             </FrameOverlay>
           ) : (
             <video src={item.url} controls className="max-w-full max-h-full" autoPlay />
@@ -111,7 +136,7 @@ function Lightbox({ item, event, isOpen, onClose, onNext, onPrev, hasNext, hasPr
           <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
             <div className="flex items-center justify-between">
               <div>
-                {item.caption && <p className="text-white text-lg mb-1">{item.caption}</p>}
+                {cleanCaption && <p className="text-white text-lg mb-1">{cleanCaption}</p>}
                 <p className="text-white/60 text-sm">Enviado por {item.uploadedBy} • {new Date(item.uploadedAt).toLocaleDateString('pt-BR')}</p>
               </div>
               <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white/10" onClick={() => { const link = document.createElement('a'); link.href = item.originalUrl; link.download = `foto-${item.id}.jpg`; link.click(); }}>

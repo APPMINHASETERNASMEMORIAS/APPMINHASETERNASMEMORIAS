@@ -28,6 +28,8 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
   const [croppedImage, setCroppedImage] = useState<Blob | null>(null);
   const [aspect, setAspect] = useState(16 / 9); // Matches the aspect-video container
 
+  const [zoom, setZoom] = useState(1);
+
   const onCropComplete = useCallback((_croppedArea: any, croppedAreaPixels: any) => {
     setCroppedAreaPixels(croppedAreaPixels);
   }, []);
@@ -48,6 +50,8 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
       setPreviewUrl(null);
       setName('');
       setMessage('');
+      setZoom(1);
+      setCrop({ x: 0, y: 0 });
     }
   }, [isOpen]);
 
@@ -376,6 +380,7 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
                 e.preventDefault();
                 e.stopPropagation();
                 setAspect(16 / 9);
+                setCrop({ x: 0, y: 0 });
               }}
               className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all ${
                 aspect === 16 / 9 
@@ -392,6 +397,7 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
                 e.preventDefault();
                 e.stopPropagation();
                 setAspect(9 / 16);
+                setCrop({ x: 0, y: 0 });
               }}
               className={`flex items-center gap-2 px-4 py-2 rounded-full font-medium transition-all ${
                 aspect === 9 / 16 
@@ -406,16 +412,15 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
 
           <div className="relative flex-1 w-full h-full">
             <Cropper
+              key={aspect}
               image={previewUrl}
               crop={crop}
-              zoom={1}
-              rotation={0}
               aspect={aspect}
               onCropChange={setCrop}
               onCropComplete={onCropComplete}
               showGrid={false}
-              maxZoom={1}
-              objectFit="contain"
+              objectFit="auto-cover"
+              disableZoom={true}
             />
           </div>
           

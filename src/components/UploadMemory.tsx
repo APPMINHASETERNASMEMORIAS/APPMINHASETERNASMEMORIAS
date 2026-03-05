@@ -1,5 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Upload, Image as ImageIcon, Video, Loader2, Camera, Plus, X as CloseIcon } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Upload, Image as ImageIcon, Video, Loader2, Camera, Plus, X as CloseIcon, Check, Maximize2 } from 'lucide-react';
+import Cropper from 'react-easy-crop';
+import getCroppedImg from '../lib/cropImage';
 import { uploadToCloudinary, isCloudinaryConfigured } from '../lib/cloudinary';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import toast from 'react-hot-toast';
@@ -21,6 +23,17 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
   const [isUploading, setIsUploading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [rotation, setRotation] = useState(0);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
+  const [isCropping, setIsCropping] = useState(false);
+  const [croppedImage, setCroppedImage] = useState<Blob | null>(null);
+  const [aspect, setAspect] = useState(16 / 9); // Matches the aspect-video container
+
+  const onCropComplete = useCallback((_croppedArea: any, croppedAreaPixels: any) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
 
   // Clean up preview URL when component unmounts or file changes
   useEffect(() => {
@@ -55,12 +68,32 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
       setFile(selectedFile);
+      setCroppedImage(null);
       
       // Create preview URL
       if (previewUrl) {
         URL.revokeObjectURL(previewUrl);
       }
-      setPreviewUrl(URL.createObjectURL(selectedFile));
+      const url = URL.createObjectURL(selectedFile);
+      setPreviewUrl(url);
+
+      if (selectedFile.type.startsWith('image/')) {
+        setIsCropping(true);
+      }
+    }
+  };
+
+  const handleConfirmCrop = async () => {
+    if (previewUrl && croppedAreaPixels) {
+      try {
+        const cropped = await getCroppedImg(previewUrl, croppedAreaPixels, rotation);
+        setCroppedImage(cropped);
+        setIsCropping(false);
+        toast.success('Enquadramento definido!');
+      } catch (e) {
+        console.error(e);
+        toast.error('Erro ao processar imagem');
+      }
     }
   };
 
@@ -84,7 +117,7 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
 
     try {
       setIsUploading(true);
-      let fileToUpload = file;
+      let fileToUpload: File | Blob = croppedImage || file;
       const isVideo = file.type.startsWith('video/');
 
       // Real upload logic
@@ -134,6 +167,8 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
       // Reset form
       setFile(null);
       setPreviewUrl(null);
+      setCroppedImage(null);
+      setIsCropping(false);
       setName('');
       setMessage('');
       setIsOpen(false);
@@ -215,24 +250,104 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
                         </div>
                       ) : (
                         <div className="relative w-full aspect-video bg-gray-100 flex items-center justify-center overflow-hidden">
-                          <img 
-                            src={previewUrl} 
-                            alt="Preview" 
-                            className="w-full h-full object-cover"
-                          />
-                          {selectedFrame && (
-                            <div className="absolute inset-0 pointer-events-none z-10">
-                              <img 
-                                src={selectedFrame} 
-                                alt="Moldura" 
-                                className="w-full h-full object-fill"
-                                referrerPolicy="no-referrer"
-                              />
+                          {isCropping ? (
+                            <div className="absolute inset-0 z-50 bg-black flex flex-col">
+                              <div className="relative flex-1">
+                                <Cropper
+                                  image={previewUrl}
+                                  crop={crop}
+                                  zoom={zoom}
+                                  rotation={rotation}
+                                  aspect={aspect}
+                                  onCropChange={setCrop}
+                                  onRotationChange={setRotation}
+                                  onCropComplete={onCropComplete}
+                                  onZoomChange={setZoom}
+                                  showGrid={false}
+                                />
+                                {selectedFrame && (
+                                  <div className="absolute inset-0 pointer-events-none z-10">
+                                    <img 
+                                      src={selectedFrame} 
+                                      alt="Moldura" 
+                                      className="w-full h-full object-fill"
+                                      referrerPolicy="no-referrer"
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                              
+                              <div className="bg-black/80 p-4 space-y-4 z-[60]">
+                                <div className="flex items-center gap-4">
+                                  <span className="text-white text-xs font-bold">Zoom</span>
+                                  <input
+                                    type="range"
+                                    value={zoom}
+                                    min={1}
+                                    max={3}
+                                    step={0.1}
+                                    onChange={(e) => setZoom(Number(e.target.value))}
+                                    className="flex-1 h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                                  />
+                                </div>
+                                
+                                <div className="flex justify-between items-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => setRotation((prev) => (prev + 90) % 360)}
+                                    className="text-white text-xs flex items-center gap-2 hover:text-purple-400 transition-colors"
+                                  >
+                                    <Upload className="w-4 h-4 rotate-90" />
+                                    Girar 90°
+                                  </button>
+                                  
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleConfirmCrop();
+                                    }}
+                                    className="bg-purple-600 text-white px-6 py-2 rounded-full flex items-center gap-2 shadow-lg hover:bg-purple-700 transition-colors font-bold text-sm"
+                                  >
+                                    <Check className="w-4 h-4" />
+                                    Confirmar
+                                  </button>
+                                </div>
+                              </div>
                             </div>
+                          ) : (
+                            <>
+                              <img 
+                                src={croppedImage ? URL.createObjectURL(croppedImage) : previewUrl} 
+                                alt="Preview" 
+                                className="w-full h-full object-cover"
+                              />
+                              {selectedFrame && (
+                                <div className="absolute inset-0 pointer-events-none z-10">
+                                  <img 
+                                    src={selectedFrame} 
+                                    alt="Moldura" 
+                                    className="w-full h-full object-fill"
+                                    referrerPolicy="no-referrer"
+                                  />
+                                </div>
+                              )}
+                              <div className="absolute inset-0 bg-black/0 group-hover/preview:bg-black/20 transition-colors flex items-center justify-center z-20">
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setIsCropping(true);
+                                  }}
+                                  className="bg-white/90 text-purple-600 px-4 py-2 rounded-full shadow-lg opacity-0 group-hover/preview:opacity-100 transition-all hover:scale-105 flex items-center gap-2"
+                                >
+                                  <Maximize2 className="w-4 h-4" />
+                                  <span className="text-sm font-bold">Ajustar Enquadramento</span>
+                                </button>
+                              </div>
+                            </>
                           )}
-                          <div className="absolute inset-0 bg-black/0 group-hover/preview:bg-black/20 transition-colors flex items-center justify-center z-20">
-                            <ImageIcon className="w-12 h-12 text-white opacity-0 group-hover/preview:opacity-80 transition-opacity" />
-                          </div>
                         </div>
                       )}
                       

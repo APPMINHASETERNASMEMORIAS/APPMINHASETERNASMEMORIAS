@@ -14,13 +14,14 @@ export function FrameOverlay({ settings, className = '', children }: FrameOverla
 
   const getTemplateStyles = () => {
     switch (settings.templateId) {
-      case 'floral':
-        return 'border-[12px] border-double';
-      case 'modern':
-        return 'border-[16px] border-black/5';
-      case 'classic':
-        return 'outline outline-2 outline-offset-[-16px] border-[20px]';
-      case 'minimal':
+      case 'luxury':
+        return 'border-[16px] border-solid shadow-[inset_0_0_30px_rgba(0,0,0,0.3)]';
+      case 'retro':
+        return 'border-[20px] border-b-[80px] shadow-2xl bg-white/5';
+      case 'neon':
+        return 'border-[3px] shadow-[0_0_20px_currentcolor,inset_0_0_10px_currentcolor]';
+      case 'romance':
+        return 'border-[10px] rounded-[50px] border-double shadow-[0_0_15px_rgba(255,182,193,0.3)]';
       default:
         return 'border-[4px]';
     }
@@ -33,39 +34,50 @@ export function FrameOverlay({ settings, className = '', children }: FrameOverla
       {/* Frame Overlay */}
       <div 
         className={`absolute inset-0 pointer-events-none transition-all duration-500 ${getTemplateStyles()}`}
-        style={{ borderColor: settings.color, color: settings.color }}
+        style={{ 
+          borderColor: settings.color, 
+          color: settings.color,
+          ...(settings.templateId === 'luxury' ? {
+            borderImage: `linear-gradient(45deg, ${settings.color}, #ffffff, ${settings.color}, #ffffff, ${settings.color}) 1`,
+          } : {})
+        }}
       >
         {/* Corner Ornaments */}
-        {settings.templateId === 'floral' && (
+        {settings.templateId === 'luxury' && (
           <>
-            <div className="absolute top-2 left-2 w-12 h-12 border-t-2 border-l-2 rounded-tl-3xl opacity-60" />
-            <div className="absolute top-2 right-2 w-12 h-12 border-t-2 border-r-2 rounded-tr-3xl opacity-60" />
-            <div className="absolute bottom-2 left-2 w-12 h-12 border-b-2 border-l-2 rounded-bl-3xl opacity-60" />
-            <div className="absolute bottom-2 right-2 w-12 h-12 border-b-2 border-r-2 rounded-br-3xl opacity-60" />
+            <div className="absolute top-1 left-1 w-12 h-12 border-t-2 border-l-2 opacity-100" style={{ borderColor: settings.color }} />
+            <div className="absolute top-1 right-1 w-12 h-12 border-t-2 border-r-2 opacity-100" style={{ borderColor: settings.color }} />
+            <div className="absolute bottom-1 left-1 w-12 h-12 border-b-2 border-l-2 opacity-100" style={{ borderColor: settings.color }} />
+            <div className="absolute bottom-1 right-1 w-12 h-12 border-b-2 border-r-2 opacity-100" style={{ borderColor: settings.color }} />
+            {/* Decorative dots */}
+            <div className="absolute top-4 left-4 w-1.5 h-1.5 rounded-full bg-white shadow-sm" />
+            <div className="absolute top-4 right-4 w-1.5 h-1.5 rounded-full bg-white shadow-sm" />
+            <div className="absolute bottom-4 left-4 w-1.5 h-1.5 rounded-full bg-white shadow-sm" />
+            <div className="absolute bottom-4 right-4 w-1.5 h-1.5 rounded-full bg-white shadow-sm" />
           </>
         )}
 
-        {settings.templateId === 'classic' && (
+        {settings.templateId === 'romance' && (
           <>
-            <div className="absolute top-4 left-4 w-8 h-8 border-t-4 border-l-4 opacity-80" />
-            <div className="absolute top-4 right-4 w-8 h-8 border-t-4 border-r-4 opacity-80" />
-            <div className="absolute bottom-4 left-4 w-8 h-8 border-b-4 border-l-4 opacity-80" />
-            <div className="absolute bottom-4 right-4 w-8 h-8 border-b-4 border-r-4 opacity-80" />
+            <div className="absolute -top-2 -left-2 w-16 h-16 opacity-40 blur-xl bg-pink-400" />
+            <div className="absolute -bottom-2 -right-2 w-16 h-16 opacity-40 blur-xl bg-pink-400" />
+            {/* Heart ornaments */}
+            <div className="absolute top-4 left-4 text-2xl">❤️</div>
+            <div className="absolute top-4 right-4 text-2xl">❤️</div>
+            <div className="absolute bottom-4 left-4 text-2xl">❤️</div>
+            <div className="absolute bottom-4 right-4 text-2xl">❤️</div>
           </>
         )}
 
-        {settings.templateId === 'modern' && (
-          <>
-            <div className="absolute top-0 left-0 w-full h-4 bg-gradient-to-b from-current to-transparent opacity-10" />
-            <div className="absolute bottom-0 left-0 w-full h-4 bg-gradient-to-t from-current to-transparent opacity-10" />
-          </>
+        {settings.templateId === 'neon' && (
+          <div className="absolute inset-0 animate-pulse opacity-50" style={{ boxShadow: `0 0 30px ${settings.color}, inset 0 0 20px ${settings.color}` }} />
         )}
 
         {settings.text && (
-          <div className="absolute bottom-6 left-0 right-0 text-center px-4">
+          <div className={`absolute left-0 right-0 text-center px-4 ${settings.templateId === 'retro' ? 'bottom-4' : 'bottom-8'}`}>
             <p 
-              className={`${settings.font} text-lg md:text-xl font-medium drop-shadow-lg`}
-              style={{ color: settings.color }}
+              className={`${settings.font} ${settings.templateId === 'retro' ? 'text-gray-800' : ''} text-xl md:text-2xl font-bold drop-shadow-lg`}
+              style={settings.templateId === 'retro' ? { fontFamily: 'cursive' } : { color: settings.color }}
             >
               {settings.text}
             </p>

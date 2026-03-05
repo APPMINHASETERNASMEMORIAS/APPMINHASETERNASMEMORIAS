@@ -1172,10 +1172,10 @@ function EventPage() {
             </p>
           </div>
 
-          <div className="space-y-8">
-            <UploadMemory eventId={id} isPaused={isPaused} onUploadSuccess={() => setRefreshGallery(prev => prev + 1)} />
-            <MemoryGallery eventId={id} refreshTrigger={refreshGallery} />
-          </div>
+            <div className="space-y-8">
+              <UploadMemory eventId={id} isPaused={isPaused} onUploadSuccess={() => setRefreshGallery(prev => prev + 1)} />
+              <MemoryGallery eventId={id} refreshTrigger={refreshGallery} event={event} />
+            </div>
         </div>
       </main>
     </div>

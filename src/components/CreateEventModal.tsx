@@ -87,10 +87,10 @@ const FONTS = [
 ];
 
 const FRAME_TEMPLATES = [
-  { id: 'minimal', name: 'Minimalista', preview: 'border-2' },
-  { id: 'floral', name: 'Floral', preview: 'border-4 border-double' },
-  { id: 'modern', name: 'Moderno', preview: 'border-8 border-black/5' },
-  { id: 'classic', name: 'Clássico', preview: 'outline outline-4 outline-offset-[-12px]' },
+  { id: 'luxury', name: 'Luxo', preview: 'border-[8px] border-double shadow-[inset_0_0_15px_rgba(0,0,0,0.2)]' },
+  { id: 'retro', name: 'Retro', preview: 'border-[10px] border-b-[35px] shadow-lg bg-white/5' },
+  { id: 'neon', name: 'Neon', preview: 'border-[2px] shadow-[0_0_15px_currentcolor,inset_0_0_8px_currentcolor]' },
+  { id: 'romance', name: 'Romance', preview: 'border-[6px] rounded-[25px] border-double shadow-[0_0_10px_rgba(255,182,193,0.3)]' },
 ];
 
 const COLORS = [
@@ -120,7 +120,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
     color: '#FFD700',
     font: 'font-playfair',
     text: '',
-    templateId: 'minimal',
+    templateId: 'luxury',
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
@@ -217,7 +217,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
       color: '#FFD700',
       font: 'font-playfair',
       text: '',
-      templateId: 'minimal',
+      templateId: 'luxury',
     });
   };
 
@@ -437,17 +437,35 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-6">
                   <div className="space-y-3">
-                    <Label className="flex items-center gap-2"><Layout className="w-4 h-4" />Modelo da Moldura</Label>
-                    <div className="grid grid-cols-2 gap-2">
+                    <Label className="flex items-center gap-2"><Layout className="w-4 h-4" />Escolha sua Moldura</Label>
+                    <div className="grid grid-cols-2 gap-3">
                       {FRAME_TEMPLATES.map((t) => (
                         <button
                           key={t.id}
                           onClick={() => setFrameSettings({ ...frameSettings, templateId: t.id })}
-                          className={`p-3 rounded-xl border-2 transition-all text-sm font-medium ${
-                            frameSettings.templateId === t.id ? 'border-purple-600 bg-purple-50 text-purple-700' : 'border-gray-100 text-gray-600 hover:border-gray-200'
+                          className={`relative aspect-video rounded-xl border-2 transition-all overflow-hidden group ${
+                            frameSettings.templateId === t.id ? 'border-purple-600 ring-2 ring-purple-600/20' : 'border-gray-100 hover:border-gray-300'
                           }`}
                         >
-                          {t.name}
+                          {/* Visual Preview of the Frame */}
+                          <div className="absolute inset-0 bg-gray-50 flex items-center justify-center">
+                            <div 
+                              className={`absolute inset-0 pointer-events-none ${t.preview}`}
+                              style={{ borderColor: frameSettings.color, color: frameSettings.color }}
+                            />
+                            <Camera className="w-6 h-6 text-gray-200" />
+                          </div>
+                          
+                          {/* Selection Indicator */}
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/40 backdrop-blur-sm py-1 text-center">
+                            <span className="text-[10px] text-white font-medium uppercase tracking-wider">{t.name}</span>
+                          </div>
+                          
+                          {frameSettings.templateId === t.id && (
+                            <div className="absolute top-1 right-1 bg-purple-600 text-white rounded-full p-0.5 shadow-sm">
+                              <CheckCircle2 className="w-3 h-3" />
+                            </div>
+                          )}
                         </button>
                       ))}
                     </div>

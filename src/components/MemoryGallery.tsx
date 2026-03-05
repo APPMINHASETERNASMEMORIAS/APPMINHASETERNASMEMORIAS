@@ -1,7 +1,9 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
-import { Heart, MessageCircle, PlayCircle, Trash2 } from 'lucide-react';
+import { Heart, MessageCircle, PlayCircle, Trash2, Camera } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { FrameOverlay } from './FrameOverlay';
+import { Event } from '../types';
 
 interface Memory {
   id: string;
@@ -15,7 +17,7 @@ interface Memory {
   uploader_id: string | null;
 }
 
-export function MemoryGallery({ eventId, refreshTrigger }: { eventId?: string, refreshTrigger: number }) {
+export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: string, refreshTrigger: number, event?: Event }) {
   const [memories, setMemories] = useState<Memory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
@@ -277,12 +279,14 @@ export function MemoryGallery({ eventId, refreshTrigger }: { eventId?: string, r
                     </div>
                   </div>
                 ) : (
-                  <img
-                    src={memory.url}
-                    alt={`Memória de ${memory.uploader_name}`}
-                    className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                    loading="lazy"
-                  />
+                  <FrameOverlay settings={event?.settings?.frameSettings} className="w-full h-full">
+                    <img
+                      src={memory.url}
+                      alt={`Memória de ${memory.uploader_name}`}
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                      loading="lazy"
+                    />
+                  </FrameOverlay>
                 )}
               </div>
 
@@ -393,11 +397,13 @@ export function MemoryGallery({ eventId, refreshTrigger }: { eventId?: string, r
                   )}
                 </>
               ) : (
-                <img
-                  src={selectedMemory.url}
-                  alt={`Memória de ${selectedMemory.uploader_name}`}
-                  className="max-w-full max-h-[70vh] object-contain rounded-lg"
-                />
+                <FrameOverlay settings={event?.settings?.frameSettings} className="max-w-full max-h-[70vh]">
+                  <img
+                    src={selectedMemory.url}
+                    alt={`Memória de ${selectedMemory.uploader_name}`}
+                    className="max-w-full max-h-[70vh] object-contain rounded-lg"
+                  />
+                </FrameOverlay>
               )}
             </div>
 

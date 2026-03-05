@@ -61,34 +61,59 @@ export function QRCodeDisplay({ eventId, eventName, isOpen, onClose, frameSettin
 
         // Draw Frame based on template
         switch (frameSettings.templateId) {
-          case 'floral':
+          case 'luxury':
             ctx.setLineDash([]);
+            ctx.lineWidth = 40;
             ctx.strokeRect(40, 40, size - 80, size - 80);
             ctx.lineWidth = 10;
-            ctx.strokeRect(80, 80, size - 160, size - 160);
-            break;
-          case 'modern':
-            ctx.lineWidth = 60;
-            ctx.globalAlpha = 0.1;
-            ctx.strokeRect(30, 30, size - 60, size - 60);
-            ctx.globalAlpha = 1.0;
-            ctx.lineWidth = 10;
-            ctx.strokeRect(60, 60, size - 120, size - 120);
-            break;
-          case 'classic':
-            ctx.lineWidth = 5;
-            ctx.strokeRect(20, 20, size - 40, size - 40);
+            ctx.strokeRect(90, 90, size - 180, size - 180);
+            // Corner ornaments
             ctx.lineWidth = 15;
-            ctx.strokeRect(60, 60, size - 120, size - 120);
-            // Corners
-            ctx.lineWidth = 20;
-            const cS = 100;
-            ctx.beginPath(); ctx.moveTo(60, 60 + cS); ctx.lineTo(60, 60); ctx.lineTo(60 + cS, 60); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(size - 60 - cS, 60); ctx.lineTo(size - 60, 60); ctx.lineTo(size - 60, 60 + cS); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(60, size - 60 - cS); ctx.lineTo(60, size - 60); ctx.lineTo(60 + cS, size - 60); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(size - 60 - cS, size - 60); ctx.lineTo(size - 60, size - 60); ctx.lineTo(size - 60, size - 60 - cS); ctx.stroke();
+            const cornerLen = 100;
+            // Top Left
+            ctx.strokeRect(40, 40, cornerLen, 15);
+            ctx.strokeRect(40, 40, 15, cornerLen);
+            // Top Right
+            ctx.strokeRect(size - 40 - cornerLen, 40, cornerLen, 15);
+            ctx.strokeRect(size - 40 - 15, 40, 15, cornerLen);
+            // Bottom Left
+            ctx.strokeRect(40, size - 40 - 15, cornerLen, 15);
+            ctx.strokeRect(40, size - 40 - cornerLen, 15, cornerLen);
+            // Bottom Right
+            ctx.strokeRect(size - 40 - cornerLen, size - 40 - 15, cornerLen, 15);
+            ctx.strokeRect(size - 40 - 15, size - 40 - cornerLen, 15, cornerLen);
             break;
-          case 'minimal':
+          case 'retro':
+            ctx.lineWidth = 80;
+            ctx.strokeRect(40, 40, size - 80, size - 80);
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(40, size - 160, size - 80, 120);
+            break;
+          case 'neon':
+            ctx.lineWidth = 20;
+            ctx.shadowBlur = 30;
+            ctx.shadowColor = color;
+            ctx.strokeRect(40, 40, size - 80, size - 80);
+            ctx.shadowBlur = 0;
+            break;
+          case 'romance':
+            ctx.lineWidth = 20;
+            const radius = 100;
+            ctx.beginPath();
+            ctx.moveTo(40 + radius, 40);
+            ctx.lineTo(size - 40 - radius, 40);
+            ctx.quadraticCurveTo(size - 40, 40, size - 40, 40 + radius);
+            ctx.lineTo(size - 40, size - 40 - radius);
+            ctx.quadraticCurveTo(size - 40, size - 40, size - 40 - radius, size - 40);
+            ctx.lineTo(40 + radius, size - 40);
+            ctx.quadraticCurveTo(40, size - 40, 40, size - 40 - radius);
+            ctx.lineTo(40, 40 + radius);
+            ctx.quadraticCurveTo(40, 40, 40 + radius, 40);
+            ctx.stroke();
+            // Inner double line
+            ctx.lineWidth = 5;
+            ctx.stroke();
+            break;
           default:
             ctx.lineWidth = 15;
             ctx.strokeRect(40, 40, size - 80, size - 80);

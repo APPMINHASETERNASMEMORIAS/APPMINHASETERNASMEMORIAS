@@ -129,7 +129,9 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
           return;
         }
       } else if (file.type.startsWith('image/')) {
-        if (file.size > 1024 * 1024) {
+        // Use the size of what we're actually uploading
+        const currentSize = fileToUpload.size;
+        if (currentSize > 1024 * 1024) {
           const options = {
             maxSizeMB: 2,
             maxWidthOrHeight: 1920,
@@ -137,7 +139,8 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
           };
           try {
             toast.loading('Otimizando imagem...', { id: 'compress' });
-            fileToUpload = await imageCompression(file, options);
+            // Compress the cropped image if it exists, otherwise the original
+            fileToUpload = await imageCompression(fileToUpload as File, options);
             toast.dismiss('compress');
           } catch (error) {
             console.error('Erro ao comprimir imagem:', error);

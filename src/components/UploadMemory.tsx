@@ -207,11 +207,15 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
             </span>
           </button>
         </DialogTrigger>
-        <DialogContent className={`w-[calc(100%-2rem)] ${isCropping ? 'sm:max-w-2xl' : 'sm:max-w-md'} rounded-3xl border-none p-0 overflow-hidden bg-white max-h-[90vh] flex flex-col transition-all duration-300`}>
-          <div className="p-4 sm:p-8 overflow-y-auto custom-scrollbar">
+        <DialogContent className={`w-[calc(100%-2rem)] ${isCropping ? 'sm:max-w-3xl' : 'sm:max-w-md'} rounded-3xl border-none p-0 overflow-hidden bg-white max-h-[95vh] flex flex-col transition-all duration-300`}>
+          <div className="p-4 sm:p-8 overflow-y-auto custom-scrollbar flex-1">
             <DialogHeader className="text-center mb-4 sm:mb-6">
-              <DialogTitle className="text-lg sm:text-2xl font-playfair font-bold text-gray-900">Compartilhe uma Memória</DialogTitle>
-              <p className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-2">Envie suas fotos ou vídeos deste momento especial.</p>
+              <DialogTitle className="text-lg sm:text-2xl font-playfair font-bold text-gray-900">
+                {isCropping ? 'Ajuste o Enquadramento' : 'Compartilhe uma Memória'}
+              </DialogTitle>
+              <p className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-2">
+                {isCropping ? 'Arraste a foto para cima ou para baixo para centralizar no mural.' : 'Envie suas fotos ou vídeos deste momento especial.'}
+              </p>
             </DialogHeader>
 
             <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
@@ -252,10 +256,10 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
                           </div>
                         </div>
                       ) : (
-                        <div className="relative w-full aspect-square bg-gray-100 flex items-center justify-center overflow-hidden transition-all duration-300">
+                        <div className="relative w-full aspect-square bg-gray-100 flex items-center justify-center overflow-hidden transition-all duration-300 rounded-xl shadow-inner">
                           {isCropping ? (
                             <div className="absolute inset-0 z-50 bg-black flex flex-col">
-                              <div className="relative flex-1 min-h-[300px] sm:min-h-[450px]">
+                              <div className="relative flex-1 min-h-[350px] sm:min-h-[500px]">
                                 <Cropper
                                   image={previewUrl}
                                   crop={crop}
@@ -264,32 +268,44 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
                                   aspect={aspect}
                                   onCropChange={(c) => setCrop({ x: 0, y: c?.y ?? 0 })}
                                   onCropComplete={onCropComplete}
-                                  showGrid={false}
+                                  showGrid={true}
                                   zoomWithScroll={false}
                                   restrictPosition={true}
+                                  style={{
+                                    containerStyle: { background: '#000' },
+                                    cropAreaStyle: { border: '2px solid rgba(255,255,255,0.5)' }
+                                  }}
                                 />
                                 {selectedFrame && (
                                   <div className="absolute inset-0 pointer-events-none z-10">
                                     <img 
                                       src={selectedFrame} 
                                       alt="Moldura" 
-                                      className="w-full h-full object-fill"
+                                      className="w-full h-full object-fill opacity-90"
                                       referrerPolicy="no-referrer"
                                     />
                                   </div>
                                 )}
+                                {/* Visual Guide for Vertical Movement */}
+                                <div className="absolute left-4 top-1/2 -translate-y-1/2 flex flex-col items-center gap-2 opacity-50 pointer-events-none">
+                                  <div className="w-1 h-8 bg-white rounded-full animate-bounce" />
+                                  <div className="w-1 h-8 bg-white rounded-full animate-bounce delay-100" />
+                                </div>
                               </div>
                               
-                              <div className="bg-black/90 p-6 z-[60] border-t border-white/10">
-                                <div className="flex justify-between items-center">
-                                  <p className="text-white/70 text-xs font-medium">Arraste a foto para cima ou para baixo</p>
+                              <div className="bg-gray-900 p-4 sm:p-6 z-[60] border-t border-white/10">
+                                <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+                                  <div className="flex items-center gap-2 text-white/70">
+                                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                                    <p className="text-xs font-medium">Visualização em tempo real do mural</p>
+                                  </div>
                                   <button
                                     type="button"
                                     onClick={(e) => {
                                       e.stopPropagation();
                                       handleConfirmCrop();
                                     }}
-                                    className="bg-white text-purple-600 px-8 py-2.5 rounded-full flex items-center gap-2 shadow-xl hover:bg-gray-100 transition-all font-bold text-sm active:scale-95"
+                                    className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-600 text-white px-10 py-3 rounded-full flex items-center justify-center gap-2 shadow-2xl hover:brightness-110 transition-all font-bold text-sm active:scale-95"
                                   >
                                     <Check className="w-5 h-5" />
                                     Confirmar Enquadramento

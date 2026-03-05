@@ -24,8 +24,8 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
   const [isOpen, setIsOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(1);
-  const [rotation, setRotation] = useState(0);
+  const zoom = 1;
+  const rotation = 0;
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
   const [isCropping, setIsCropping] = useState(false);
   const [croppedImage, setCroppedImage] = useState<Blob | null>(null);
@@ -262,10 +262,8 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
                                   zoom={zoom}
                                   rotation={rotation}
                                   aspect={aspect}
-                                  onCropChange={setCrop}
-                                  onRotationChange={setRotation}
+                                  onCropChange={(c) => setCrop({ x: 0, y: c.y })}
                                   onCropComplete={onCropComplete}
-                                  onZoomChange={setZoom}
                                   showGrid={false}
                                 />
                                 {selectedFrame && (
@@ -280,30 +278,8 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
                                 )}
                               </div>
                               
-                              <div className="bg-black/80 p-4 space-y-4 z-[60]">
-                                <div className="flex items-center gap-4">
-                                  <span className="text-white text-xs font-bold">Zoom</span>
-                                  <input
-                                    type="range"
-                                    value={zoom}
-                                    min={1}
-                                    max={3}
-                                    step={0.1}
-                                    onChange={(e) => setZoom(Number(e.target.value))}
-                                    className="flex-1 h-1.5 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-500"
-                                  />
-                                </div>
-                                
-                                <div className="flex justify-between items-center">
-                                  <button
-                                    type="button"
-                                    onClick={() => setRotation((prev) => (prev + 90) % 360)}
-                                    className="text-white text-xs flex items-center gap-2 hover:text-purple-400 transition-colors"
-                                  >
-                                    <Upload className="w-4 h-4 rotate-90" />
-                                    Girar 90°
-                                  </button>
-                                  
+                              <div className="bg-black/80 p-4 z-[60]">
+                                <div className="flex justify-end items-center">
                                   <button
                                     type="button"
                                     onClick={(e) => {

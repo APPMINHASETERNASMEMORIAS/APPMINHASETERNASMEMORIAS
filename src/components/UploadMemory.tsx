@@ -169,9 +169,9 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
           return;
         }
 
-        const maxSize = 20 * 1024 * 1024; // 20MB
+        const maxSize = 30 * 1024 * 1024; // 30MB
         if (file.size > maxSize) {
-          toast.error('Vídeo muito grande (Máx 20MB).');
+          toast.error('Vídeo muito grande (Máx 30MB).');
           setIsUploading(false);
           return;
         }

@@ -33,6 +33,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
+import { FrameOverlay } from './FrameOverlay';
 import type { EventType, EventSettings, FrameSettings } from '@/types';
 import toast from 'react-hot-toast';
 
@@ -517,20 +518,18 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
                 <div className="space-y-4">
                   <Label>Prévia da Moldura</Label>
                   <div className="aspect-[4/5] bg-gray-100 rounded-2xl relative overflow-hidden flex items-center justify-center border-4 border-white shadow-inner">
-                    <div 
-                      className={`absolute inset-0 pointer-events-none transition-all duration-500 ${
-                        FRAME_TEMPLATES.find(t => t.id === frameSettings.templateId)?.preview
-                      }`}
-                      style={{ borderColor: frameSettings.color, color: frameSettings.color }}
+                    <FrameOverlay 
+                      settings={{
+                        ...frameSettings,
+                        enabled: true
+                      }}
+                      className="w-full h-full"
                     >
-                      <div className="absolute bottom-6 left-0 right-0 text-center px-4">
-                        <p className={`${frameSettings.font} text-xl font-medium drop-shadow-sm`}>
-                          {frameSettings.text || 'Seu Texto Aqui'}
-                        </p>
+                      <div className="flex flex-col items-center justify-center w-full h-full">
+                        <Camera className="w-12 h-12 text-gray-300" />
+                        <p className="text-xs text-gray-400 mt-2">Sua foto aqui</p>
                       </div>
-                    </div>
-                    <Camera className="w-12 h-12 text-gray-300" />
-                    <p className="text-xs text-gray-400 mt-16 absolute">Sua foto aqui</p>
+                    </FrameOverlay>
                   </div>
                 </div>
               </div>

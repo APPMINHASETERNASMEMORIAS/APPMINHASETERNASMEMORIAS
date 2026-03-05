@@ -15,19 +15,22 @@ export function FrameOverlay({ settings, className = '', children }: FrameOverla
   const getTemplateStyles = () => {
     switch (settings.templateId) {
       case 'luxury':
-        return 'border-[16px] border-solid shadow-[inset_0_0_30px_rgba(0,0,0,0.3)]';
+        return 'border-[16px] border-double border-yellow-600 shadow-[inset_0_0_30px_rgba(0,0,0,0.3)]';
       case 'retro':
-        return 'border-[20px] border-b-[80px] shadow-2xl bg-white/5';
+        return 'border-[20px] border-b-[80px] shadow-2xl bg-white/5 border-amber-900';
       case 'neon':
         return 'border-[3px] shadow-[0_0_20px_currentcolor,inset_0_0_10px_currentcolor]';
       case 'romance':
         return 'border-[10px] rounded-[50px] border-double shadow-[0_0_15px_rgba(255,182,193,0.3)]';
       case 'floral':
-        return 'border-[16px] border-solid border-green-500/30';
+        // Simula moldura floral com gradiente verde e borda dupla
+        return 'border-[20px] border-double border-green-700/80 shadow-[0_0_20px_rgba(34,197,94,0.4)]';
       case 'vintage':
-        return 'border-[20px] border-double border-amber-700';
+        // Simula moldura vintage ornamentada com borda grossa e sombra
+        return 'border-[25px] border-double border-amber-950 shadow-[0_0_30px_rgba(0,0,0,0.5),inset_0_0_20px_rgba(0,0,0,0.3)]';
       case 'gold':
-        return 'border-[12px] border-solid border-yellow-500';
+        // Simula moldura dourada com gradiente
+        return 'border-[15px] border-solid border-yellow-500 shadow-[0_0_20px_rgba(234,179,8,0.6)]';
       default:
         return 'border-[4px]';
     }

@@ -83,8 +83,6 @@ export function FrameOverlay({ settings, className = '', children }: FrameOverla
           color: settings.color,
         }}
       >
-        {renderDecorations()}
-
         {settings.text && (
           <div className={`absolute left-0 right-0 text-center px-4 bottom-8`}>
             <p 
@@ -96,6 +94,7 @@ export function FrameOverlay({ settings, className = '', children }: FrameOverla
           </div>
         )}
       </div>
+      {renderDecorations()}
     </div>
   );
 }

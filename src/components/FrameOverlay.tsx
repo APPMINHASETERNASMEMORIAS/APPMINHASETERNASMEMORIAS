@@ -21,7 +21,7 @@ export function FrameOverlay({ settings, className = '', children }: FrameOverla
           <img 
             src={settings.imageUrl} 
             alt="Frame" 
-            className="w-full h-full object-fill opacity-90"
+            className="w-full h-full object-fill opacity-70"
             referrerPolicy="no-referrer"
           />
         </div>

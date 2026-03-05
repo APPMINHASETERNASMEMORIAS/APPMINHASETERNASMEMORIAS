@@ -5,11 +5,8 @@ const FRAME_OPTIONS = [
   'https://lh3.googleusercontent.com/d/120rNh5NBi9PvY_39RhBXHPtgO-ebEQtN',
   'https://lh3.googleusercontent.com/d/1MiTQtunEjExr5rt-E29Rfe641KIl6pzy',
   'https://lh3.googleusercontent.com/d/1Pj5xIiA8pgwcsJNWiITHw98q1C8E8dAW',
-  'https://lh3.googleusercontent.com/d/1T_RFshRXK3evgOfKvPWnGxMWiEaVhgZM',
-  'https://lh3.googleusercontent.com/d/1ceyIu5_XyhpmtOCRYZ0ognvR5U9ZXNEB',
   'https://lh3.googleusercontent.com/d/1lJK0OCBDafda1kedU3lt-If7us1iWAzg',
   'https://lh3.googleusercontent.com/d/1mKl3ZdyBgE8-UTsXX0uTD2u7tPwwwntc',
-  'https://lh3.googleusercontent.com/d/1nvo26DLV5IfVnC5Buwhg33xL4IeHY0cq',
   'https://lh3.googleusercontent.com/d/1qfiljJNdrCpTm2KS0HqjM6_JL_0BkdDr',
 ];
 
@@ -45,7 +42,7 @@ export function FrameSelection({ onSelect }: { onSelect: (frameUrl: string | nul
             <img 
               src={frame} 
               alt={`Moldura ${index + 1}`} 
-              className="w-full h-full object-contain bg-gray-50"
+              className="w-full h-full object-contain bg-gray-50 opacity-70"
               referrerPolicy="no-referrer"
             />
           </button>

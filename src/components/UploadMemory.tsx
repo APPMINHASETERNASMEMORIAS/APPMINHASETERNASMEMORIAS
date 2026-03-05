@@ -145,9 +145,31 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
       const isVideo = file.type.startsWith('video/');
 
       if (isVideo) {
-        const maxSize = 10 * 1024 * 1024; // 10MB
+        // Validação de duração
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        
+        const duration = await new Promise<number>((resolve, reject) => {
+          video.onloadedmetadata = () => {
+            resolve(video.duration);
+            URL.revokeObjectURL(video.src);
+          };
+          video.onerror = () => {
+            reject(new Error('Erro ao ler metadados do vídeo'));
+            URL.revokeObjectURL(video.src);
+          };
+          video.src = URL.createObjectURL(file);
+        });
+
+        if (duration > 20.5) { // Margem de 0.5s
+          toast.error('Vídeo muito longo (Máx 20 segundos).');
+          setIsUploading(false);
+          return;
+        }
+
+        const maxSize = 20 * 1024 * 1024; // 20MB
         if (file.size > maxSize) {
-          toast.error('Vídeo muito grande (Máx 10MB).');
+          toast.error('Vídeo muito grande (Máx 20MB).');
           setIsUploading(false);
           return;
         }

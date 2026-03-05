@@ -74,33 +74,19 @@ const PLANS = {
   test: { name: 'Teste Admin', price: 1.00, limit: 10, storage: '24 horas' }
 };
 
-const FONTS = [
-  { name: 'Playfair', value: 'font-playfair' },
-  { name: 'Dancing', value: 'font-dancing' },
-  { name: 'Great Vibes', value: 'font-great-vibes' },
-  { name: 'Cinzel', value: 'font-cinzel' },
-  { name: 'Alex Brush', value: 'font-alex-brush' },
-  { name: 'Satisfy', value: 'font-satisfy' },
-  { name: 'Parisienne', value: 'font-parisienne' },
-  { name: 'Cormorant', value: 'font-cormorant' },
-  { name: 'Libre', value: 'font-libre' },
-  { name: 'Poppins', value: 'font-poppins' },
-];
-
 const FRAME_TEMPLATES = [
-  { id: 'frame1', name: '', imageUrl: 'https://lh3.googleusercontent.com/d/120rNh5NBi9PvY_39RhBXHPtgO-ebEQtN' },
-  { id: 'frame2', name: '', imageUrl: 'https://lh3.googleusercontent.com/d/1MiTQtunEjExr5rt-E29Rfe641KIl6pzy' },
-  { id: 'frame3', name: '', imageUrl: 'https://lh3.googleusercontent.com/d/1Pj5xIiA8pgwcsJNWiITHw98q1C8E8dAW' },
-  { id: 'frame4', name: '', imageUrl: 'https://lh3.googleusercontent.com/d/1T_RFshRXK3evgOfKvPWnGxMWiEaVhgZM' },
-  { id: 'frame5', name: '', imageUrl: 'https://lh3.googleusercontent.com/d/1ceyIu5_XyhpmtOCRYZ0ognvR5U9ZXNEB' },
-  { id: 'frame6', name: '', imageUrl: 'https://lh3.googleusercontent.com/d/1lJK0OCBDafda1kedU3lt-If7us1iWAzg' },
-  { id: 'frame7', name: '', imageUrl: 'https://lh3.googleusercontent.com/d/1mKl3ZdyBgE8-UTsXX0uTD2u7tPwwwntc' },
-  { id: 'frame8', name: '', imageUrl: 'https://lh3.googleusercontent.com/d/1nvo26DLV5IfVnC5Buwhg33xL4IeHY0cq' },
-  { id: 'frame9', name: '', imageUrl: 'https://lh3.googleusercontent.com/d/1qfiljJNdrCpTm2KS0HqjM6_JL_0BkdDr' },
-];
-
-const COLORS = [
-  '#000000', '#FFFFFF', '#FFD700', '#C0C0C0', '#FF69B4', '#8A2BE2', '#4169E1', '#2E8B57', '#FF4500', '#704214'
+  { id: 'https://lh3.googleusercontent.com/d/120rNh5NBi9PvY_39RhBXHPtgO-ebEQtN', name: 'Moldura 1', preview: '' },
+  { id: 'https://lh3.googleusercontent.com/d/1FggHjWmgmc9vEhGioanZ3AOuwrczlHJy', name: 'Moldura 2', preview: '' },
+  { id: 'https://lh3.googleusercontent.com/d/1HR57KOb3MsrbakmroB_A5p_5-2Gzc1pX', name: 'Moldura 3', preview: '' },
+  { id: 'https://lh3.googleusercontent.com/d/1MiTQtunEjExr5rt-E29Rfe641KIl6pzy', name: 'Moldura 4', preview: '' },
+  { id: 'https://lh3.googleusercontent.com/d/1Pj5xIiA8pgwcsJNWiITHw98q1C8E8dAW', name: 'Moldura 5', preview: '' },
+  { id: 'https://lh3.googleusercontent.com/d/1_b1MF4Tctc5aegI5KplZAxYAOAOT0EgI', name: 'Moldura 6', preview: '' },
+  { id: 'https://lh3.googleusercontent.com/d/1d9BLngmfACtXYzUW0meqOuRbnAnK6Y2B', name: 'Moldura 7', preview: '' },
+  { id: 'https://lh3.googleusercontent.com/d/1lJK0OCBDafda1kedU3lt-If7us1iWAzg', name: 'Moldura 8', preview: '' },
+  { id: 'https://lh3.googleusercontent.com/d/1mKl3ZdyBgE8-UTsXX0uTD2u7tPwwwntc', name: 'Moldura 9', preview: '' },
+  { id: 'https://lh3.googleusercontent.com/d/1qfiljJNdrCpTm2KS0HqjM6_JL_0BkdDr', name: 'Moldura 10', preview: '' },
+  { id: 'https://lh3.googleusercontent.com/d/1t8-igj8dualWINI6kQZlAZalPlLUD1OJ', name: 'Moldura 11', preview: '' },
+  { id: 'https://lh3.googleusercontent.com/d/1uQUN0-Jmggl678plcCFQWRhXoppMOQ5j', name: 'Moldura 12', preview: '' },
 ];
 
 export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTestMode = false, onCreate }: CreateEventModalProps) {
@@ -123,11 +109,10 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
   });
   const [frameSettings, setFrameSettings] = useState<FrameSettings>({
     enabled: false,
-    color: '#FFD700',
+    color: '#FFFFFF',
     font: 'font-playfair',
     text: '',
-    templateId: 'frame1',
-    imageUrl: 'https://lh3.googleusercontent.com/d/120rNh5NBi9PvY_39RhBXHPtgO-ebEQtN',
+    templateId: FRAME_TEMPLATES[0].id,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
@@ -221,11 +206,10 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
     });
     setFrameSettings({
       enabled: false,
-      color: '#FFD700',
+      color: '#FFFFFF',
       font: 'font-playfair',
       text: '',
-      templateId: 'frame1',
-      imageUrl: 'https://lh3.googleusercontent.com/d/120rNh5NBi9PvY_39RhBXHPtgO-ebEQtN',
+      templateId: FRAME_TEMPLATES[0].id,
     });
   };
 
@@ -446,11 +430,11 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
                 <div className="space-y-6">
                   <div className="space-y-3">
                     <Label className="flex items-center gap-2"><Layout className="w-4 h-4" />Escolha sua Moldura</Label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-3 max-h-[400px] overflow-y-auto pr-2">
                       {FRAME_TEMPLATES.map((t) => (
                         <button
                           key={t.id}
-                          onClick={() => setFrameSettings({ ...frameSettings, templateId: t.id, imageUrl: t.imageUrl })}
+                          onClick={() => setFrameSettings({ ...frameSettings, templateId: t.id })}
                           className={`relative aspect-video rounded-xl border-2 transition-all overflow-hidden group ${
                             frameSettings.templateId === t.id ? 'border-purple-600 ring-2 ring-purple-600/20' : 'border-gray-100 hover:border-gray-300'
                           }`}
@@ -458,60 +442,26 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
                           {/* Visual Preview of the Frame */}
                           <div className="absolute inset-0 bg-gray-50 flex items-center justify-center">
                             <img 
-                              src={t.imageUrl} 
-                              alt="Moldura" 
-                              className="absolute inset-0 w-full h-full object-cover"
+                              src={t.id} 
+                              alt={t.name}
+                              className="w-full h-full object-cover opacity-70"
                               referrerPolicy="no-referrer"
                             />
                           </div>
                           
+                          {/* Selection Indicator */}
+                          <div className="absolute bottom-0 left-0 right-0 bg-black/40 backdrop-blur-sm py-1 text-center">
+                            <span className="text-[10px] text-white font-medium uppercase tracking-wider">{t.name}</span>
+                          </div>
+                          
                           {frameSettings.templateId === t.id && (
-                            <div className="absolute top-1 right-1 bg-purple-600 text-white rounded-full p-0.5 shadow-sm z-10">
+                            <div className="absolute top-1 right-1 bg-purple-600 text-white rounded-full p-0.5 shadow-sm">
                               <CheckCircle2 className="w-3 h-3" />
                             </div>
                           )}
                         </button>
                       ))}
                     </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label className="flex items-center gap-2"><Palette className="w-4 h-4" />Cor Principal</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {COLORS.map((c) => (
-                        <button
-                          key={c}
-                          onClick={() => setFrameSettings({ ...frameSettings, color: c })}
-                          className={`w-8 h-8 rounded-full border-2 transition-transform ${
-                            frameSettings.color === c ? 'scale-125 border-purple-600' : 'border-transparent'
-                          }`}
-                          style={{ backgroundColor: c }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label className="flex items-center gap-2"><TypeIcon className="w-4 h-4" />Fonte do Texto</Label>
-                    <Select value={frameSettings.font} onValueChange={(v) => setFrameSettings({ ...frameSettings, font: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {FONTS.map((f) => (
-                          <SelectItem key={f.value} value={f.value} className={f.value}>
-                            {f.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-3">
-                    <Label className="flex items-center gap-2"><FileText className="w-4 h-4" />Texto na Moldura</Label>
-                    <Input 
-                      placeholder="Ex: Maria & João 2024" 
-                      value={frameSettings.text}
-                      onChange={(e) => setFrameSettings({ ...frameSettings, text: e.target.value })}
-                    />
                   </div>
                 </div>
 

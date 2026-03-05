@@ -13,33 +13,11 @@ export function FrameOverlay({ settings, className = '', children }: FrameOverla
     return <>{children}</>;
   }
 
-  if (settings.imageUrl) {
-    return (
-      <div className={`relative w-full h-full overflow-hidden ${className}`}>
-        {children}
-        <div className="absolute inset-0 pointer-events-none z-10">
-          <img 
-            src={settings.imageUrl} 
-            alt="Frame" 
-            className="w-full h-full object-fill opacity-70"
-            referrerPolicy="no-referrer"
-          />
-        </div>
-        {settings.text && (
-          <div className={`absolute left-0 right-0 text-center px-4 bottom-8 z-20`}>
-            <p 
-              className={`${settings.font} text-xl md:text-2xl font-bold drop-shadow-lg`}
-              style={{ color: settings.color }}
-            >
-              {settings.text}
-            </p>
-          </div>
-        )}
-      </div>
-    );
-  }
+  const isImageFrame = settings.templateId?.startsWith('http');
 
   const getTemplateStyles = () => {
+    if (isImageFrame) return '';
+    
     switch (settings.templateId) {
       case 'luxury':
         return 'border-[16px] border-double border-yellow-600 shadow-[inset_0_0_30px_rgba(0,0,0,0.3)]';
@@ -60,67 +38,40 @@ export function FrameOverlay({ settings, className = '', children }: FrameOverla
     }
   };
 
-  const renderDecorations = () => {
-    const iconSize = 40;
-    const color = settings.color || 'currentColor';
-    
-    switch (settings.templateId) {
-      case 'floral':
-        return (
-          <>
-            <Flower className="absolute top-2 left-2" size={iconSize} color={color} />
-            <Flower className="absolute top-2 right-2" size={iconSize} color={color} />
-            <Leaf className="absolute bottom-2 left-2" size={iconSize} color={color} />
-            <Leaf className="absolute bottom-2 right-2" size={iconSize} color={color} />
-          </>
-        );
-      case 'gold':
-        return (
-          <>
-            <Sun className="absolute top-2 left-2" size={iconSize} color={color} />
-            <Sun className="absolute top-2 right-2" size={iconSize} color={color} />
-            <Sparkles className="absolute bottom-2 left-2" size={iconSize} color={color} />
-            <Sparkles className="absolute bottom-2 right-2" size={iconSize} color={color} />
-          </>
-        );
-      case 'vintage':
-        return (
-          <>
-            <Star className="absolute top-2 left-2" size={iconSize} color={color} />
-            <Star className="absolute top-2 right-2" size={iconSize} color={color} />
-            <Star className="absolute bottom-2 left-2" size={iconSize} color={color} />
-            <Star className="absolute bottom-2 right-2" size={iconSize} color={color} />
-          </>
-        );
-      default:
-        return null;
-    }
-  };
-
   return (
     <div className={`relative w-full h-full overflow-hidden ${className}`}>
       {children}
       
       {/* Frame Overlay */}
-      <div 
-        className={`absolute inset-0 pointer-events-none transition-all duration-500 ${getTemplateStyles()}`}
-        style={{ 
-          borderColor: settings.color, 
-          color: settings.color,
-        }}
-      >
-        {settings.text && (
-          <div className={`absolute left-0 right-0 text-center px-4 bottom-8`}>
-            <p 
-              className={`${settings.font} text-xl md:text-2xl font-bold drop-shadow-lg`}
-              style={{ color: settings.color }}
-            >
-              {settings.text}
-            </p>
-          </div>
-        )}
-      </div>
-      {renderDecorations()}
+      {isImageFrame ? (
+        <div className="absolute inset-0 pointer-events-none z-10">
+          <img 
+            src={settings.templateId} 
+            alt="Moldura" 
+            className="w-full h-full object-cover opacity-70"
+            referrerPolicy="no-referrer"
+          />
+        </div>
+      ) : (
+        <div 
+          className={`absolute inset-0 pointer-events-none transition-all duration-500 ${getTemplateStyles()}`}
+          style={{ 
+            borderColor: settings.color, 
+            color: settings.color,
+          }}
+        >
+          {settings.text && (
+            <div className={`absolute left-0 right-0 text-center px-4 bottom-8`}>
+              <p 
+                className={`${settings.font} text-xl md:text-2xl font-bold drop-shadow-lg`}
+                style={{ color: settings.color }}
+              >
+                {settings.text}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

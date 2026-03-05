@@ -148,35 +148,35 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-8 right-4 sm:bottom-6 sm:right-6 z-50">
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
           <button
             disabled={isPaused}
-            className={`w-16 h-16 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 group ${
+            className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 group ${
               isPaused 
                 ? 'bg-gray-400 cursor-not-allowed' 
                 : 'bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400'
             }`}
           >
             <div className="relative">
-              <Camera className="w-7 h-7 text-white group-hover:opacity-0 transition-opacity duration-300" />
-              <Plus className="w-7 h-7 text-white absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <Camera className="w-6 h-6 sm:w-7 sm:h-7 text-white group-hover:opacity-0 transition-opacity duration-300" />
+              <Plus className="w-6 h-6 sm:w-7 sm:h-7 text-white absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </div>
-            {/* Tooltip-like label */}
-            <span className="absolute right-20 bg-white text-purple-600 px-4 py-2 rounded-xl shadow-lg font-bold text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none border border-purple-100">
+            {/* Tooltip-like label - Hidden on small mobile */}
+            <span className="hidden sm:block absolute right-20 bg-white text-purple-600 px-4 py-2 rounded-xl shadow-lg font-bold text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none border border-purple-100">
               Enviar Foto/Vídeo
             </span>
           </button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-md rounded-3xl border-none p-0 overflow-hidden bg-white">
-          <div className="p-8">
-            <DialogHeader className="text-center mb-6">
-              <DialogTitle className="text-2xl font-playfair font-bold text-gray-900">Compartilhe uma Memória</DialogTitle>
-              <p className="text-gray-500 mt-2">Envie suas fotos ou vídeos deste momento especial.</p>
+        <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md rounded-3xl border-none p-0 overflow-hidden bg-white max-h-[90vh] flex flex-col">
+          <div className="p-4 sm:p-8 overflow-y-auto custom-scrollbar">
+            <DialogHeader className="text-center mb-4 sm:mb-6">
+              <DialogTitle className="text-lg sm:text-2xl font-playfair font-bold text-gray-900">Compartilhe uma Memória</DialogTitle>
+              <p className="text-xs sm:text-sm text-gray-500 mt-1 sm:mt-2">Envie suas fotos ou vídeos deste momento especial.</p>
             </DialogHeader>
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               {/* File Input */}
               <div className="relative">
                 <input
@@ -189,7 +189,7 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
                 />
                 <label
                   htmlFor="file-upload"
-                  className={`flex flex-col items-center justify-center w-full min-h-[160px] border-2 border-dashed rounded-2xl transition-all overflow-hidden relative ${
+                  className={`flex flex-col items-center justify-center w-full min-h-[120px] sm:min-h-[160px] border-2 border-dashed rounded-2xl transition-all overflow-hidden relative ${
                     isPaused 
                       ? 'border-gray-200 bg-gray-100 cursor-not-allowed opacity-60' 
                       : file 

@@ -20,20 +20,20 @@ export function FrameSelection({ onSelect }: { onSelect: (frameUrl: string | nul
   const [selectedFrame, setSelectedFrame] = useState<string | null>(null);
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-sm font-medium text-gray-700">Escolha uma Moldura (Opcional)</h3>
-      <div className="grid grid-cols-3 gap-2">
+    <div className="space-y-3 sm:space-y-4">
+      <h3 className="text-xs sm:text-sm font-medium text-gray-700">Escolha uma Moldura (Opcional)</h3>
+      <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
         <button
           type="button"
           onClick={() => {
             setSelectedFrame(null);
             onSelect(null);
           }}
-          className={`relative rounded-xl overflow-hidden border-2 transition-all h-16 flex items-center justify-center bg-gray-100 ${
+          className={`relative rounded-xl overflow-hidden border-2 transition-all h-12 sm:h-16 flex items-center justify-center bg-gray-100 ${
             selectedFrame === null ? 'border-purple-600' : 'border-transparent'
           }`}
         >
-          <span className="text-xs text-gray-500">Nenhuma</span>
+          <span className="text-[10px] sm:text-xs text-gray-500">Nenhuma</span>
         </button>
         {FRAME_OPTIONS.map((frame, index) => (
           <button
@@ -43,7 +43,7 @@ export function FrameSelection({ onSelect }: { onSelect: (frameUrl: string | nul
               setSelectedFrame(frame);
               onSelect(frame);
             }}
-            className={`relative rounded-xl overflow-hidden border-2 transition-all h-16 ${
+            className={`relative rounded-xl overflow-hidden border-2 transition-all h-12 sm:h-16 ${
               selectedFrame === frame ? 'border-purple-600 scale-105' : 'border-transparent'
             }`}
           >

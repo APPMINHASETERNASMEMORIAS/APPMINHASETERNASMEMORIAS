@@ -39,7 +39,7 @@ export function FrameOverlay({ settings, className = '', children }: FrameOverla
   };
 
   return (
-    <div className={`relative w-full h-full overflow-hidden ${className}`}>
+    <div className={`relative overflow-hidden ${className}`}>
       {children}
       
       {/* Frame Overlay */}
@@ -48,7 +48,7 @@ export function FrameOverlay({ settings, className = '', children }: FrameOverla
           <img 
             src={settings.templateId} 
             alt="Moldura" 
-            className="w-full h-full object-cover opacity-70"
+            className="w-full h-full object-fill"
             referrerPolicy="no-referrer"
           />
         </div>

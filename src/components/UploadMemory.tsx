@@ -225,7 +225,7 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
                               <img 
                                 src={selectedFrame} 
                                 alt="Moldura" 
-                                className="w-full h-full object-cover opacity-70"
+                                className="w-full h-full object-fill"
                                 referrerPolicy="no-referrer"
                               />
                             </div>

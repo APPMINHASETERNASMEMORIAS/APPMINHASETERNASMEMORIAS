@@ -50,7 +50,7 @@ export function FrameSelection({ onSelect }: { onSelect: (frameUrl: string | nul
             <img 
               src={frame} 
               alt={`Moldura ${index + 1}`} 
-              className="w-full h-full object-cover opacity-70 hover:opacity-100 transition-opacity"
+              className="w-full h-full object-cover transition-opacity"
               referrerPolicy="no-referrer"
             />
           </button>

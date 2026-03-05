@@ -419,13 +419,15 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
                   )}
                 </>
               ) : (
-                <FrameOverlay settings={getMemoryFrame(selectedMemory, event?.settings?.frameSettings)} className="max-w-full max-h-[70vh]">
-                  <img
-                    src={selectedMemory.url}
-                    alt={`Memória de ${selectedMemory.uploader_name}`}
-                    className="max-w-full max-h-[70vh] object-contain rounded-lg"
-                  />
-                </FrameOverlay>
+                <div className="relative inline-block max-w-full max-h-[70vh]">
+                  <FrameOverlay settings={getMemoryFrame(selectedMemory, event?.settings?.frameSettings)}>
+                    <img
+                      src={selectedMemory.url}
+                      alt={`Memória de ${selectedMemory.uploader_name}`}
+                      className="max-w-full max-h-[70vh] block rounded-lg"
+                    />
+                  </FrameOverlay>
+                </div>
               )}
             </div>
 

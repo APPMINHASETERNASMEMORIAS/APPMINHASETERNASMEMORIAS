@@ -3,11 +3,17 @@ import React, { useState } from 'react';
 // Replace these with the actual image URLs from the user's Google Drive or hosted elsewhere
 const FRAME_OPTIONS = [
   'https://lh3.googleusercontent.com/d/120rNh5NBi9PvY_39RhBXHPtgO-ebEQtN',
+  'https://lh3.googleusercontent.com/d/1FggHjWmgmc9vEhGioanZ3AOuwrczlHJy',
+  'https://lh3.googleusercontent.com/d/1HR57KOb3MsrbakmroB_A5p_5-2Gzc1pX',
   'https://lh3.googleusercontent.com/d/1MiTQtunEjExr5rt-E29Rfe641KIl6pzy',
   'https://lh3.googleusercontent.com/d/1Pj5xIiA8pgwcsJNWiITHw98q1C8E8dAW',
+  'https://lh3.googleusercontent.com/d/1_b1MF4Tctc5aegI5KplZAxYAOAOT0EgI',
+  'https://lh3.googleusercontent.com/d/1d9BLngmfACtXYzUW0meqOuRbnAnK6Y2B',
   'https://lh3.googleusercontent.com/d/1lJK0OCBDafda1kedU3lt-If7us1iWAzg',
   'https://lh3.googleusercontent.com/d/1mKl3ZdyBgE8-UTsXX0uTD2u7tPwwwntc',
   'https://lh3.googleusercontent.com/d/1qfiljJNdrCpTm2KS0HqjM6_JL_0BkdDr',
+  'https://lh3.googleusercontent.com/d/1t8-igj8dualWINI6kQZlAZalPlLUD1OJ',
+  'https://lh3.googleusercontent.com/d/1uQUN0-Jmggl678plcCFQWRhXoppMOQ5j',
 ];
 
 export function FrameSelection({ onSelect }: { onSelect: (frameUrl: string | null) => void }) {

@@ -29,6 +29,18 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<any>(null);
   const [isCropping, setIsCropping] = useState(false);
   const [croppedImage, setCroppedImage] = useState<Blob | null>(null);
+  const [croppedPreviewUrl, setCroppedPreviewUrl] = useState<string | null>(null);
+
+  // Manage cropped preview URL
+  useEffect(() => {
+    if (croppedImage) {
+      const url = URL.createObjectURL(croppedImage);
+      setCroppedPreviewUrl(url);
+      return () => URL.revokeObjectURL(url);
+    } else {
+      setCroppedPreviewUrl(null);
+    }
+  }, [croppedImage]);
 
   // Reset crop when file changes
   useEffect(() => {
@@ -357,7 +369,7 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
                       ) : (
                         <div className="relative w-full aspect-square bg-gray-100 flex items-center justify-center overflow-hidden transition-all duration-300 rounded-xl shadow-inner">
                           <img 
-                            src={croppedImage ? URL.createObjectURL(croppedImage) : previewUrl} 
+                            src={croppedPreviewUrl || previewUrl} 
                             alt="Preview" 
                             className="w-full h-full object-cover"
                           />

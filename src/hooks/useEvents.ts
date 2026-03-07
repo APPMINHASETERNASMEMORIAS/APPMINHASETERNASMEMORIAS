@@ -376,6 +376,13 @@ export function useEvents() {
       )
     );
 
+    // Grant creator status to the uploader
+    const createdEvents = JSON.parse(localStorage.getItem('created_events') || '[]');
+    if (!createdEvents.includes(eventId)) {
+      createdEvents.push(eventId);
+      localStorage.setItem('created_events', JSON.stringify(createdEvents));
+    }
+
     if (isSupabaseConfigured) {
       try {
         const { error } = await supabase!
@@ -384,12 +391,14 @@ export function useEvents() {
           .eq('id', eventId);
 
         if (error) throw error;
-        toast.success('Comprovante enviado com sucesso!');
+        toast.success('Comprovante enviado! Acesso liberado para você.');
       } catch (error) {
         console.error('Error uploading receipt:', error);
         toast.error('Erro ao enviar comprovante.');
         fetchEventsAndMedia(); // Revert on error
       }
+    } else {
+        toast.success('Comprovante enviado! Acesso liberado para você (Demo).');
     }
   }, [fetchEventsAndMedia]);
 

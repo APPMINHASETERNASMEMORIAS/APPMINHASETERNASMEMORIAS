@@ -1223,8 +1223,12 @@ function EventPage() {
               {isEnded
                 ? 'Este evento foi finalizado. Agradecemos a todos que compartilharam suas memórias!'
                 : isPaused 
-                  ? (event?.status === 'pending' ? 'Aguardando confirmação de pagamento para liberar envios.' : 'O recebimento de fotos para este evento foi pausado pelo administrador.')
-                  : 'Tire uma foto ou grave um vídeo e deixe uma mensagem especial.'}
+                  ? 'O recebimento de fotos para este evento foi pausado pelo administrador.'
+                  : (event?.status === 'pending' && !event.paymentReceiptUrl)
+                    ? 'Aguardando envio do comprovante para liberar a galeria.'
+                    : (event?.status === 'pending' && event.paymentReceiptUrl && !isCreator && !isEventDayOrPast)
+                      ? 'A galeria será aberta para convidados no dia do evento.'
+                      : 'Tire uma foto ou grave um vídeo e deixe uma mensagem especial.'}
             </p>
 
             {event?.status === 'pending' && (

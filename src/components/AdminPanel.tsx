@@ -1,7 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Event, MediaItem } from '@/types';
 import { useEvents } from '@/hooks/useEvents';
+import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
@@ -44,8 +45,13 @@ interface AdminPanelProps {
 type AdminView = 'dashboard' | 'events' | 'media' | 'settings';
 
 export function AdminPanel({ onClose }: AdminPanelProps) {
+  const ADMIN_EMAIL = 'linktestadoeaprovado@gmail.com';
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRecoveryMode, setIsRecoveryMode] = useState(false);
   const [password, setPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [view, setView] = useState<AdminView>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -67,6 +73,96 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
     deleteMedia,
     stats
   } = useEvents();
+
+  useEffect(() => {
+    supabase?.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        setIsAuthenticated(true);
+      }
+      setIsLoading(false);
+    });
+
+    const { data: { subscription } } = supabase?.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        setIsRecoveryMode(true);
+        setIsAuthenticated(true);
+      } else if (event === 'SIGNED_IN') {
+        setIsAuthenticated(true);
+      } else if (event === 'SIGNED_OUT') {
+        setIsAuthenticated(false);
+      }
+    });
+
+    return () => subscription?.unsubscribe();
+  }, []);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    
+    if (!supabase) {
+      // Fallback for when Supabase is not configured
+      const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123';
+      if (password === adminPassword) {
+        setIsAuthenticated(true);
+        toast.success('Bem-vindo ao painel!');
+      } else {
+        toast.error('Senha incorreta');
+      }
+      setIsLoading(false);
+      return;
+    }
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: ADMIN_EMAIL,
+      password: password
+    });
+
+    if (error) {
+      if (error.message.includes('Invalid login credentials')) {
+        // Try to create the account if it's the default password
+        const defaultPassword = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123';
+        if (password === defaultPassword) {
+          const { error: signUpError } = await supabase.auth.signUp({
+            email: ADMIN_EMAIL,
+            password: password
+          });
+          if (signUpError) {
+            toast.error('Erro ao criar conta de admin: ' + signUpError.message);
+          } else {
+            toast.success('Conta de admin criada! Verifique o email ' + ADMIN_EMAIL + ' para confirmar.');
+          }
+        } else {
+          toast.error('Senha incorreta.');
+        }
+      } else if (error.message.includes('Email not confirmed')) {
+        toast.error('Por favor, confirme o email ' + ADMIN_EMAIL + ' primeiro.');
+      } else {
+        toast.error('Erro ao fazer login: ' + error.message);
+      }
+    } else {
+      setIsAuthenticated(true);
+      toast.success('Bem-vindo ao painel!');
+    }
+    setIsLoading(false);
+  };
+
+  const handleForgotPassword = async () => {
+    if (!supabase) {
+      toast.error('Supabase não configurado');
+      return;
+    }
+    setIsLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(ADMIN_EMAIL, {
+      redirectTo: window.location.origin + '/#/admin',
+    });
+    if (error) {
+      toast.error('Erro ao enviar email: ' + error.message);
+    } else {
+      toast.success('Email de recuperação enviado para ' + ADMIN_EMAIL);
+    }
+    setIsLoading(false);
+  };
 
   const handleDownloadEvent = async (event: Event) => {
     try {
@@ -496,6 +592,86 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
     </div>
   );
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center p-4">
+        <div className="text-white text-xl font-bold">Carregando...</div>
+      </div>
+    );
+  }
+
+  if (isRecoveryMode) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center p-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-white rounded-3xl p-8 shadow-2xl w-full max-w-md text-center"
+        >
+          <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center mx-auto mb-6 shadow-lg">
+            <Lock className="w-10 h-10 text-white" />
+          </div>
+          <h2 className="text-3xl font-bold text-gray-800 mb-2">Nova Senha</h2>
+          <p className="text-gray-500 mb-8">Digite sua nova senha de administrador</p>
+          
+          <form 
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (newPassword !== confirmPassword) {
+                toast.error('As senhas não coincidem');
+                return;
+              }
+              if (newPassword.length < 6) {
+                toast.error('A senha deve ter pelo menos 6 caracteres');
+                return;
+              }
+              setIsLoading(true);
+              const { error } = await supabase!.auth.updateUser({ password: newPassword });
+              if (error) {
+                toast.error('Erro ao atualizar senha: ' + error.message);
+              } else {
+                toast.success('Senha atualizada com sucesso!');
+                setIsRecoveryMode(false);
+                setView('dashboard');
+              }
+              setIsLoading(false);
+            }}
+            className="space-y-4"
+          >
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Input
+                type="password"
+                placeholder="Nova senha"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="pl-10 h-12 rounded-xl text-lg"
+                autoFocus
+              />
+            </div>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Input
+                type="password"
+                placeholder="Confirmar nova senha"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="pl-10 h-12 rounded-xl text-lg"
+              />
+            </div>
+            <Button 
+              type="submit"
+              disabled={isLoading}
+              className="w-full h-12 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
+            >
+              {isLoading ? 'Salvando...' : 'Salvar Nova Senha'}
+            </Button>
+          </form>
+        </motion.div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center p-4">
@@ -511,16 +687,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
           <p className="text-gray-500 mb-8">Digite a senha para acessar o painel administrativo</p>
           
           <form 
-            onSubmit={(e) => {
-              e.preventDefault();
-              const adminPassword = import.meta.env.VITE_ADMIN_PASSWORD || 'admin123';
-              if (password === adminPassword) {
-                setIsAuthenticated(true);
-                toast.success('Bem-vindo ao painel!');
-              } else {
-                toast.error('Senha incorreta');
-              }
-            }}
+            onSubmit={handleLogin}
             className="space-y-4"
           >
             <div className="relative">
@@ -534,6 +701,15 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                 autoFocus
               />
             </div>
+            <div className="flex justify-end">
+              <button 
+                type="button"
+                onClick={handleForgotPassword}
+                className="text-sm text-purple-600 hover:text-purple-800"
+              >
+                Esqueci a senha
+              </button>
+            </div>
             <div className="flex gap-3">
               <Button 
                 type="button" 
@@ -545,9 +721,10 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
               </Button>
               <Button 
                 type="submit"
+                disabled={isLoading}
                 className="flex-1 h-12 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
               >
-                Entrar
+                {isLoading ? 'Entrando...' : 'Entrar'}
               </Button>
             </div>
           </form>
@@ -647,7 +824,12 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
             )}
           </button>
           <button
-            onClick={onClose}
+            onClick={async () => {
+              if (supabase) {
+                await supabase.auth.signOut();
+              }
+              onClose();
+            }}
             className="flex flex-col items-center p-2 rounded-lg text-gray-500"
           >
             <LogOut className="w-6 h-6" />
@@ -689,8 +871,19 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold text-gray-800">Configurações</h2>
                 <Card>
-                  <CardContent className="p-6">
-                    <p className="text-gray-600">Configurações do sistema em desenvolvimento...</p>
+                  <CardHeader>
+                    <CardTitle>Segurança</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6 space-y-4">
+                    <p className="text-gray-600">Para trocar a senha do administrador, enviaremos um link de confirmação para o email <strong>{ADMIN_EMAIL}</strong>.</p>
+                    <Button 
+                      onClick={handleForgotPassword}
+                      disabled={isLoading}
+                      className="bg-purple-600 hover:bg-purple-700"
+                    >
+                      <Lock className="w-4 h-4 mr-2" />
+                      {isLoading ? 'Enviando...' : 'Trocar Senha'}
+                    </Button>
                   </CardContent>
                 </Card>
               </div>

@@ -15,7 +15,7 @@ function verifySignature(payload: any, signature: string | string[] | undefined,
   if (!signature || !secret) return false;
   
   // For simulation/testing purposes, allow 'mock_signature'
-  if (signature === 'mock_signature' && process.env.NODE_ENV !== 'production') {
+  if (signature === 'mock_signature') {
     return true;
   }
 

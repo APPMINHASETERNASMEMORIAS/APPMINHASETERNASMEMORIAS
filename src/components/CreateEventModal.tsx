@@ -92,6 +92,7 @@ const FRAME_TEMPLATES = [
 
 export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTestMode = false, isOneRealTestMode = false, onCreate }: CreateEventModalProps) {
   const [step, setStep] = useState(1);
+  const [paymentReceipt, setPaymentReceipt] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     clientName: '',
     clientPhone: '',
@@ -170,6 +171,10 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
   };
 
   const handleConfirmEvent = async () => {
+    if (!paymentReceipt && !isTestMode) {
+      toast.error('Por favor, anexe o comprovante de pagamento antes de continuar.');
+      return;
+    }
     setIsSubmitting(true);
     try {
       // Simulate a small delay for better UX
@@ -200,6 +205,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
   const resetForm = () => {
     setStep(1);
     setPaymentUrl(null);
+    setPaymentReceipt(null);
     setFormData({
       clientName: '',
       clientPhone: '',
@@ -592,10 +598,21 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
                 >
                   Ir para Pagamento (Pix ou Cartão)
                 </a>
+
+                <div className="space-y-2 text-left">
+                  <Label className="text-sm font-medium text-gray-700">Anexar Comprovante de Pagamento *</Label>
+                  <Input 
+                    type="file" 
+                    accept="image/*,application/pdf"
+                    onChange={(e) => setPaymentReceipt(e.target.files?.[0] || null)}
+                    className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
+                  />
+                  <p className="text-xs text-gray-500">Aceitamos imagens (JPG, PNG) ou PDF.</p>
+                </div>
                 
                 <Button 
                   onClick={handleConfirmEvent}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || (!paymentReceipt && !isTestMode)}
                   className="w-full h-14 text-lg font-bold bg-[#00E676] hover:bg-[#00C853] text-black"
                 >
                   {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : <CheckCircle2 className="w-6 h-6 mr-2" />}

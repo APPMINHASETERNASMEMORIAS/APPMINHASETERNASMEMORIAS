@@ -295,7 +295,6 @@ function LandingPage() {
   // Parallax effect for hero
   const { scrollY } = useScroll();
   const heroY = useTransform(scrollY, [0, 500], [0, 150]);
-  const heroOpacity = useTransform(scrollY, [0, 300], [1, 0]);
 
   const navigate = useNavigate();
 
@@ -462,7 +461,7 @@ function LandingPage() {
         </div>
 
         <motion.div 
-          style={{ y: heroY, opacity: heroOpacity }}
+          style={{ y: heroY }}
           className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-32 text-center"
         >
           <motion.div

@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useEvents } from '@/hooks/useEvents';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { Switch } from '@/components/ui/switch';
 import { User, Phone, Edit2, Calendar, Clock, Camera, ArrowLeft, Save, QrCode, CreditCard, Upload } from 'lucide-react';
 import { Event, EventType } from '@/types';
 import { QRCodeDisplay } from './QRCodeDisplay';
@@ -38,6 +39,7 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
   const [editFormData, setEditFormData] = useState<Partial<Event>>({});
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+  const [withFrame, setWithFrame] = useState(false);
   
   const { events, updateEvent } = useEvents();
   const navigate = useNavigate();
@@ -206,35 +208,29 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
                   Ver Galeria
                 </Button>
 
+                <div className="flex items-center space-x-2 bg-gray-50 p-3 rounded-lg border border-gray-100">
+                  <Switch 
+                    id="frame-mode" 
+                    checked={withFrame} 
+                    onCheckedChange={setWithFrame} 
+                  />
+                  <Label htmlFor="frame-mode" className="text-sm font-medium cursor-pointer">
+                    Adicionar Moldura (+ R$ 10,00)
+                  </Label>
+                </div>
+
                 <Button 
-                  onClick={async () => {
+                  onClick={() => {
                     if (!selectedEvent) return;
-                    try {
-                      toast.loading('Gerando link de pagamento...', { id: 'payment' });
-                      const response = await fetch('/api/payments/create', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          handle: selectedEvent.id,
-                          items: [{ 
-                            name: `Plano ${PLANS[selectedEvent.plan as keyof typeof PLANS]?.name || 'Festa'}`, 
-                            price: PLANS[selectedEvent.plan as keyof typeof PLANS]?.price || 0 
-                          }],
-                          userId: selectedEvent.id, // Using event ID as user ID for now
-                          plan: selectedEvent.plan
-                        })
-                      });
-                      const data = await response.json();
-                      if (data.success) {
-                        toast.dismiss('payment');
-                        window.open(data.paymentUrl, '_blank');
-                      } else {
-                        throw new Error(data.error || 'Erro ao gerar pagamento');
-                      }
-                    } catch (error) {
-                      toast.dismiss('payment');
-                      toast.error('Erro ao gerar link de pagamento');
-                      console.error(error);
+                    
+                    const basePlanKey = selectedEvent.plan || 'festa';
+                    const planKey = withFrame ? `${basePlanKey}_moldura` : basePlanKey;
+                    const plan = PLANS[planKey as keyof typeof PLANS];
+                    
+                    if (plan && plan.link) {
+                      window.open(plan.link, '_blank');
+                    } else {
+                      toast.error('Link de pagamento não disponível para este plano.');
                     }
                   }}
                   className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"

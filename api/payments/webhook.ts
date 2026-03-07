@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import crypto from 'crypto';
 
 // Initialize Supabase client
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
@@ -10,6 +11,26 @@ const supabase = supabaseUrl && (supabaseServiceKey || supabaseAnonKey)
   ? createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey)
   : null;
 
+function verifySignature(payload: any, signature: string | string[] | undefined, secret: string | undefined): boolean {
+  if (!signature || !secret) return false;
+  
+  // For simulation/testing purposes, allow 'mock_signature'
+  if (signature === 'mock_signature' && process.env.NODE_ENV !== 'production') {
+    return true;
+  }
+
+  try {
+    const hmac = crypto.createHmac('sha256', secret);
+    const body = typeof payload === 'string' ? payload : JSON.stringify(payload);
+    const digest = hmac.update(body).digest('hex');
+    
+    return digest === signature;
+  } catch (error) {
+    console.error('Signature verification error:', error);
+    return false;
+  }
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
@@ -17,6 +38,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     let payload = req.body;
+    const rawBody = typeof payload === 'string' ? payload : JSON.stringify(payload);
+    
     if (typeof payload === 'string') {
       try {
         payload = JSON.parse(payload);
@@ -25,16 +48,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
     payload = payload || {};
-    const signature = req.headers['x-infinitepay-signature']; // Exemplo de header de assinatura
+    const signature = req.headers['x-infinitepay-signature'];
 
     console.log('[WEBHOOK RECEIVED]', payload);
 
+    // 1. VERIFICAÇÃO DE SEGURANÇA (CRÍTICO)
+    const isValid = verifySignature(payload, signature, process.env.INFINITEPAY_WEBHOOK_SECRET);
+    
     // Log to Supabase if client is available
     if (supabase && Object.keys(payload).length > 0) {
       try {
         await supabase.from('webhook_logs').insert({
           payload: payload,
           headers: req.headers,
+          is_valid: isValid,
           created_at: new Date().toISOString()
         });
       } catch (logError) {
@@ -42,15 +69,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     }
 
-    // 1. VERIFICAÇÃO DE SEGURANÇA (CRÍTICO)
-    // Você DEVE validar a assinatura para garantir que o webhook veio da InfinitePay
-    // const isValid = verifySignature(payload, signature, process.env.INFINITEPAY_WEBHOOK_SECRET);
-    // if (!isValid) return res.status(401).send('Invalid signature');
-
-    console.log('[WEBHOOK RECEIVED]', payload);
+    if (!isValid && process.env.NODE_ENV === 'production') {
+      console.warn('[WEBHOOK] Invalid signature received');
+      return res.status(401).send('Invalid signature');
+    }
 
     // 2. PROCESSAMENTO DO PAGAMENTO
-    // Supondo que o payload contenha o status e o ID da transação
     if (payload && payload.status === 'approved') {
       const transactionId = payload.id;
       const planId = payload.metadata?.planId;

@@ -167,7 +167,8 @@ export function useEvents() {
           status: newEvent.status,
           payment_status: newEvent.paymentStatus,
           settings: newEvent.settings,
-          stats: newEvent.stats
+          stats: newEvent.stats,
+          plan: data.plan || 'festa'
         }]);
 
         if (error) throw error;
@@ -256,7 +257,17 @@ export function useEvents() {
             console.log(`Pausing event ${event.id} due to unpaid grace period expiration.`);
             updateEvent(event.id, { status: 'paused' });
             toast.error(`O evento "${event.eventName}" foi pausado por falta de pagamento.`);
-            // TODO: Send WhatsApp message here
+            
+            // Send WhatsApp notification
+            if (event.clientPhone) {
+              const message = `Olá! Notamos que o pagamento para o seu evento "${event.eventName}" ainda não foi confirmado. Sua galeria foi pausada temporariamente. Assim que o pagamento for confirmado, ela será ativada automaticamente!`;
+              const whatsappUrl = `https://api.whatsapp.com/send?phone=${event.clientPhone.replace(/\D/g, '')}&text=${encodeURIComponent(message)}`;
+              
+              // Since this is a background check, we can't open the window automatically, 
+              // but we can log it and potentially provide a button in the UI if the admin is watching.
+              console.log(`[WHATSAPP NOTIFICATION] Should send to ${event.clientPhone}: ${message}`);
+              console.log(`[WHATSAPP LINK] ${whatsappUrl}`);
+            }
           }
         }
       });

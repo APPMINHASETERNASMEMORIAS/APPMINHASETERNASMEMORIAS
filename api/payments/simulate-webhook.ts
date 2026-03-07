@@ -6,7 +6,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { eventId, status, amount } = req.body;
+    let body = req.body;
+    if (typeof body === 'string') {
+      try {
+        body = JSON.parse(body);
+      } catch (e) {
+        console.error('Failed to parse body string:', e);
+      }
+    }
+    body = body || {};
+    const { eventId, status, amount } = body;
 
     const mockPayload = {
       id: `sim_${Date.now()}`,

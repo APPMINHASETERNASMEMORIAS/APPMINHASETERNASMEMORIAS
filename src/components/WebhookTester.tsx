@@ -44,6 +44,10 @@ export function WebhookTester() {
     try {
       const response = await fetch('/api/payments/simulate-webhook', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
       });
       
       const data = await response.json();

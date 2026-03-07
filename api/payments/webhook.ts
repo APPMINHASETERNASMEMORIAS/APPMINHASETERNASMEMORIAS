@@ -16,13 +16,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const payload = req.body;
+    let payload = req.body;
+    if (typeof payload === 'string') {
+      try {
+        payload = JSON.parse(payload);
+      } catch (e) {
+        console.error('Failed to parse payload string:', e);
+      }
+    }
+    payload = payload || {};
     const signature = req.headers['x-infinitepay-signature']; // Exemplo de header de assinatura
 
     console.log('[WEBHOOK RECEIVED]', payload);
 
     // Log to Supabase if client is available
-    if (supabase) {
+    if (supabase && Object.keys(payload).length > 0) {
       try {
         await supabase.from('webhook_logs').insert({
           payload: payload,
@@ -43,7 +51,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 2. PROCESSAMENTO DO PAGAMENTO
     // Supondo que o payload contenha o status e o ID da transação
-    if (payload.status === 'approved') {
+    if (payload && payload.status === 'approved') {
       const transactionId = payload.id;
       const planId = payload.metadata?.planId;
       const userId = payload.metadata?.userId;

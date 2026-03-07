@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { MediaWall } from './MediaWall';
 import { QRCodeDisplay } from './QRCodeDisplay';
 import { CreateEventModal } from './CreateEventModal';
+import { WebhookTester } from './WebhookTester';
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import toast from 'react-hot-toast';
@@ -35,14 +36,15 @@ import {
   Lock,
   Shield,
   RotateCcw,
-  CheckCircle2
+  CheckCircle2,
+  Activity
 } from 'lucide-react';
 
 interface AdminPanelProps {
   onClose: () => void;
 }
 
-type AdminView = 'dashboard' | 'events' | 'media' | 'settings';
+type AdminView = 'dashboard' | 'events' | 'media' | 'settings' | 'webhooks';
 
 export function AdminPanel({ onClose }: AdminPanelProps) {
   const ADMIN_EMAIL = 'linktestadoeaprovado@gmail.com';
@@ -784,6 +786,13 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                 )}
               </button>
               <button
+                onClick={() => setView('webhooks')}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${view === 'webhooks' ? 'bg-purple-50 text-purple-600' : 'text-gray-600 hover:bg-gray-50'}`}
+              >
+                <Activity className="w-5 h-5" />
+                Webhooks / Logs
+              </button>
+              <button
                 onClick={() => setView('settings')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${view === 'settings' ? 'bg-purple-50 text-purple-600' : 'text-gray-600 hover:bg-gray-50'}`}
               >
@@ -831,6 +840,13 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
             )}
           </button>
           <button
+            onClick={() => setView('webhooks')}
+            className={`flex flex-col items-center p-2 rounded-lg ${view === 'webhooks' ? 'text-purple-600' : 'text-gray-500'}`}
+          >
+            <Activity className="w-6 h-6" />
+            <span className="text-[10px] mt-1">Logs</span>
+          </button>
+          <button
             onClick={async () => {
               if (supabase) {
                 await supabase.auth.signOut();
@@ -874,6 +890,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                 )}
               </div>
             )}
+            {view === 'webhooks' && <WebhookTester />}
             {view === 'settings' && (
               <div className="space-y-6">
                 <h2 className="text-2xl font-bold text-gray-800">Configurações</h2>

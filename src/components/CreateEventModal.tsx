@@ -129,7 +129,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
   const planDetails = PLANS[activePlan as keyof typeof PLANS] || PLANS.festa;
   const totalPrice = isTestMode ? 0.00 : (planDetails.price + (frameSettings.enabled ? 9.99 : 0));
 
-  const handleGeneratePayment = async () => {
+  const handleGeneratePayment = async (overridePrice?: number, isTestOverride?: boolean) => {
     setIsSubmitting(true);
     try {
       const { data: { user } } = await supabase!.auth.getUser();
@@ -140,6 +140,9 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
         return;
       }
 
+      const finalPrice = overridePrice !== undefined ? overridePrice : totalPrice;
+      const finalIsTest = isTestOverride !== undefined ? isTestOverride : isTestMode;
+
       const response = await fetch('/api/payments/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -148,12 +151,12 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
           items: [
             {
               quantity: 1,
-              price: Math.round(totalPrice * 100), // Preço em centavos
-              description: planDetails.name
+              price: Math.round(finalPrice * 100), // Preço em centavos
+              description: planDetails.name + (frameSettings.enabled ? ' + Moldura' : '')
             }
           ],
           userId: user.id,
-          isTest: isTestMode
+          isTest: finalIsTest
         })
       });
       
@@ -558,13 +561,22 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
                   Você será redirecionado para o ambiente seguro para concluir o pagamento via Pix ou Cartão de Crédito.
                 </p>
                 <Button 
-                  onClick={handleGeneratePayment} 
+                  onClick={() => handleGeneratePayment()} 
                   disabled={isSubmitting} 
                   className="w-full h-14 text-lg bg-[#00E676] hover:bg-[#00C853] text-black font-bold"
                 >
                   {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : <CreditCard className="w-6 h-6 mr-2" />}
                   {isSubmitting ? 'Gerando...' : 'Clique aqui para pagar'}
                 </Button>
+                {isTestMode && (
+                  <Button 
+                    onClick={() => handleGeneratePayment(1.00, false)} 
+                    disabled={isSubmitting} 
+                    className="w-full h-14 text-lg bg-orange-600 hover:bg-orange-700 text-white font-bold"
+                  >
+                    {isSubmitting ? 'Gerando...' : 'Testar Pagamento Real (R$ 1,00)'}
+                  </Button>
+                )}
               </div>
             ) : (
               <div className="space-y-4 text-center">

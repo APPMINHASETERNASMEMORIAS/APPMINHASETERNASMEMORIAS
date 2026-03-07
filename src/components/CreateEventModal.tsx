@@ -132,41 +132,44 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
   const handleGeneratePayment = async (overridePrice?: number, isTestOverride?: boolean) => {
     setIsSubmitting(true);
     try {
-      const finalPrice = overridePrice !== undefined ? overridePrice : totalPrice;
-      const finalIsTest = isTestOverride !== undefined ? isTestOverride : isTestMode;
-
-      const response = await fetch('/api/payments/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          handle: "crysramosfotografia",
-          items: [
-            {
-              quantity: 1,
-              price: Math.round(finalPrice * 100), // Preço em centavos
-              description: planDetails.name + (frameSettings.enabled ? ' + Moldura' : '')
-            }
-          ],
-          isTest: finalIsTest
-        })
-      });
+      let url = '';
       
-      const data = await response.json();
-      if (data.success && data.paymentUrl) {
-        setPaymentUrl(data.paymentUrl);
+      if (isOneRealTestMode) {
+        url = 'https://checkout.infinitepay.io/crysramosfotografia/8VlxpRjlp';
+      } else {
+        const planKey = activePlan;
+        const hasFrame = frameSettings.enabled;
+        
+        if (planKey === 'intimo') {
+          url = hasFrame ? 'https://checkout.infinitepay.io/crysramosfotografia/7Pfhk9vExV' : 'https://checkout.infinitepay.io/crysramosfotografia/1hYM8emKD';
+        } else if (planKey === 'festa') {
+          url = hasFrame ? 'https://checkout.infinitepay.io/crysramosfotografia/INzIZO1yj' : 'https://checkout.infinitepay.io/crysramosfotografia/1EbwPpmBi1';
+        } else if (planKey === 'celebracao') {
+          url = hasFrame ? 'https://checkout.infinitepay.io/crysramosfotografia/2TDubzuKbD' : 'https://checkout.infinitepay.io/crysramosfotografia/9Zk4Rrd7n';
+        } else if (planKey === 'ilimitado') {
+          url = hasFrame ? 'https://checkout.infinitepay.io/crysramosfotografia/jxyWAfKcn' : 'https://checkout.infinitepay.io/crysramosfotografia/p4d9912aH';
+        } else if (planKey === 'test') {
+          url = 'https://checkout.infinitepay.io/crysramosfotografia/8VlxpRjlp';
+        }
+      }
+
+      if (url) {
+        // Simular um pequeno delay para UX
+        await new Promise(resolve => setTimeout(resolve, 800));
+        setPaymentUrl(url);
         toast.success('Link de pagamento gerado!');
       } else {
-        throw new Error(data.error || 'Falha ao gerar pagamento');
+        throw new Error('Plano não encontrado');
       }
     } catch (error: any) {
       console.error(error);
-      toast.error(error.message || 'Erro ao conectar com o servidor de pagamento');
+      toast.error(error.message || 'Erro ao gerar link de pagamento');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleCreateFreeEvent = async () => {
+  const handleConfirmEvent = async () => {
     setIsSubmitting(true);
     try {
       // Simulate a small delay for better UX
@@ -183,12 +186,12 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
         plan: activePlan 
       });
       
-      toast.success('Evento de teste criado com sucesso!');
+      toast.success('Evento criado com sucesso!');
       resetForm();
       onClose();
     } catch (error) {
       console.error(error);
-      toast.error('Erro ao criar evento de teste');
+      toast.error('Erro ao criar evento');
     } finally {
       setIsSubmitting(false);
     }
@@ -545,7 +548,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
                   </p>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <Button 
-                      onClick={handleCreateFreeEvent} 
+                      onClick={handleConfirmEvent} 
                       disabled={isSubmitting} 
                       className="flex-1 h-14 text-base sm:text-lg bg-purple-600 hover:bg-purple-700 text-white font-bold"
                     >
@@ -578,7 +581,8 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
                 </div>
                 <h3 className="text-xl font-bold text-gray-900">Link de Pagamento Pronto!</h3>
                 <p className="text-gray-600 mb-6">
-                  Escolha sua forma de pagamento (Pix ou Cartão) na página seguinte. Seu evento será liberado automaticamente após a confirmação.
+                  1. Clique no botão abaixo para pagar via Pix ou Cartão.<br/>
+                  2. <b>Após o pagamento</b>, volte aqui e clique em "Já paguei, liberar evento".
                 </p>
                 <a 
                   href={paymentUrl} 
@@ -589,13 +593,14 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
                   Ir para Pagamento (Pix ou Cartão)
                 </a>
                 
-                <button 
-                  onClick={handleCreateFreeEvent}
+                <Button 
+                  onClick={handleConfirmEvent}
                   disabled={isSubmitting}
-                  className="text-sm text-gray-400 underline hover:text-gray-600"
+                  className="w-full h-14 text-lg font-bold bg-[#00E676] hover:bg-[#00C853] text-black"
                 >
-                  {isSubmitting ? 'Aguardando...' : '(Dev) Simular Pagamento Aprovado'}
-                </button>
+                  {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : <CheckCircle2 className="w-6 h-6 mr-2" />}
+                  {isSubmitting ? 'Aguardando...' : 'Já paguei, liberar evento'}
+                </Button>
               </div>
             )}
 

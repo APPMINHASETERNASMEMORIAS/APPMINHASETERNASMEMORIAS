@@ -528,15 +528,23 @@ function LandingPage() {
               Criar Minha Galeria
             </motion.button>
             <motion.button
-              onClick={() => setIsVideoModalOpen(true)}
+              onClick={() => setIsClientLoginModalOpen(true)}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="bg-white/10 backdrop-blur-sm text-white border-2 border-white/30 px-8 py-4 rounded-full font-bold text-lg hover:bg-white/20 transition-colors flex items-center justify-center gap-2"
             >
-              <Play className="w-5 h-5" />
-              Ver Como Funciona
+              <Camera className="w-5 h-5" />
+              Ver minha galeria
             </motion.button>
           </motion.div>
+          <motion.button
+            onClick={() => setIsVideoModalOpen(true)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="mt-8 text-white/80 hover:text-white underline transition-colors"
+          >
+            Ver Como Funciona
+          </motion.button>
 
           {/* Video Modal */}
           <Dialog open={isVideoModalOpen} onOpenChange={setIsVideoModalOpen}>

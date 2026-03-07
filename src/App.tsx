@@ -1232,9 +1232,10 @@ function EventPage() {
                 eventId={id} 
                 isPaused={isPaused} 
                 status={event?.status} 
-                paymentReceiptUrl={event?.paymentReceiptUrl}
+                paymentStatus={event?.paymentStatus}
                 isCreator={isCreator}
                 isEventDayOrPast={isEventDayOrPast}
+                mediaCount={media.length}
                 onUploadSuccess={() => setRefreshGallery(prev => prev + 1)} 
               />
               {event && (

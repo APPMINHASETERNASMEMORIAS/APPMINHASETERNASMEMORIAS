@@ -30,17 +30,20 @@ export function UploadMemory({
   isPaused = false, 
   onUploadSuccess, 
   status, 
-  paymentReceiptUrl,
+  paymentStatus,
   isCreator = false,
-  isEventDayOrPast = false
+  isEventDayOrPast = false,
+  mediaCount = 0
 }: { 
   eventId?: string, 
   isPaused?: boolean, 
   onUploadSuccess?: () => void, 
   status?: 'active' | 'paused' | 'ended' | 'pending', 
   paymentReceiptUrl?: string,
+  paymentStatus?: 'pending' | 'paid' | 'failed',
   isCreator?: boolean,
-  isEventDayOrPast?: boolean
+  isEventDayOrPast?: boolean,
+  mediaCount?: number
 }) {
   const [step, setStep] = useState<Step>('frame');
   const [selectedFrame, setSelectedFrame] = useState(FRAMES[0]);
@@ -53,31 +56,31 @@ export function UploadMemory({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   
   // Locking Logic
-  // 1. If status is pending AND no receipt -> Locked (Waiting payment)
-  // 2. If status is pending AND receipt exists:
-  //    - If Creator -> Unlocked (Test mode / Pre-event check)
-  //    - If Guest -> Locked (Until event day)
+  // 1. Creator: Needs paymentStatus === 'paid' to upload before event. Limit 20.
+  // 2. Guest: Only on event day.
   
-  const hasReceipt = !!paymentReceiptUrl;
-  const isPending = status === 'pending';
+  const isPaid = paymentStatus === 'paid';
+  const creatorLimit = 20;
   
   let isLocked = false;
   let lockMessage = '';
 
-  if (isPending && !hasReceipt) {
-    isLocked = true;
-    lockMessage = 'Aguardando envio do comprovante para liberar envios.';
-  } else if (isPending && hasReceipt) {
-    if (isCreator) {
-      isLocked = false; // Creator can access
-    } else {
-      if (!isEventDayOrPast) {
-        isLocked = true;
-        lockMessage = 'O envio de fotos será liberado no dia do evento.';
-      } else {
-        isLocked = false; // Event day reached
-      }
+  if (isEventDayOrPast) {
+    // On event day or after, everyone can upload (if not paused/ended)
+    isLocked = false;
+  } else if (isCreator) {
+    // Before event day, creator can upload if paid, up to 20 photos
+    if (!isPaid) {
+      isLocked = true;
+      lockMessage = 'Aguardando confirmação de pagamento para liberar seus envios exclusivos.';
+    } else if (mediaCount >= creatorLimit) {
+      isLocked = true;
+      lockMessage = `Você atingiu o limite de ${creatorLimit} envios antecipados. Mais envios estarão disponíveis no dia do evento.`;
     }
+  } else {
+    // Guest before event day
+    isLocked = true;
+    lockMessage = 'O envio de fotos para convidados será liberado apenas no dia do evento.';
   }
   
   // Remove "Verifying" message as requested ("retire esse modo de teste")

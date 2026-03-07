@@ -75,6 +75,13 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
     });
 
     if (matchedEvent) {
+      // Grant creator privileges on this device upon successful login
+      const createdEvents = JSON.parse(localStorage.getItem('created_events') || '[]');
+      if (!createdEvents.includes(matchedEvent.id)) {
+        createdEvents.push(matchedEvent.id);
+        localStorage.setItem('created_events', JSON.stringify(createdEvents));
+      }
+      
       setSelectedEvent(matchedEvent);
       setMode('manage');
     } else {

@@ -15,6 +15,7 @@ export interface Event {
   settings: EventSettings;
   stats: EventStats;
   plan?: string;
+  paymentReceiptUrl?: string;
 }
 
 export type EventType = 

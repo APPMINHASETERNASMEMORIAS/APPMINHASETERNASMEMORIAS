@@ -5,6 +5,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { Toaster } from 'react-hot-toast';
 import { UploadMemory } from './components/UploadMemory';
 import { MemoryGallery } from './components/MemoryGallery';
+import { PaymentReceiptUpload } from './components/PaymentReceiptUpload';
 import { 
   Heart, 
   Sparkles, 
@@ -1137,6 +1138,7 @@ function LandingPage() {
           isOpen={isQRModalOpen}
           onClose={() => setIsQRModalOpen(false)}
           frameSettings={createdEvent.settings.frameSettings}
+          status={createdEvent.status}
         />
       )}
     </div>
@@ -1147,10 +1149,10 @@ function EventPage() {
   const { id } = useParams();
   const [refreshGallery, setRefreshGallery] = useState(0);
   const navigate = useNavigate();
-  const { getEvent } = useEvents();
+  const { getEvent, uploadPaymentReceipt } = useEvents();
   
   const event = id ? getEvent(id) : undefined;
-  const isPaused = event?.status === 'paused' || event?.status === 'ended';
+  const isPaused = event?.status === 'paused' || event?.status === 'ended' || event?.status === 'pending';
   const isEnded = event?.status === 'ended';
 
   return (
@@ -1191,14 +1193,20 @@ function EventPage() {
               {isEnded
                 ? 'Este evento foi finalizado. Agradecemos a todos que compartilharam suas memórias!'
                 : isPaused 
-                  ? 'O recebimento de fotos para este evento foi pausado pelo administrador.' 
+                  ? (event?.status === 'pending' ? 'Aguardando confirmação de pagamento para liberar envios.' : 'O recebimento de fotos para este evento foi pausado pelo administrador.')
                   : 'Tire uma foto ou grave um vídeo e deixe uma mensagem especial.'}
             </p>
           </div>
 
             <div className="space-y-8">
-              <UploadMemory eventId={id} isPaused={isPaused} onUploadSuccess={() => setRefreshGallery(prev => prev + 1)} />
-              <MemoryGallery eventId={id} refreshTrigger={refreshGallery} event={event} />
+              {event?.status === 'pending' ? (
+                <PaymentReceiptUpload eventId={id!} onUploadSuccess={(url) => uploadPaymentReceipt(id!, url)} />
+              ) : (
+                <>
+                  <UploadMemory eventId={id} isPaused={isPaused} status={event?.status} onUploadSuccess={() => setRefreshGallery(prev => prev + 1)} />
+                  <MemoryGallery eventId={id} refreshTrigger={refreshGallery} event={event} />
+                </>
+              )}
             </div>
         </div>
       </main>

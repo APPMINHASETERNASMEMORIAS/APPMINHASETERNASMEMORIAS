@@ -332,6 +332,7 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
           isOpen={isQRModalOpen}
           onClose={() => setIsQRModalOpen(false)}
           frameSettings={selectedEvent.settings.frameSettings}
+          status={selectedEvent.status}
         />
       )}
     </>

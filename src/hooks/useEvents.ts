@@ -349,6 +349,31 @@ export function useEvents() {
     return flattened;
   }, [media]);
 
+  const uploadPaymentReceipt = useCallback(async (eventId: string, receiptUrl: string) => {
+    // Optimistic update
+    setEvents(prev =>
+      prev.map(event =>
+        event.id === eventId ? { ...event, paymentReceiptUrl: receiptUrl } : event
+      )
+    );
+
+    if (isSupabaseConfigured) {
+      try {
+        const { error } = await supabase!
+          .from('events')
+          .update({ payment_receipt_url: receiptUrl })
+          .eq('id', eventId);
+
+        if (error) throw error;
+        toast.success('Comprovante enviado com sucesso!');
+      } catch (error) {
+        console.error('Error uploading receipt:', error);
+        toast.error('Erro ao enviar comprovante.');
+        fetchEventsAndMedia(); // Revert on error
+      }
+    }
+  }, [fetchEventsAndMedia]);
+
   return {
     events: Array.isArray(events) ? events.filter(e => e && typeof e === 'object') : [],
     media: getFlattenedMedia(),
@@ -356,6 +381,7 @@ export function useEvents() {
     createEvent,
     updateEvent,
     deleteEvent,
+    uploadPaymentReceipt,
     getEvent,
     getEventMedia,
     approveMedia,

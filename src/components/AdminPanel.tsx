@@ -906,6 +906,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
           eventName={selectedEvent.eventName}
           isOpen={showQRCode}
           onClose={() => setShowQRCode(false)}
+          status={selectedEvent.status}
         />
       )}
 

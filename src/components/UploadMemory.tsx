@@ -25,7 +25,7 @@ const FRAMES = [
 
 type Step = 'frame' | 'upload' | 'crop' | 'details';
 
-export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { eventId?: string, isPaused?: boolean, onUploadSuccess?: () => void }) {
+export function UploadMemory({ eventId, isPaused = false, onUploadSuccess, status }: { eventId?: string, isPaused?: boolean, onUploadSuccess?: () => void, status?: 'active' | 'paused' | 'ended' | 'pending' }) {
   const [step, setStep] = useState<Step>('frame');
   const [selectedFrame, setSelectedFrame] = useState(FRAMES[0]);
   
@@ -35,6 +35,8 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
   const [isUploading, setIsUploading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  
+  const isPending = status === 'pending';
   
   // Cropper state
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -233,9 +235,9 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
         <DialogTrigger asChild>
           <button
-            disabled={isPaused}
+            disabled={isPaused || isPending}
             className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full shadow-2xl flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 group ${
-              isPaused 
+              isPaused || isPending
                 ? 'bg-gray-400 cursor-not-allowed' 
                 : 'bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400'
             }`}
@@ -249,6 +251,12 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess }: { e
         
         <DialogContent className="w-[calc(100%-2rem)] sm:max-w-md rounded-3xl border-none p-0 overflow-hidden bg-white max-h-[90vh] flex flex-col">
           <div className="p-4 sm:p-6 overflow-y-auto custom-scrollbar h-full">
+            
+            {isPending && (
+              <div className="p-4 bg-red-50 text-red-700 rounded-xl mb-6 text-center text-sm font-medium">
+                Aguardando confirmação de pagamento para liberar envios.
+              </div>
+            )}
             
             {/* Header with Back Button */}
             <div className="flex items-center justify-between mb-6">

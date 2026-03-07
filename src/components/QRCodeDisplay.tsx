@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Download, Share2, Copy, Check, Printer } from 'lucide-react';
+import { Download, Share2, Copy, Check, Printer, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -17,13 +17,15 @@ interface QRCodeDisplayProps {
   isOpen: boolean;
   onClose: () => void;
   frameSettings?: FrameSettings;
+  status: 'active' | 'paused' | 'ended' | 'pending';
 }
 
-export function QRCodeDisplay({ eventId, eventName, isOpen, onClose, frameSettings }: QRCodeDisplayProps) {
+export function QRCodeDisplay({ eventId, eventName, isOpen, onClose, frameSettings, status }: QRCodeDisplayProps) {
   const [copied, setCopied] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
   
   const eventUrl = `${window.location.origin}/#/evento/${eventId}`;
+  const isPending = status === 'pending';
   
   const handleCopyLink = async () => {
     try {
@@ -36,6 +38,7 @@ export function QRCodeDisplay({ eventId, eventName, isOpen, onClose, frameSettin
   };
 
   const handleDownloadQR = (withFrame: boolean = false) => {
+    if (isPending) return;
     const svg = document.getElementById('event-qr-code');
     if (!svg) return;
 
@@ -179,61 +182,75 @@ export function QRCodeDisplay({ eventId, eventName, isOpen, onClose, frameSettin
 
         <div className="flex flex-col items-center gap-6 py-6">
           <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
-            <QRCodeSVG
-              id="event-qr-code"
-              value={eventUrl}
-              size={200}
-              level="H"
-              includeMargin={true}
-            />
+            {isPending ? (
+              <div className="w-[200px] h-[200px] flex items-center justify-center bg-gray-100 rounded-lg">
+                <Lock className="w-12 h-12 text-gray-400" />
+              </div>
+            ) : (
+              <QRCodeSVG
+                id="event-qr-code"
+                value={eventUrl}
+                size={200}
+                level="H"
+                includeMargin={true}
+              />
+            )}
           </div>
 
           <div className="text-center">
             <h3 className="font-semibold text-lg text-gray-800">{eventName}</h3>
-            <p className="text-sm text-gray-500 mt-1">Escaneie para participar</p>
-          </div>
-
-          <div className="w-full bg-gray-100 rounded-lg p-3 flex items-center gap-2">
-            <input
-              type="text"
-              value={eventUrl}
-              readOnly
-              className="flex-1 bg-transparent text-sm text-gray-600 outline-none"
-            />
-            <button onClick={handleCopyLink} className="p-2 hover:bg-gray-200 rounded-lg transition-colors">
-              {copied ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5 text-gray-500" />}
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 w-full">
-            {frameSettings?.enabled && (
-              <Button 
-                onClick={() => handleDownloadQR(true)} 
-                className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white py-6"
-              >
-                <Printer className="w-5 h-5" />
-                Baixar QR Code com Moldura (Para Imprimir)
-              </Button>
+            {isPending ? (
+              <p className="text-sm text-red-500 mt-1 font-medium">Aguardando confirmação de pagamento</p>
+            ) : (
+              <p className="text-sm text-gray-500 mt-1">Escaneie para participar</p>
             )}
-            <div className="flex gap-3">
-              <Button onClick={() => handleDownloadQR(false)} variant="outline" className="flex-1 flex items-center gap-2">
-                <Download className="w-4 h-4" />
-                Apenas QR
-              </Button>
-              <Button onClick={handleShare} className="flex-1 flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600">
-                <Share2 className="w-4 h-4" />
-                Compartilhar
-              </Button>
-            </div>
           </div>
-          
-          <Button 
-            onClick={() => window.open(eventUrl, '_blank')} 
-            variant="ghost" 
-            className="w-full text-purple-600 hover:text-purple-700 hover:bg-purple-50"
-          >
-            Acessar página do evento
-          </Button>
+
+          {!isPending && (
+            <>
+              <div className="w-full bg-gray-100 rounded-lg p-3 flex items-center gap-2">
+                <input
+                  type="text"
+                  value={eventUrl}
+                  readOnly
+                  className="flex-1 bg-transparent text-sm text-gray-600 outline-none"
+                />
+                <button onClick={handleCopyLink} className="p-2 hover:bg-gray-200 rounded-lg transition-colors">
+                  {copied ? <Check className="w-5 h-5 text-green-500" /> : <Copy className="w-5 h-5 text-gray-500" />}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 gap-3 w-full">
+                {frameSettings?.enabled && (
+                  <Button 
+                    onClick={() => handleDownloadQR(true)} 
+                    className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-700 text-white py-6"
+                  >
+                    <Printer className="w-5 h-5" />
+                    Baixar QR Code com Moldura (Para Imprimir)
+                  </Button>
+                )}
+                <div className="flex gap-3">
+                  <Button onClick={() => handleDownloadQR(false)} variant="outline" className="flex-1 flex items-center gap-2">
+                    <Download className="w-4 h-4" />
+                    Apenas QR
+                  </Button>
+                  <Button onClick={handleShare} className="flex-1 flex items-center gap-2 bg-gradient-to-r from-purple-600 to-pink-600">
+                    <Share2 className="w-4 h-4" />
+                    Compartilhar
+                  </Button>
+                </div>
+              </div>
+              
+              <Button 
+                onClick={() => window.open(eventUrl, '_blank')} 
+                variant="ghost" 
+                className="w-full text-purple-600 hover:text-purple-700 hover:bg-purple-50"
+              >
+                Acessar página do evento
+              </Button>
+            </>
+          )}
         </div>
       </DialogContent>
     </Dialog>

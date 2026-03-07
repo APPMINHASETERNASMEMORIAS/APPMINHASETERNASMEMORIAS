@@ -49,6 +49,7 @@ export function useEvents() {
         description: row.description || '',
         qrCode: row.qr_code || `${window.location.origin}/#/evento/${row.id}`,
         createdAt: row.created_at,
+        startedAt: row.settings?.startedAt,
         status: row.status as 'active' | 'paused' | 'ended',
         settings: row.settings || DEFAULT_SETTINGS,
         stats: row.stats || { totalPhotos: 0, totalVideos: 0, totalViews: 0, totalDownloads: 0 },
@@ -199,6 +200,13 @@ export function useEvents() {
         if (updates.status) dbUpdates.status = updates.status;
         if (updates.settings) dbUpdates.settings = updates.settings;
         if (updates.stats) dbUpdates.stats = updates.stats;
+        
+        if (updates.startedAt !== undefined) {
+          const currentEvent = events.find(e => e.id === id);
+          if (currentEvent) {
+            dbUpdates.settings = { ...currentEvent.settings, startedAt: updates.startedAt };
+          }
+        }
 
         const { error } = await supabase!
           .from('events')

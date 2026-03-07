@@ -1166,6 +1166,7 @@ function EventPage() {
             <div className="flex items-center gap-4">
               <CountdownTimer 
                 createdAt={event.createdAt} 
+                startedAt={event.startedAt}
                 clientPhone={event.clientPhone}
               />
             </div>

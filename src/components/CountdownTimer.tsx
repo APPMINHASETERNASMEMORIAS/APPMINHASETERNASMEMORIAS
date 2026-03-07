@@ -4,11 +4,12 @@ import toast from 'react-hot-toast';
 
 interface CountdownTimerProps {
   createdAt: string;
+  startedAt?: string;
   onEnd?: () => void;
   clientPhone?: string;
 }
 
-export function CountdownTimer({ createdAt, onEnd, clientPhone }: CountdownTimerProps) {
+export function CountdownTimer({ createdAt, startedAt, onEnd, clientPhone }: CountdownTimerProps) {
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [notified, setNotified] = useState(false);
 
@@ -17,9 +18,18 @@ export function CountdownTimer({ createdAt, onEnd, clientPhone }: CountdownTimer
 
   useEffect(() => {
     const calculateTimeLeft = () => {
-      const created = new Date(createdAt).getTime();
+      let startTime: number;
+      
+      if (startedAt) {
+        startTime = new Date(startedAt).getTime();
+      } else {
+        const createdDate = new Date(createdAt);
+        createdDate.setHours(12, 0, 0, 0);
+        startTime = createdDate.getTime();
+      }
+
       const now = new Date().getTime();
-      const difference = created + DURATION_MS - now;
+      const difference = startTime + DURATION_MS - now;
       
       if (difference <= 0) {
         setTimeLeft(0);
@@ -52,7 +62,7 @@ export function CountdownTimer({ createdAt, onEnd, clientPhone }: CountdownTimer
     const timer = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(timer);
-  }, [createdAt, notified, clientPhone, onEnd]);
+  }, [createdAt, startedAt, notified, clientPhone, onEnd]);
 
   const formatTime = (ms: number) => {
     const hours = Math.floor(ms / (1000 * 60 * 60));

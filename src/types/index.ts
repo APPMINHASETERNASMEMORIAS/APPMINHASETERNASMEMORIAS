@@ -10,6 +10,7 @@ export interface Event {
   coverImage?: string;
   qrCode: string;
   createdAt: string;
+  startedAt?: string;
   status: 'active' | 'paused' | 'ended';
   settings: EventSettings;
   stats: EventStats;
@@ -35,6 +36,7 @@ export interface EventSettings {
   delayedRevealTime?: string;
   frameSettings?: FrameSettings;
   clientPhone?: string;
+  startedAt?: string;
 }
 
 export interface FrameSettings {

@@ -18,12 +18,12 @@ const supabase = supabaseUrl && (supabaseServiceKey || supabaseAnonKey)
   : null;
 
 function verifySignature(payload: any, signature: string | string[] | undefined, secret: string | undefined): boolean {
-  if (!signature || !secret) return false;
-  
   // For simulation/testing purposes, allow 'mock_signature'
   if (signature === 'mock_signature') {
     return true;
   }
+
+  if (!signature || !secret) return false;
 
   try {
     const hmac = crypto.createHmac('sha256', secret);

@@ -42,6 +42,7 @@ import { QRCodeDisplay } from './components/QRCodeDisplay';
 import { AdminPanel } from './components/AdminPanel';
 import { ClientLoginModal } from './components/ClientLoginModal';
 import { CountdownTimer } from './components/CountdownTimer';
+import { DownloadEventButton } from './components/DownloadEventButton';
 import { Event } from './types';
 
 // Error Boundary Component
@@ -1152,10 +1153,11 @@ function EventPage() {
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const navigate = useNavigate();
-  const { getEvent, uploadPaymentReceipt, isEventCreator } = useEvents();
+  const { getEvent, uploadPaymentReceipt, isEventCreator, getEventMedia } = useEvents();
   
   const event = id ? getEvent(id) : undefined;
   const isCreator = id ? isEventCreator(id) : false;
+  const media = id ? getEventMedia(id) : [];
   
   // Logic for locking/pausing
   // 1. If status is paused/ended -> Paused for everyone
@@ -1246,6 +1248,13 @@ function EventPage() {
                 isEventDayOrPast={isEventDayOrPast}
                 onUploadSuccess={() => setRefreshGallery(prev => prev + 1)} 
               />
+              {event && (
+                <DownloadEventButton 
+                  eventName={event.eventName} 
+                  isEnded={isEnded} 
+                  media={media} 
+                />
+              )}
               <MemoryGallery eventId={id} refreshTrigger={refreshGallery} event={event} />
             </div>
         </div>

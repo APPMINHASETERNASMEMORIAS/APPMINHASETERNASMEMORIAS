@@ -267,6 +267,16 @@ export function useEvents() {
               // but we can log it and potentially provide a button in the UI if the admin is watching.
               console.log(`[WHATSAPP NOTIFICATION] Should send to ${event.clientPhone}: ${message}`);
               console.log(`[WHATSAPP LINK] ${whatsappUrl}`);
+              
+              // We'll use a custom event to notify the UI that a WhatsApp message is ready
+              window.dispatchEvent(new CustomEvent('whatsapp-notification', { 
+                detail: { 
+                  phone: event.clientPhone, 
+                  message, 
+                  url: whatsappUrl,
+                  eventName: event.eventName
+                } 
+              }));
             }
           }
         }

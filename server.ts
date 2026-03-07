@@ -89,9 +89,9 @@ async function startServer() {
         transactionId: data.id
       });
 
-    } catch (error) {
+    } catch (error: any) {
       console.error('[PAYMENT ERROR]', error);
-      res.status(500).json({ success: false, error: 'Failed to create payment' });
+      res.status(500).json({ success: false, error: error.message || 'Failed to create payment' });
     }
   });
 

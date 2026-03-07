@@ -156,11 +156,11 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
         setPaymentUrl(data.paymentUrl);
         toast.success('Link de pagamento gerado!');
       } else {
-        throw new Error('Falha ao gerar pagamento');
+        throw new Error(data.error || 'Falha ao gerar pagamento');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast.error('Erro ao conectar com o servidor de pagamento');
+      toast.error(error.message || 'Erro ao conectar com o servidor de pagamento');
     } finally {
       setIsSubmitting(false);
     }

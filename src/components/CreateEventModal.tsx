@@ -541,43 +541,46 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
               )}
             </div>
 
-            {isTestMode ? (
-              <div className="space-y-4">
-                <p className="text-center text-gray-600 text-sm">
-                  Você está no modo de teste administrativo. O evento será criado instantaneamente sem cobrança.
-                </p>
-                <Button 
-                  onClick={handleCreateFreeEvent} 
-                  disabled={isSubmitting} 
-                  className="w-full h-14 text-lg bg-purple-600 hover:bg-purple-700 text-white font-bold"
-                >
-                  {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : <CheckCircle2 className="w-6 h-6 mr-2" />}
-                  {isSubmitting ? 'Criando...' : 'Criar Evento de Teste'}
-                </Button>
-              </div>
-            ) : !paymentUrl ? (
-              <div className="space-y-4">
-                <p className="text-center text-gray-600 text-sm">
-                  Você será redirecionado para o ambiente seguro para concluir o pagamento via Pix ou Cartão de Crédito.
-                </p>
-                <Button 
-                  onClick={() => handleGeneratePayment()} 
-                  disabled={isSubmitting} 
-                  className="w-full h-14 text-lg bg-[#00E676] hover:bg-[#00C853] text-black font-bold"
-                >
-                  {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : <CreditCard className="w-6 h-6 mr-2" />}
-                  {isSubmitting ? 'Gerando...' : 'Clique aqui para pagar'}
-                </Button>
-                {isTestMode && (
+            {!paymentUrl ? (
+              isTestMode ? (
+                <div className="space-y-4">
+                  <p className="text-center text-gray-600 text-sm">
+                    Você está no modo de teste administrativo. Escolha como deseja prosseguir:
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Button 
+                      onClick={handleCreateFreeEvent} 
+                      disabled={isSubmitting} 
+                      className="flex-1 h-14 text-base sm:text-lg bg-purple-600 hover:bg-purple-700 text-white font-bold"
+                    >
+                      {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CheckCircle2 className="w-5 h-5 mr-2" />}
+                      {isSubmitting ? 'Criando...' : 'Criar Grátis (Teste)'}
+                    </Button>
+                    <Button 
+                      onClick={() => handleGeneratePayment(1.00, false)} 
+                      disabled={isSubmitting} 
+                      className="flex-1 h-14 text-base sm:text-lg bg-orange-500 hover:bg-orange-600 text-white font-bold"
+                    >
+                      {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CreditCard className="w-5 h-5 mr-2" />}
+                      {isSubmitting ? 'Gerando...' : 'Pagar R$ 1,00 (Teste)'}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-center text-gray-600 text-sm">
+                    Você será redirecionado para o ambiente seguro para concluir o pagamento via Pix ou Cartão de Crédito.
+                  </p>
                   <Button 
-                    onClick={() => handleGeneratePayment(1.00, false)} 
+                    onClick={() => handleGeneratePayment()} 
                     disabled={isSubmitting} 
-                    className="w-full h-14 text-lg bg-orange-600 hover:bg-orange-700 text-white font-bold"
+                    className="w-full h-14 text-lg bg-[#00E676] hover:bg-[#00C853] text-black font-bold"
                   >
-                    {isSubmitting ? 'Gerando...' : 'Testar Pagamento Real (R$ 1,00)'}
+                    {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : <CreditCard className="w-6 h-6 mr-2" />}
+                    {isSubmitting ? 'Gerando...' : 'Clique aqui para pagar'}
                   </Button>
-                )}
-              </div>
+                </div>
+              )
             ) : (
               <div className="space-y-4 text-center">
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">

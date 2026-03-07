@@ -8,9 +8,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { useEvents } from '@/hooks/useEvents';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { User, Phone, Edit2, Calendar, Clock, Camera, ArrowLeft, Save, QrCode } from 'lucide-react';
+import { User, Phone, Edit2, Calendar, Clock, Camera, ArrowLeft, Save, QrCode, CreditCard, Upload } from 'lucide-react';
 import { Event, EventType } from '@/types';
 import { QRCodeDisplay } from './QRCodeDisplay';
+import { PaymentReceiptUpload } from './PaymentReceiptUpload';
 
 interface ClientLoginModalProps {
   isOpen: boolean;
@@ -35,6 +36,7 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [editFormData, setEditFormData] = useState<Partial<Event>>({});
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   
   const { events, updateEvent } = useEvents();
   const navigate = useNavigate();
@@ -228,6 +230,22 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
                   </Button>
                 )}
 
+                <Button 
+                  onClick={() => window.open('https://pagamento.exemplo.com', '_blank')}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                >
+                  <CreditCard className="w-4 h-4 mr-2" />
+                  Realizar Pagamento
+                </Button>
+
+                <Button 
+                  onClick={() => setIsReceiptModalOpen(true)}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Enviar Comprovante
+                </Button>
+
                 {!hasStarted(selectedEvent) ? (
                   <Button 
                     variant="outline" 
@@ -334,6 +352,20 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
           frameSettings={selectedEvent.settings.frameSettings}
           status={selectedEvent.status}
         />
+      )}
+
+      {selectedEvent && (
+        <Dialog open={isReceiptModalOpen} onOpenChange={setIsReceiptModalOpen}>
+          <DialogContent>
+            <PaymentReceiptUpload 
+              eventId={selectedEvent.id} 
+              onUploadSuccess={() => {
+                setIsReceiptModalOpen(false);
+                toast.success('Comprovante enviado!');
+              }} 
+            />
+          </DialogContent>
+        </Dialog>
       )}
     </>
   );

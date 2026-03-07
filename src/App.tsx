@@ -44,6 +44,7 @@ import { ClientLoginModal } from './components/ClientLoginModal';
 import { CountdownTimer } from './components/CountdownTimer';
 import { DownloadEventButton } from './components/DownloadEventButton';
 import { WhatsAppButton } from './components/WhatsAppButton';
+import { WebhookTester } from './components/WebhookTester';
 import { Event } from './types';
 
 // Error Boundary Component
@@ -1294,6 +1295,8 @@ function EventPage() {
   );
 }
 
+
+
 function App() {
   return (
     <Router>
@@ -1306,6 +1309,7 @@ function App() {
             <AdminPanel onClose={() => window.location.href = '/'} />
           </ErrorBoundary>
         } />
+        <Route path="/admin/webhooks" element={<WebhookTester />} />
         <Route path="/evento/:id" element={<EventPage />} />
       </Routes>
     </Router>

@@ -96,18 +96,31 @@ async function startServer() {
     }
   });
 
+  // In-memory storage for webhook logs (for testing purposes)
+  const webhookLogs: any[] = [];
+
   // InfinitePay Webhook (Receives payment confirmation)
   app.post('/api/payments/webhook', async (req, res) => {
     try {
       const payload = req.body;
       const signature = req.headers['x-infinitepay-signature']; // Exemplo de header de assinatura
 
+      console.log('[WEBHOOK RECEIVED]', payload);
+      
+      // Store log for viewing
+      webhookLogs.unshift({
+        timestamp: new Date().toISOString(),
+        headers: req.headers,
+        body: payload
+      });
+      
+      // Limit logs to 50
+      if (webhookLogs.length > 50) webhookLogs.pop();
+
       // 1. VERIFICAÇÃO DE SEGURANÇA (CRÍTICO)
       // Você DEVE validar a assinatura para garantir que o webhook veio da InfinitePay
       // const isValid = verifySignature(payload, signature, process.env.INFINITEPAY_WEBHOOK_SECRET);
       // if (!isValid) return res.status(401).send('Invalid signature');
-
-      console.log('[WEBHOOK RECEIVED]', payload);
 
       // 2. PROCESSAMENTO DO PAGAMENTO
       // Supondo que o payload contenha o status e o ID da transação
@@ -115,22 +128,59 @@ async function startServer() {
         const transactionId = payload.id;
         const planId = payload.metadata?.planId;
         const userId = payload.metadata?.userId; // Você deve enviar o userId no momento da criação
+        const eventId = payload.metadata?.eventId; // Assuming eventId is passed in metadata
 
-        // 3. ATUALIZAÇÃO NO FIRESTORE
-        // Aqui você usaria o Firebase Admin SDK para atualizar o banco
-        // await admin.firestore().collection('subscriptions').doc(userId).update({
-        //   status: 'active',
-        //   planId: planId,
-        //   updatedAt: new Date()
-        // });
+        console.log(`[WEBHOOK] Payment ${transactionId} approved for user ${userId}, event ${eventId}`);
         
-        console.log(`[WEBHOOK] Payment ${transactionId} approved for user ${userId}`);
+        // TODO: Update database status here
+        // If you have SUPABASE_SERVICE_ROLE_KEY, you can update the event status directly.
       }
       
       res.status(200).json({ received: true });
     } catch (error) {
       console.error('[WEBHOOK ERROR]', error);
       res.status(500).json({ error: 'Webhook processing failed' });
+    }
+  });
+
+  // Endpoint to view webhook logs
+  app.get('/api/payments/webhook-logs', (req, res) => {
+    res.json(webhookLogs);
+  });
+  
+  // Endpoint to simulate a webhook (Test Ping)
+  app.post('/api/payments/simulate-webhook', async (req, res) => {
+    try {
+        const mockPayload = {
+            id: `sim_${Date.now()}`,
+            status: 'approved',
+            amount: 5999,
+            metadata: {
+                userId: 'test_user',
+                planId: 'intimo',
+                eventId: 'test_event_id'
+            },
+            created_at: new Date().toISOString()
+        };
+        
+        // Call the webhook handler internally or via fetch
+        // Here we just push to logs directly to simulate reception
+        console.log('[SIMULATION] Sending mock webhook...');
+        
+        // Simulate the fetch to our own webhook endpoint
+        const response = await fetch(`http://localhost:${PORT}/api/payments/webhook`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'x-infinitepay-signature': 'mock_signature'
+            },
+            body: JSON.stringify(mockPayload)
+        });
+        
+        const result = await response.json();
+        res.json({ success: true, result });
+    } catch (error: any) {
+        res.status(500).json({ error: error.message });
     }
   });
 

@@ -15,6 +15,7 @@ import {
   Layout,
   Sparkles
 } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -131,14 +132,28 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
   const handleGeneratePayment = async () => {
     setIsSubmitting(true);
     try {
+      const { data: { user } } = await supabase!.auth.getUser();
+      
+      if (!user) {
+        toast.error('Você precisa estar logado para realizar o pagamento.');
+        setIsSubmitting(false);
+        return;
+      }
+
       const response = await fetch('/api/payments/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          planId: activePlan,
-          amount: totalPrice,
-          isTest: isTestMode,
-          hasFrame: frameSettings.enabled
+          handle: "crysramosfotografia",
+          items: [
+            {
+              quantity: 1,
+              price: Math.round(totalPrice * 100), // Preço em centavos
+              description: planDetails.name
+            }
+          ],
+          userId: user.id,
+          isTest: isTestMode
         })
       });
       

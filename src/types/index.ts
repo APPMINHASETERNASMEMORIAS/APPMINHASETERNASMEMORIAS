@@ -11,7 +11,7 @@ export interface Event {
   qrCode: string;
   createdAt: string;
   startedAt?: string;
-  status: 'active' | 'paused' | 'ended';
+  status: 'active' | 'paused' | 'ended' | 'pending';
   settings: EventSettings;
   stats: EventStats;
   plan?: string;

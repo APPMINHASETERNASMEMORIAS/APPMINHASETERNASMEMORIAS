@@ -137,7 +137,7 @@ export function useEvents() {
       id,
       qrCode: `${window.location.origin}/#/evento/${id}`,
       createdAt: new Date().toISOString(),
-      status: 'active',
+      status: 'pending',
       settings: { ...(data.settings || DEFAULT_SETTINGS), clientPhone: data.clientPhone },
       stats: {
         totalPhotos: 0,

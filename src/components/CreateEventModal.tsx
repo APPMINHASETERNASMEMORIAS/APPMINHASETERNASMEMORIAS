@@ -92,7 +92,6 @@ const FRAME_TEMPLATES = [
 
 export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTestMode = false, isOneRealTestMode = false, onCreate }: CreateEventModalProps) {
   const [step, setStep] = useState(1);
-  const [paymentReceipt, setPaymentReceipt] = useState<File | null>(null);
   const [formData, setFormData] = useState({
     clientName: '',
     clientPhone: '',
@@ -117,7 +116,6 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
     templateId: FRAME_TEMPLATES[0].id,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paymentUrl, setPaymentUrl] = useState<string | null>(null);
 
   const [localPlan, setLocalPlan] = useState(selectedPlan);
 
@@ -130,51 +128,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
   const planDetails = PLANS[activePlan as keyof typeof PLANS] || PLANS.festa;
   const totalPrice = isOneRealTestMode ? 1.00 : (isTestMode ? 0.00 : (planDetails.price + (frameSettings.enabled ? 9.99 : 0)));
 
-  const handleGeneratePayment = async (overridePrice?: number, isTestOverride?: boolean) => {
-    setIsSubmitting(true);
-    try {
-      let url = '';
-      
-      if (isOneRealTestMode) {
-        url = 'https://checkout.infinitepay.io/crysramosfotografia/8VlxpRjlp';
-      } else {
-        const planKey = activePlan;
-        const hasFrame = frameSettings.enabled;
-        
-        if (planKey === 'intimo') {
-          url = hasFrame ? 'https://checkout.infinitepay.io/crysramosfotografia/7Pfhk9vExV' : 'https://checkout.infinitepay.io/crysramosfotografia/1hYM8emKD';
-        } else if (planKey === 'festa') {
-          url = hasFrame ? 'https://checkout.infinitepay.io/crysramosfotografia/INzIZO1yj' : 'https://checkout.infinitepay.io/crysramosfotografia/1EbwPpmBi1';
-        } else if (planKey === 'celebracao') {
-          url = hasFrame ? 'https://checkout.infinitepay.io/crysramosfotografia/2TDubzuKbD' : 'https://checkout.infinitepay.io/crysramosfotografia/9Zk4Rrd7n';
-        } else if (planKey === 'ilimitado') {
-          url = hasFrame ? 'https://checkout.infinitepay.io/crysramosfotografia/jxyWAfKcn' : 'https://checkout.infinitepay.io/crysramosfotografia/p4d9912aH';
-        } else if (planKey === 'test') {
-          url = 'https://checkout.infinitepay.io/crysramosfotografia/8VlxpRjlp';
-        }
-      }
-
-      if (url) {
-        // Simular um pequeno delay para UX
-        await new Promise(resolve => setTimeout(resolve, 800));
-        setPaymentUrl(url);
-        toast.success('Link de pagamento gerado!');
-      } else {
-        throw new Error('Plano não encontrado');
-      }
-    } catch (error: any) {
-      console.error(error);
-      toast.error(error.message || 'Erro ao gerar link de pagamento');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleConfirmEvent = async () => {
-    if (!paymentReceipt && !isTestMode) {
-      toast.error('Por favor, anexe o comprovante de pagamento antes de continuar.');
-      return;
-    }
     setIsSubmitting(true);
     try {
       // Simulate a small delay for better UX
@@ -191,7 +145,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
         plan: activePlan 
       });
       
-      toast.success('Evento criado com sucesso!');
+      toast.success('Evento criado com sucesso! Agora realize o pagamento no seu painel para liberá-lo.');
       resetForm();
       onClose();
     } catch (error) {
@@ -204,8 +158,6 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
 
   const resetForm = () => {
     setStep(1);
-    setPaymentUrl(null);
-    setPaymentReceipt(null);
     setFormData({
       clientName: '',
       clientPhone: '',
@@ -243,17 +195,17 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-center">
-            {step === 1 ? 'Criar Novo Evento' : step === 2 ? 'Configurações' : step === 3 ? 'Moldura Personalizada' : 'Pagamento'}
+            {step === 1 ? 'Criar Novo Evento' : step === 2 ? 'Configurações' : 'Moldura Personalizada'}
           </DialogTitle>
         </DialogHeader>
 
         <div className="flex items-center justify-center gap-2 mb-6">
-          {[1, 2, 3, 4].map((s) => (
+          {[1, 2, 3].map((s) => (
             <div key={s} className="flex items-center">
               <div className={`w-8 h-8 rounded-full flex items-center justify-center font-semibold text-sm transition-colors ${
                 step >= s ? 'bg-gradient-to-r from-purple-600 to-pink-600 text-white' : 'bg-gray-200 text-gray-500'
               }`}>{s}</div>
-              {s < 4 && (
+              {s < 3 && (
                 <div className={`w-8 sm:w-12 h-1 rounded mx-1 transition-colors ${step > s ? 'bg-gradient-to-r from-purple-600 to-pink-600' : 'bg-gray-200'}`} />
               )}
             </div>
@@ -510,124 +462,15 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
 
             <div className="flex justify-between pt-4">
               <Button variant="outline" onClick={() => setStep(2)}>Voltar</Button>
-              <Button onClick={() => setStep(4)} className="bg-gradient-to-r from-purple-600 to-pink-600">
-                Próximo: Pagamento<ChevronDown className="w-4 h-4 ml-2 rotate-[-90deg]" />
+              <Button onClick={handleConfirmEvent} disabled={isSubmitting} className="bg-gradient-to-r from-purple-600 to-pink-600">
+                {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CheckCircle2 className="w-5 h-5 mr-2" />}
+                Criar Evento
               </Button>
             </div>
           </div>
         )}
 
-        {step === 4 && (
-          <div className="space-y-6">
-            <div className="bg-purple-50 border border-purple-100 rounded-xl p-6 text-center">
-              <h3 className="text-lg font-semibold text-purple-900 mb-2">Resumo do Pedido</h3>
-              <div className="space-y-1 mb-4">
-                <p className="text-purple-700">Plano {planDetails.name} (Até {planDetails.limit} acessos)</p>
-                <p className="text-xs text-purple-500">Fotos guardadas por {planDetails.storage}</p>
-                {frameSettings.enabled && (
-                  <p className="text-sm font-medium text-purple-800 flex items-center justify-center gap-1">
-                    <Sparkles className="w-3 h-3" />
-                    Adicional: Moldura Personalizada (+ R$ 9,99)
-                  </p>
-                )}
-              </div>
-              <div className="text-4xl font-bold text-purple-900 mb-2">
-                R$ {totalPrice.toFixed(2).replace('.', ',')}
-              </div>
-              {isTestMode && !isOneRealTestMode && (
-                <span className="inline-block bg-yellow-200 text-yellow-800 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">
-                  Modo de Teste
-                </span>
-              )}
-              {isOneRealTestMode && (
-                <span className="inline-block bg-orange-200 text-orange-800 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">
-                  Modo Teste R$ 1,00
-                </span>
-              )}
-            </div>
-
-            {!paymentUrl ? (
-              isTestMode && !isOneRealTestMode ? (
-                <div className="space-y-4">
-                  <p className="text-center text-gray-600 text-sm">
-                    Você está no modo de teste administrativo. Escolha como deseja prosseguir:
-                  </p>
-                  <div className="flex flex-col sm:flex-row gap-3">
-                    <Button 
-                      onClick={handleConfirmEvent} 
-                      disabled={isSubmitting} 
-                      className="flex-1 h-14 text-base sm:text-lg bg-purple-600 hover:bg-purple-700 text-white font-bold"
-                    >
-                      {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CheckCircle2 className="w-5 h-5 mr-2" />}
-                      {isSubmitting ? 'Criando...' : 'Criar Grátis (Teste)'}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <p className="text-center text-gray-600 text-sm">
-                    {isOneRealTestMode 
-                      ? "Você será redirecionado para pagar R$ 1,00 para testar o fluxo real."
-                      : "Você será redirecionado para o ambiente seguro para concluir o pagamento via Pix ou Cartão de Crédito."}
-                  </p>
-                  <Button 
-                    onClick={() => handleGeneratePayment(isOneRealTestMode ? 1.00 : undefined, isOneRealTestMode ? false : undefined)} 
-                    disabled={isSubmitting} 
-                    className={`w-full h-14 text-lg font-bold ${isOneRealTestMode ? 'bg-orange-500 hover:bg-orange-600 text-white' : 'bg-[#00E676] hover:bg-[#00C853] text-black'}`}
-                  >
-                    {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : <CreditCard className="w-6 h-6 mr-2" />}
-                    {isSubmitting ? 'Gerando...' : (isOneRealTestMode ? 'Pagar R$ 1,00 (Teste)' : 'Clique aqui para pagar')}
-                  </Button>
-                </div>
-              )
-            ) : (
-              <div className="space-y-4 text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle2 className="w-8 h-8 text-green-600" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900">Link de Pagamento Pronto!</h3>
-                <p className="text-gray-600 mb-6">
-                  1. Clique no botão abaixo para pagar via Pix ou Cartão.<br/>
-                  2. <b>Após o pagamento</b>, volte aqui e clique em "Já paguei, liberar evento".
-                </p>
-                <a 
-                  href={paymentUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="block w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-4 rounded-xl transition-colors mb-4"
-                >
-                  Ir para Pagamento (Pix ou Cartão)
-                </a>
-
-                <div className="space-y-2 text-left">
-                  <Label className="text-sm font-medium text-gray-700">Anexar Comprovante de Pagamento *</Label>
-                  <Input 
-                    type="file" 
-                    accept="image/*,application/pdf"
-                    onChange={(e) => setPaymentReceipt(e.target.files?.[0] || null)}
-                    className="file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100"
-                  />
-                  <p className="text-xs text-gray-500">Aceitamos imagens (JPG, PNG) ou PDF.</p>
-                </div>
-                
-                <Button 
-                  onClick={handleConfirmEvent}
-                  disabled={isSubmitting || (!paymentReceipt && !isTestMode)}
-                  className="w-full h-14 text-lg font-bold bg-[#00E676] hover:bg-[#00C853] text-black"
-                >
-                  {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : <CheckCircle2 className="w-6 h-6 mr-2" />}
-                  {isSubmitting ? 'Aguardando...' : 'Já paguei, liberar evento'}
-                </Button>
-              </div>
-            )}
-
-            <div className="flex justify-start pt-4 border-t">
-              <Button variant="ghost" onClick={() => { setStep(3); setPaymentUrl(null); }} disabled={isSubmitting}>
-                Voltar
-              </Button>
-            </div>
-          </div>
-        )}
+        {/* Removed step 4 */}
       </DialogContent>
     </Dialog>
   );

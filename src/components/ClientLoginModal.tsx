@@ -223,6 +223,16 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
                   onClick={() => {
                     if (!selectedEvent) return;
                     
+                    if (selectedEvent.settings.isOneRealTestMode) {
+                      const plan = PLANS.test;
+                      if (plan && plan.link) {
+                        window.open(plan.link, '_blank');
+                      } else {
+                        toast.error('Link de teste não disponível.');
+                      }
+                      return;
+                    }
+
                     const basePlanKey = selectedEvent.plan || 'festa';
                     const planKey = withFrame ? `${basePlanKey}_moldura` : basePlanKey;
                     const plan = PLANS[planKey as keyof typeof PLANS];

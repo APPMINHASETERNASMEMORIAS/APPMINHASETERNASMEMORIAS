@@ -38,6 +38,7 @@ export interface EventSettings {
   frameSettings?: FrameSettings;
   clientPhone?: string;
   startedAt?: string;
+  isOneRealTestMode?: boolean;
 }
 
 export interface FrameSettings {

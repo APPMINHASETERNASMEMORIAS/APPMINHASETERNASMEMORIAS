@@ -134,7 +134,11 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
         ...formData, 
         eventName: generatedEventName,
         eventTime: generatedEventTime,
-        settings: { ...settings, frameSettings: frameSettings.enabled ? frameSettings : undefined }, 
+        settings: { 
+          ...settings, 
+          frameSettings: frameSettings.enabled ? frameSettings : undefined,
+          isOneRealTestMode: isOneRealTestMode
+        }, 
         plan: activePlan 
       });
       

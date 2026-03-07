@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RefreshCw, Send, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { PaymentFlowTester } from './PaymentFlowTester';
 
 interface WebhookLog {
   id?: string;
@@ -112,6 +113,8 @@ export function WebhookTester() {
               </div>
             </CardContent>
           </Card>
+
+          <PaymentFlowTester />
 
           <Card>
             <CardHeader>

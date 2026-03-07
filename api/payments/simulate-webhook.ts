@@ -6,14 +6,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
+    const { eventId, status, amount } = req.body;
+
     const mockPayload = {
       id: `sim_${Date.now()}`,
-      status: 'approved',
-      amount: 5999,
+      status: status || 'approved',
+      amount: amount || 5999,
       metadata: {
         userId: 'test_user',
         planId: 'intimo',
-        eventId: 'test_event_id'
+        eventId: eventId || 'test_event_id'
       },
       created_at: new Date().toISOString()
     };

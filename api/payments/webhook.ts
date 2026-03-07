@@ -46,15 +46,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (payload.status === 'approved') {
       const transactionId = payload.id;
       const planId = payload.metadata?.planId;
-      const userId = payload.metadata?.userId; // Você deve enviar o userId no momento da criação
+      const userId = payload.metadata?.userId;
+      const eventId = payload.metadata?.eventId; // Capture eventId from metadata
 
-      // 3. ATUALIZAÇÃO NO FIRESTORE
-      // Aqui você usaria o Firebase Admin SDK para atualizar o banco
-      // await admin.firestore().collection('subscriptions').doc(userId).update({
-      //   status: 'active',
-      //   planId: planId,
-      //   updatedAt: new Date()
-      // });
+      console.log(`[WEBHOOK] Processing approved payment ${transactionId} for event ${eventId}`);
+
+      // 3. ATUALIZAÇÃO NO SUPABASE
+      if (supabase && eventId) {
+        try {
+          const { error } = await supabase
+            .from('events')
+            .update({ 
+              status: 'active',
+              plan: planId || 'festa', // Update plan if provided
+              payment_status: 'paid', // Optional: if you have this column
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', eventId);
+
+          if (error) {
+            console.error('[WEBHOOK] Failed to update event status:', error);
+            throw error;
+          }
+          console.log(`[WEBHOOK] Event ${eventId} updated to active`);
+        } catch (dbError) {
+          console.error('[WEBHOOK] Database update failed:', dbError);
+        }
+      } else {
+        console.warn('[WEBHOOK] Missing Supabase client or eventId');
+      }
       
       console.log(`[WEBHOOK] Payment ${transactionId} approved for user ${userId}`);
     }

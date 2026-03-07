@@ -54,6 +54,7 @@ export function useEvents() {
         paymentStatus: row.payment_status as 'pending' | 'paid' | 'failed',
         settings: row.settings || DEFAULT_SETTINGS,
         stats: row.stats || { totalPhotos: 0, totalVideos: 0, totalViews: 0, totalDownloads: 0 },
+        plan: row.plan || 'festa',
       }));
 
       setEvents(mappedEvents);
@@ -220,6 +221,8 @@ export function useEvents() {
         if (updates.eventType) dbUpdates.event_type = updates.eventType;
         if (updates.description !== undefined) dbUpdates.description = updates.description;
         if (updates.status) dbUpdates.status = updates.status;
+        if (updates.paymentStatus) dbUpdates.payment_status = updates.paymentStatus;
+        if (updates.plan) dbUpdates.plan = updates.plan;
         if (updates.settings) dbUpdates.settings = updates.settings;
         if (updates.stats) dbUpdates.stats = updates.stats;
         

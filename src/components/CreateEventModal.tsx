@@ -43,6 +43,7 @@ interface CreateEventModalProps {
   onClose: () => void;
   selectedPlan?: string;
   isTestMode?: boolean;
+  isOneRealTestMode?: boolean;
   onCreate: (data: {
     clientName: string;
     clientPhone?: string;
@@ -90,7 +91,7 @@ const FRAME_TEMPLATES = [
   { id: 'https://lh3.googleusercontent.com/d/1uQUN0-Jmggl678plcCFQWRhXoppMOQ5j', name: 'Moldura 12', preview: '' },
 ];
 
-export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTestMode = false, onCreate }: CreateEventModalProps) {
+export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTestMode = false, isOneRealTestMode = false, onCreate }: CreateEventModalProps) {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     clientName: '',
@@ -127,7 +128,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
 
   const activePlan = localPlan || 'festa';
   const planDetails = PLANS[activePlan as keyof typeof PLANS] || PLANS.festa;
-  const totalPrice = isTestMode ? 0.00 : (planDetails.price + (frameSettings.enabled ? 9.99 : 0));
+  const totalPrice = isOneRealTestMode ? 1.00 : (isTestMode ? 0.00 : (planDetails.price + (frameSettings.enabled ? 9.99 : 0)));
 
   const handleGeneratePayment = async (overridePrice?: number, isTestOverride?: boolean) => {
     setIsSubmitting(true);
@@ -534,15 +535,20 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
               <div className="text-4xl font-bold text-purple-900 mb-2">
                 R$ {totalPrice.toFixed(2).replace('.', ',')}
               </div>
-              {isTestMode && (
+              {isTestMode && !isOneRealTestMode && (
                 <span className="inline-block bg-yellow-200 text-yellow-800 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">
                   Modo de Teste
+                </span>
+              )}
+              {isOneRealTestMode && (
+                <span className="inline-block bg-orange-200 text-orange-800 text-xs px-2 py-1 rounded-full font-bold uppercase tracking-wide">
+                  Modo Teste R$ 1,00
                 </span>
               )}
             </div>
 
             {!paymentUrl ? (
-              isTestMode ? (
+              isTestMode && !isOneRealTestMode ? (
                 <div className="space-y-4">
                   <p className="text-center text-gray-600 text-sm">
                     Você está no modo de teste administrativo. Escolha como deseja prosseguir:
@@ -556,28 +562,22 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
                       {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CheckCircle2 className="w-5 h-5 mr-2" />}
                       {isSubmitting ? 'Criando...' : 'Criar Grátis (Teste)'}
                     </Button>
-                    <Button 
-                      onClick={() => handleGeneratePayment(1.00, false)} 
-                      disabled={isSubmitting} 
-                      className="flex-1 h-14 text-base sm:text-lg bg-orange-500 hover:bg-orange-600 text-white font-bold"
-                    >
-                      {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <CreditCard className="w-5 h-5 mr-2" />}
-                      {isSubmitting ? 'Gerando...' : 'Pagar R$ 1,00 (Teste)'}
-                    </Button>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-4">
                   <p className="text-center text-gray-600 text-sm">
-                    Você será redirecionado para o ambiente seguro para concluir o pagamento via Pix ou Cartão de Crédito.
+                    {isOneRealTestMode 
+                      ? "Você será redirecionado para pagar R$ 1,00 para testar o fluxo real."
+                      : "Você será redirecionado para o ambiente seguro para concluir o pagamento via Pix ou Cartão de Crédito."}
                   </p>
                   <Button 
-                    onClick={() => handleGeneratePayment()} 
+                    onClick={() => handleGeneratePayment(isOneRealTestMode ? 1.00 : undefined, isOneRealTestMode ? false : undefined)} 
                     disabled={isSubmitting} 
-                    className="w-full h-14 text-lg bg-[#00E676] hover:bg-[#00C853] text-black font-bold"
+                    className={`w-full h-14 text-lg font-bold ${isOneRealTestMode ? 'bg-orange-500 hover:bg-orange-600 text-white' : 'bg-[#00E676] hover:bg-[#00C853] text-black'}`}
                   >
                     {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin mr-2" /> : <CreditCard className="w-6 h-6 mr-2" />}
-                    {isSubmitting ? 'Gerando...' : 'Clique aqui para pagar'}
+                    {isSubmitting ? 'Gerando...' : (isOneRealTestMode ? 'Pagar R$ 1,00 (Teste)' : 'Clique aqui para pagar')}
                   </Button>
                 </div>
               )

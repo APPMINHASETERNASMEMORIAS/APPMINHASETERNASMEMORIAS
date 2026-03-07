@@ -55,6 +55,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
   const [isDownloading, setIsDownloading] = useState<string | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isFreeTestMode, setIsFreeTestMode] = useState(false);
+  const [isOneRealTestMode, setIsOneRealTestMode] = useState(false);
 
   const {
     events,
@@ -291,7 +292,22 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
             />
           </div>
           <Button
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => {
+              setIsFreeTestMode(false);
+              setIsOneRealTestMode(true);
+              setShowCreateModal(true);
+            }}
+            variant="outline"
+            className="border-orange-500 text-orange-600 hover:bg-orange-50"
+          >
+            Teste R$ 1,00
+          </Button>
+          <Button
+            onClick={() => {
+              setIsFreeTestMode(false);
+              setIsOneRealTestMode(false);
+              setShowCreateModal(true);
+            }}
             className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -725,9 +741,13 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
       {/* Create Event Modal */}
       <CreateEventModal
         isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
+        onClose={() => {
+          setShowCreateModal(false);
+          setIsOneRealTestMode(false);
+        }}
         selectedPlan={isFreeTestMode ? 'test' : 'festa'}
         isTestMode={isFreeTestMode}
+        isOneRealTestMode={isOneRealTestMode}
         onCreate={async (data) => {
           const newEvent = await createEvent(data);
           setSelectedEvent(newEvent);

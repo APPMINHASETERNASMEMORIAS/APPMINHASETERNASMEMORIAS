@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { PLANS } from '@/constants';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -215,7 +216,10 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                           handle: selectedEvent.id,
-                          items: [{ name: `Plano ${selectedEvent.plan || 'Festa'}`, price: 0 }], // Price handled by backend or plan ID
+                          items: [{ 
+                            name: `Plano ${PLANS[selectedEvent.plan as keyof typeof PLANS]?.name || 'Festa'}`, 
+                            price: PLANS[selectedEvent.plan as keyof typeof PLANS]?.price || 0 
+                          }],
                           userId: selectedEvent.id, // Using event ID as user ID for now
                           plan: selectedEvent.plan
                         })

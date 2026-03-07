@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { PLANS } from '@/constants';
 import { 
   Calendar, 
   Clock, 
@@ -66,14 +67,6 @@ const EVENT_TYPES: { value: EventType; label: string; emoji: string }[] = [
   { value: 'churrasco', label: 'Churrasco', emoji: '🍖' },
   { value: 'outro', label: 'Outro', emoji: '✨' },
 ];
-
-const PLANS = {
-  intimo: { name: 'Íntimo', price: 59.99, limit: 50, storage: '7 dias' },
-  festa: { name: 'Festa', price: 99.99, limit: 100, storage: '30 dias' },
-  celebracao: { name: 'Celebração', price: 159.99, limit: 150, storage: '90 dias' },
-  ilimitado: { name: 'Ilimitado', price: 239.99, limit: 'Ilimitados', storage: '6 meses' },
-  test: { name: 'Teste Admin', price: 1.00, limit: 10, storage: '24 horas' }
-};
 
 const FRAME_TEMPLATES = [
   { id: 'https://lh3.googleusercontent.com/d/120rNh5NBi9PvY_39RhBXHPtgO-ebEQtN', name: 'Moldura 1', preview: '' },

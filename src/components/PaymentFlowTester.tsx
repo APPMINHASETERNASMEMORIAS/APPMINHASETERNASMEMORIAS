@@ -16,7 +16,8 @@ export function PaymentFlowTester() {
 
   // Simulate 5-minute timer (scaled down to 30 seconds for testing)
   useEffect(() => {
-    if (!testEvent || testEvent.status !== 'pending') return;
+    // Stop timer if event is not found, or if it's already paid, or if it's paused
+    if (!testEvent || testEvent.paymentStatus === 'paid' || testEvent.status === 'paused') return;
 
     // Start timer if not started
     if (timeLeft === null) {
@@ -71,9 +72,9 @@ export function PaymentFlowTester() {
   const handleTimeExpired = async () => {
     if (!testEventId) return;
     
-    // Check if already paid (active)
-    // In this simulation, we assume 'pending' means not paid yet.
-    // If status became 'active' via webhook, this wouldn't run (due to useEffect check).
+    // Double check current status to avoid race conditions
+    const currentEvent = events.find(e => e.id === testEventId);
+    if (currentEvent && currentEvent.paymentStatus === 'paid') return;
     
     try {
       await updateEvent(testEventId, { status: 'paused' });
@@ -87,6 +88,10 @@ export function PaymentFlowTester() {
   const simulatePayment = async () => {
     if (!testEventId) return;
     setIsSimulatingPayment(true);
+
+    // Optimistic update to prevent race condition with timer
+    // We immediately set it to paid locally so the timer stops
+    updateEvent(testEventId, { status: 'active', paymentStatus: 'paid' });
 
     try {
       // Simulate webhook call
@@ -103,13 +108,16 @@ export function PaymentFlowTester() {
       const data = await response.json();
       if (data.success) {
         toast.success('Pagamento simulado! O status deve atualizar em breve.');
-        // The useEvents hook subscription should update the UI automatically
       } else {
         toast.error('Falha na simulação: ' + data.error);
+        // Revert optimistic update if failed
+        updateEvent(testEventId, { status: 'active', paymentStatus: 'pending' });
       }
     } catch (error) {
       console.error(error);
       toast.error('Erro ao simular pagamento');
+      // Revert optimistic update if failed
+      updateEvent(testEventId, { status: 'active', paymentStatus: 'pending' });
     } finally {
       setIsSimulatingPayment(false);
     }
@@ -145,15 +153,15 @@ export function PaymentFlowTester() {
                 <h3 className="font-bold text-gray-800">{testEvent.eventName}</h3>
                 <div className="flex items-center gap-2 mt-1">
                   <span className={`px-2 py-0.5 rounded-full text-xs font-bold uppercase ${
-                    testEvent.status === 'active' ? 'bg-green-100 text-green-700' :
+                    testEvent.status === 'active' && testEvent.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' :
                     testEvent.status === 'paused' ? 'bg-red-100 text-red-700' :
                     'bg-yellow-100 text-yellow-700'
                   }`}>
-                    {testEvent.status === 'active' ? 'Ativo (Pago)' :
+                    {testEvent.status === 'active' && testEvent.paymentStatus === 'paid' ? 'Ativo (Pago)' :
                      testEvent.status === 'paused' ? 'Pausado (Não Pago)' :
                      'Aguardando Pagamento'}
                   </span>
-                  {testEvent.status === 'pending' && timeLeft !== null && (
+                  {testEvent.status === 'active' && testEvent.paymentStatus === 'pending' && timeLeft !== null && (
                     <span className="text-sm font-mono text-orange-600">
                       Tempo restante: {timeLeft}s
                     </span>
@@ -161,7 +169,7 @@ export function PaymentFlowTester() {
                 </div>
               </div>
               
-              {testEvent.status === 'pending' && (
+              {testEvent.status === 'active' && testEvent.paymentStatus === 'pending' && (
                 <Button 
                   onClick={simulatePayment}
                   disabled={isSimulatingPayment}
@@ -182,7 +190,7 @@ export function PaymentFlowTester() {
               </div>
             )}
 
-            {testEvent.status === 'active' && (
+            {testEvent.status === 'active' && testEvent.paymentStatus === 'paid' && (
               <div className="flex items-center gap-2 text-green-600 bg-green-50 p-3 rounded-lg">
                 <CheckCircle2 className="w-5 h-5" />
                 <p className="text-sm">

@@ -28,7 +28,8 @@ import {
   CheckCircle2,
   Download,
   Share2,
-  Lock
+  Lock,
+  QrCode
 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from './components/ui/dialog';
 import { Button } from './components/ui/button';
@@ -1149,6 +1150,7 @@ function EventPage() {
   const { id } = useParams();
   const [refreshGallery, setRefreshGallery] = useState(0);
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
+  const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const navigate = useNavigate();
   const { getEvent, uploadPaymentReceipt } = useEvents();
   
@@ -1174,6 +1176,14 @@ function EventPage() {
           
           {event && (
             <div className="flex items-center gap-4">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setIsQRModalOpen(true)}
+                className="text-gray-600 hover:text-purple-600"
+              >
+                <QrCode className="w-5 h-5" />
+              </Button>
               <CountdownTimer 
                 eventDate={event.eventDate} 
                 eventTime={event.eventTime}
@@ -1211,7 +1221,13 @@ function EventPage() {
           </div>
 
             <div className="space-y-8">
-              <UploadMemory eventId={id} isPaused={isPaused} status={event?.status} onUploadSuccess={() => setRefreshGallery(prev => prev + 1)} />
+              <UploadMemory 
+                eventId={id} 
+                isPaused={isPaused} 
+                status={event?.status} 
+                paymentReceiptUrl={event?.paymentReceiptUrl}
+                onUploadSuccess={() => setRefreshGallery(prev => prev + 1)} 
+              />
               <MemoryGallery eventId={id} refreshTrigger={refreshGallery} event={event} />
             </div>
         </div>
@@ -1228,6 +1244,18 @@ function EventPage() {
           />
         </DialogContent>
       </Dialog>
+
+      {event && (
+        <QRCodeDisplay
+          eventId={event.id}
+          eventName={event.eventName}
+          isOpen={isQRModalOpen}
+          onClose={() => setIsQRModalOpen(false)}
+          frameSettings={event.settings.frameSettings}
+          status={event.status}
+          paymentReceiptUrl={event.paymentReceiptUrl}
+        />
+      )}
     </div>
   );
 }

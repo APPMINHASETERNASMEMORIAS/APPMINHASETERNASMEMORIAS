@@ -18,14 +18,16 @@ interface QRCodeDisplayProps {
   onClose: () => void;
   frameSettings?: FrameSettings;
   status: 'active' | 'paused' | 'ended' | 'pending';
+  paymentReceiptUrl?: string;
 }
 
-export function QRCodeDisplay({ eventId, eventName, isOpen, onClose, frameSettings, status }: QRCodeDisplayProps) {
+export function QRCodeDisplay({ eventId, eventName, isOpen, onClose, frameSettings, status, paymentReceiptUrl }: QRCodeDisplayProps) {
   const [copied, setCopied] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
   
   const eventUrl = `${window.location.origin}/#/evento/${eventId}`;
-  const isPending = status === 'pending';
+  const isLocked = status === 'pending' && !paymentReceiptUrl;
+  const isVerifying = status === 'pending' && paymentReceiptUrl;
   
   const handleCopyLink = async () => {
     try {
@@ -38,7 +40,7 @@ export function QRCodeDisplay({ eventId, eventName, isOpen, onClose, frameSettin
   };
 
   const handleDownloadQR = (withFrame: boolean = false) => {
-    if (isPending) return;
+    if (isLocked) return;
     const svg = document.getElementById('event-qr-code');
     if (!svg) return;
 
@@ -182,7 +184,7 @@ export function QRCodeDisplay({ eventId, eventName, isOpen, onClose, frameSettin
 
         <div className="flex flex-col items-center gap-6 py-6">
           <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-100">
-            {isPending ? (
+            {isLocked ? (
               <div className="w-[200px] h-[200px] flex items-center justify-center bg-gray-100 rounded-lg">
                 <Lock className="w-12 h-12 text-gray-400" />
               </div>
@@ -199,14 +201,16 @@ export function QRCodeDisplay({ eventId, eventName, isOpen, onClose, frameSettin
 
           <div className="text-center">
             <h3 className="font-semibold text-lg text-gray-800">{eventName}</h3>
-            {isPending ? (
-              <p className="text-sm text-red-500 mt-1 font-medium">Aguardando confirmação de pagamento</p>
+            {isLocked ? (
+              <p className="text-sm text-red-500 mt-1 font-medium">Aguardando envio do comprovante</p>
+            ) : isVerifying ? (
+              <p className="text-sm text-yellow-600 mt-1 font-medium">Em análise (Liberado para teste)</p>
             ) : (
               <p className="text-sm text-gray-500 mt-1">Escaneie para participar</p>
             )}
           </div>
 
-          {!isPending && (
+          {!isLocked && (
             <>
               <div className="w-full bg-gray-100 rounded-lg p-3 flex items-center gap-2">
                 <input

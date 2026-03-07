@@ -72,7 +72,7 @@ export function DownloadEventButton({ eventName, isEnded, media }: DownloadEvent
   };
 
   return (
-    <div className="fixed bottom-8 left-4 sm:bottom-6 sm:left-6 z-50">
+    <div className="fixed bottom-24 left-4 sm:bottom-24 sm:left-6 z-50">
       <button
         onClick={handleDownload}
         disabled={!isEnded || isDownloading}

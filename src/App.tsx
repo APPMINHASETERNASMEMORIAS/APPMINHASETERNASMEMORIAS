@@ -43,6 +43,7 @@ import { AdminPanel } from './components/AdminPanel';
 import { ClientLoginModal } from './components/ClientLoginModal';
 import { CountdownTimer } from './components/CountdownTimer';
 import { DownloadEventButton } from './components/DownloadEventButton';
+import { WhatsAppButton } from './components/WhatsAppButton';
 import { Event } from './types';
 
 // Error Boundary Component
@@ -1293,6 +1294,7 @@ function App() {
   return (
     <Router>
       <Toaster position="top-center" />
+      <WhatsAppButton />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/admin" element={

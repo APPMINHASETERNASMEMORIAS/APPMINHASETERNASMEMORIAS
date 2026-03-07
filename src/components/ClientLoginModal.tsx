@@ -231,7 +231,33 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
                 )}
 
                 <Button 
-                  onClick={() => window.open('https://pagamento.exemplo.com', '_blank')}
+                  onClick={async () => {
+                    if (!selectedEvent) return;
+                    try {
+                      toast.loading('Gerando link de pagamento...', { id: 'payment' });
+                      const response = await fetch('/api/payments/create', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          handle: selectedEvent.id,
+                          items: [{ name: `Plano ${selectedEvent.plan || 'Festa'}`, price: 0 }], // Price handled by backend or plan ID
+                          userId: selectedEvent.id, // Using event ID as user ID for now
+                          plan: selectedEvent.plan
+                        })
+                      });
+                      const data = await response.json();
+                      if (data.success) {
+                        toast.dismiss('payment');
+                        window.open(data.paymentUrl, '_blank');
+                      } else {
+                        throw new Error(data.error || 'Erro ao gerar pagamento');
+                      }
+                    } catch (error) {
+                      toast.dismiss('payment');
+                      toast.error('Erro ao gerar link de pagamento');
+                      console.error(error);
+                    }
+                  }}
                   className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
                 >
                   <CreditCard className="w-4 h-4 mr-2" />

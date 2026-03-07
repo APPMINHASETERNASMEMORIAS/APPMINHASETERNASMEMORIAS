@@ -58,7 +58,8 @@ async function startServer() {
         handle: req.body.handle,
         items: req.body.items,
         metadata: {
-          userId: req.body.userId, // Adicionando o userId para identificar no webhook
+          userId: req.body.userId,
+          planId: req.body.plan, // Adicionando o planId para identificar no webhook
           timestamp: new Date().toISOString()
         }
       };

@@ -167,8 +167,7 @@ export function useEvents() {
           status: newEvent.status,
           payment_status: newEvent.paymentStatus,
           settings: newEvent.settings,
-          stats: newEvent.stats,
-          plan: data.plan || 'festa'
+          stats: newEvent.stats
         }]);
 
         if (error) throw error;
@@ -179,9 +178,9 @@ export function useEvents() {
           createdEvents.push(newEvent.id);
           localStorage.setItem('created_events', JSON.stringify(createdEvents));
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error creating event in Supabase:', error);
-        toast.error('Erro ao salvar evento no servidor.');
+        toast.error(`Erro ao salvar evento: ${error.message || 'Erro no servidor'}`);
         // Revert optimistic update on error
         setEvents(prev => prev.filter(e => e.id !== id));
       }

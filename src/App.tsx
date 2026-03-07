@@ -1148,6 +1148,7 @@ function LandingPage() {
 function EventPage() {
   const { id } = useParams();
   const [refreshGallery, setRefreshGallery] = useState(0);
+  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const navigate = useNavigate();
   const { getEvent, uploadPaymentReceipt } = useEvents();
   
@@ -1196,20 +1197,37 @@ function EventPage() {
                   ? (event?.status === 'pending' ? 'Aguardando confirmação de pagamento para liberar envios.' : 'O recebimento de fotos para este evento foi pausado pelo administrador.')
                   : 'Tire uma foto ou grave um vídeo e deixe uma mensagem especial.'}
             </p>
+
+            {event?.status === 'pending' && (
+              <div className="mt-6">
+                <Button 
+                  onClick={() => setIsReceiptModalOpen(true)}
+                  className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-transform transform hover:scale-105"
+                >
+                  Enviar Comprovante
+                </Button>
+              </div>
+            )}
           </div>
 
             <div className="space-y-8">
-              {event?.status === 'pending' ? (
-                <PaymentReceiptUpload eventId={id!} onUploadSuccess={(url) => uploadPaymentReceipt(id!, url)} />
-              ) : (
-                <>
-                  <UploadMemory eventId={id} isPaused={isPaused} status={event?.status} onUploadSuccess={() => setRefreshGallery(prev => prev + 1)} />
-                  <MemoryGallery eventId={id} refreshTrigger={refreshGallery} event={event} />
-                </>
-              )}
+              <UploadMemory eventId={id} isPaused={isPaused} status={event?.status} onUploadSuccess={() => setRefreshGallery(prev => prev + 1)} />
+              <MemoryGallery eventId={id} refreshTrigger={refreshGallery} event={event} />
             </div>
         </div>
       </main>
+
+      <Dialog open={isReceiptModalOpen} onOpenChange={setIsReceiptModalOpen}>
+        <DialogContent className="sm:max-w-md bg-white border-none">
+          <PaymentReceiptUpload 
+            eventId={id!} 
+            onUploadSuccess={(url) => {
+              uploadPaymentReceipt(id!, url);
+              setIsReceiptModalOpen(false);
+            }} 
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

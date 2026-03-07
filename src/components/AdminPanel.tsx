@@ -437,19 +437,10 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                     </button>
                     <button
                       onClick={() => {
-                        let newStatus: 'active' | 'paused' | 'ended' | 'pending' = 'active';
-                        let message = '';
-                        
-                        if (event.status === 'active') {
-                          newStatus = 'paused';
-                          message = 'Evento pausado! Novos envios estão bloqueados.';
-                        } else if (event.status === 'pending') {
-                          newStatus = 'active';
-                          message = 'Evento liberado com sucesso!';
-                        } else {
-                          newStatus = 'active';
-                          message = 'Evento retomado! Novos envios permitidos.';
-                        }
+                        const newStatus = event.status === 'active' ? 'paused' : 'active';
+                        const message = newStatus === 'active' 
+                          ? 'Evento retomado! Novos envios permitidos.' 
+                          : 'Evento pausado! Novos envios estão bloqueados.';
                         
                         updateEvent(event.id, { status: newStatus });
                         toast.success(message);
@@ -457,13 +448,11 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                       className={`w-10 h-10 rounded-full flex items-center justify-center transition-all shadow-sm ${
                         event.status === 'paused' 
                           ? 'bg-green-100 hover:bg-green-200 text-green-600' 
-                          : event.status === 'pending'
-                          ? 'bg-blue-100 hover:bg-blue-200 text-blue-600'
                           : 'bg-orange-100 hover:bg-orange-200 text-orange-600'
                       }`}
-                      title={event.status === 'paused' ? 'Retomar envios' : event.status === 'pending' ? 'Liberar evento' : 'Pausar envios'}
+                      title={event.status === 'paused' ? 'Retomar envios' : 'Pausar envios'}
                     >
-                      {event.status === 'paused' ? <Play className="w-5 h-5" /> : event.status === 'pending' ? <CheckCircle2 className="w-5 h-5" /> : <Pause className="w-5 h-5" />}
+                      {event.status === 'paused' ? <Play className="w-5 h-5" /> : <Pause className="w-5 h-5" />}
                     </button>
                     <button
                       onClick={() => {
@@ -529,14 +518,20 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                     {new Date(event.eventDate).toLocaleDateString('pt-BR')}
                   </span>
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
-                    event.status === 'active' ? 'bg-green-100 text-gray-700' :
+                    event.status === 'active' ? 'bg-green-100 text-green-700' :
                     event.status === 'paused' ? 'bg-orange-100 text-orange-700' :
-                    event.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
                     'bg-purple-100 text-purple-700'
                   }`}>
                     {event.status === 'active' ? 'Ativo' :
-                     event.status === 'paused' ? 'Pausado' :
-                     event.status === 'pending' ? 'Pendente' : 'Finalizado'}
+                     event.status === 'paused' ? 'Pausado' : 'Finalizado'}
+                  </span>
+                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
+                    event.paymentStatus === 'paid' ? 'bg-green-100 text-green-700' :
+                    event.paymentStatus === 'failed' ? 'bg-red-100 text-red-700' :
+                    'bg-yellow-100 text-yellow-700'
+                  }`}>
+                    {event.paymentStatus === 'paid' ? 'Pago' :
+                     event.paymentStatus === 'failed' ? 'Falhou' : 'Pagamento Pendente'}
                   </span>
                   <span className="flex items-center gap-1">
                     <Image className="w-4 h-4" />

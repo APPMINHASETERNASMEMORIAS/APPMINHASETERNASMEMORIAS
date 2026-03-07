@@ -5,7 +5,6 @@ import { QRCodeSVG } from 'qrcode.react';
 import { Toaster } from 'react-hot-toast';
 import { UploadMemory } from './components/UploadMemory';
 import { MemoryGallery } from './components/MemoryGallery';
-import { PaymentReceiptUpload } from './components/PaymentReceiptUpload';
 import { 
   Heart, 
   Sparkles, 
@@ -1152,10 +1151,9 @@ function LandingPage() {
 function EventPage() {
   const { id } = useParams();
   const [refreshGallery, setRefreshGallery] = useState(0);
-  const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const navigate = useNavigate();
-  const { getEvent, uploadPaymentReceipt, isEventCreator, getEventMedia } = useEvents();
+  const { getEvent, isEventCreator, getEventMedia } = useEvents();
   
   const event = id ? getEvent(id) : undefined;
   const isCreator = id ? isEventCreator(id) : false;
@@ -1224,24 +1222,9 @@ function EventPage() {
               {isEnded
                 ? 'Este evento foi finalizado. Agradecemos a todos que compartilharam suas memórias!'
                 : isPaused 
-                  ? 'O recebimento de fotos para este evento foi pausado pelo administrador.'
-                  : (event?.status === 'pending' && !event.paymentReceiptUrl)
-                    ? 'Aguardando envio do comprovante para liberar a galeria.'
-                    : (event?.status === 'pending' && event.paymentReceiptUrl && !isCreator && !isEventDayOrPast)
-                      ? 'A galeria será aberta para convidados no dia do evento.'
-                      : 'Tire uma foto ou grave um vídeo e deixe uma mensagem especial.'}
+                  ? 'O recebimento de fotos para este evento foi pausado. Aguardando confirmação de pagamento.'
+                  : 'Tire uma foto ou grave um vídeo e deixe uma mensagem especial.'}
             </p>
-
-            {event?.status === 'pending' && (
-              <div className="mt-6">
-                <Button 
-                  onClick={() => setIsReceiptModalOpen(true)}
-                  className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-6 rounded-full shadow-lg transition-transform transform hover:scale-105"
-                >
-                  Enviar Comprovante
-                </Button>
-              </div>
-            )}
           </div>
 
             <div className="space-y-8">
@@ -1265,18 +1248,6 @@ function EventPage() {
             </div>
         </div>
       </main>
-
-      <Dialog open={isReceiptModalOpen} onOpenChange={setIsReceiptModalOpen}>
-        <DialogContent className="sm:max-w-md bg-white border-none">
-          <PaymentReceiptUpload 
-            eventId={id!} 
-            onUploadSuccess={(url) => {
-              uploadPaymentReceipt(id!, url);
-              setIsReceiptModalOpen(false);
-            }} 
-          />
-        </DialogContent>
-      </Dialog>
 
       {event && (
         <QRCodeDisplay

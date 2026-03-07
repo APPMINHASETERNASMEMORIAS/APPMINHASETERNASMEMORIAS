@@ -16,6 +16,7 @@ export interface Event {
   stats: EventStats;
   plan?: string;
   paymentReceiptUrl?: string;
+  paymentStatus?: 'pending' | 'paid' | 'failed';
 }
 
 export type EventType = 

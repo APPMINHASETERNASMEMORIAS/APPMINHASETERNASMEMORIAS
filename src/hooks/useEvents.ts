@@ -51,6 +51,7 @@ export function useEvents() {
         createdAt: row.created_at,
         startedAt: row.settings?.startedAt,
         status: row.status as 'active' | 'paused' | 'ended',
+        paymentStatus: row.payment_status as 'pending' | 'paid' | 'failed',
         settings: row.settings || DEFAULT_SETTINGS,
         stats: row.stats || { totalPhotos: 0, totalVideos: 0, totalViews: 0, totalDownloads: 0 },
       }));
@@ -137,7 +138,8 @@ export function useEvents() {
       id,
       qrCode: `${window.location.origin}/#/evento/${id}`,
       createdAt: new Date().toISOString(),
-      status: 'pending',
+      status: 'active', // Start active for grace period
+      paymentStatus: 'pending',
       settings: { ...(data.settings || DEFAULT_SETTINGS), clientPhone: data.clientPhone },
       stats: {
         totalPhotos: 0,
@@ -163,6 +165,7 @@ export function useEvents() {
           qr_code: newEvent.qrCode,
           created_at: newEvent.createdAt,
           status: newEvent.status,
+          payment_status: newEvent.paymentStatus,
           settings: newEvent.settings,
           stats: newEvent.stats,
           plan: data.plan || 'festa'
@@ -240,6 +243,29 @@ export function useEvents() {
       }
     }
   }, [fetchEventsAndMedia]);
+
+  // Grace period check (5 minutes)
+  useEffect(() => {
+    const checkGracePeriod = () => {
+      const now = Date.now();
+      const GRACE_PERIOD = 5 * 60 * 1000; // 5 minutes
+
+      events.forEach(event => {
+        if (event.status === 'active' && event.paymentStatus !== 'paid') {
+          const createdAt = new Date(event.createdAt).getTime();
+          if (now - createdAt > GRACE_PERIOD) {
+            console.log(`Pausing event ${event.id} due to unpaid grace period expiration.`);
+            updateEvent(event.id, { status: 'paused' });
+            toast.error(`O evento "${event.eventName}" foi pausado por falta de pagamento.`);
+            // TODO: Send WhatsApp message here
+          }
+        }
+      });
+    };
+
+    const interval = setInterval(checkGracePeriod, 30000); // Check every 30 seconds
+    return () => clearInterval(interval);
+  }, [events, updateEvent]);
 
   const deleteEvent = useCallback(async (id: string) => {
     // Optimistic update
@@ -368,40 +394,6 @@ export function useEvents() {
     return flattened;
   }, [media]);
 
-  const uploadPaymentReceipt = useCallback(async (eventId: string, receiptUrl: string) => {
-    // Optimistic update
-    setEvents(prev =>
-      prev.map(event =>
-        event.id === eventId ? { ...event, paymentReceiptUrl: receiptUrl } : event
-      )
-    );
-
-    // Grant creator status to the uploader
-    const createdEvents = JSON.parse(localStorage.getItem('created_events') || '[]');
-    if (!createdEvents.includes(eventId)) {
-      createdEvents.push(eventId);
-      localStorage.setItem('created_events', JSON.stringify(createdEvents));
-    }
-
-    if (isSupabaseConfigured) {
-      try {
-        const { error } = await supabase!
-          .from('events')
-          .update({ payment_receipt_url: receiptUrl })
-          .eq('id', eventId);
-
-        if (error) throw error;
-        toast.success('Comprovante enviado! Acesso liberado para você.');
-      } catch (error) {
-        console.error('Error uploading receipt:', error);
-        toast.error('Erro ao enviar comprovante.');
-        fetchEventsAndMedia(); // Revert on error
-      }
-    } else {
-        toast.success('Comprovante enviado! Acesso liberado para você (Demo).');
-    }
-  }, [fetchEventsAndMedia]);
-
   return {
     events: Array.isArray(events) ? events.filter(e => e && typeof e === 'object') : [],
     media: getFlattenedMedia(),
@@ -409,7 +401,6 @@ export function useEvents() {
     createEvent,
     updateEvent,
     deleteEvent,
-    uploadPaymentReceipt,
     getEvent,
     getEventMedia,
     approveMedia,

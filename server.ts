@@ -24,11 +24,11 @@ async function startServer() {
   // InfinitePay Payment Intent Creation
   app.post('/api/payments/create', async (req, res) => {
     try {
-      const { planId, amount, isTest } = req.body;
+      const { handle, items, isTest } = req.body;
       
       // If in test mode, return simulated response immediately
       if (isTest) {
-        console.log(`[PAYMENT] Creating TEST payment intent for plan ${planId} (R$ ${amount})`);
+        console.log(`[PAYMENT] Creating TEST payment intent for handle ${handle}`);
         return res.json({
           success: true,
           paymentUrl: `https://mock-infinitepay.com/pay/${Date.now()}`,
@@ -36,7 +36,7 @@ async function startServer() {
         });
       }
 
-      console.log(`[PAYMENT] Creating payment intent for plan ${planId} (R$ ${amount})`);
+      console.log(`[PAYMENT] Creating payment intent for handle ${handle}`);
 
       // Check for required environment variables
       const apiKey = process.env.INFINITEPAY_API_KEY;
@@ -55,16 +55,15 @@ async function startServer() {
 
       // Prepare request payload for InfinitePay
       const payload = {
-        amount: Math.round(amount * 100), // Convert to cents
-        currency: 'BRL',
-        payment_method: 'pix', // Default to PIX for now
+        handle: req.body.handle,
+        items: req.body.items,
         metadata: {
-          planId,
           timestamp: new Date().toISOString()
         }
       };
 
       // Make request to InfinitePay API
+      // Nota: Verifique se o endpoint correto para esta estrutura é o mesmo
       const response = await fetch('https://api.infinitepay.io/v2/transactions', {
         method: 'POST',
         headers: {

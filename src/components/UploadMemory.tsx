@@ -25,7 +25,23 @@ const FRAMES = [
 
 type Step = 'frame' | 'upload' | 'crop' | 'details';
 
-export function UploadMemory({ eventId, isPaused = false, onUploadSuccess, status, paymentReceiptUrl }: { eventId?: string, isPaused?: boolean, onUploadSuccess?: () => void, status?: 'active' | 'paused' | 'ended' | 'pending', paymentReceiptUrl?: string }) {
+export function UploadMemory({ 
+  eventId, 
+  isPaused = false, 
+  onUploadSuccess, 
+  status, 
+  paymentReceiptUrl,
+  isCreator = false,
+  isEventDayOrPast = false
+}: { 
+  eventId?: string, 
+  isPaused?: boolean, 
+  onUploadSuccess?: () => void, 
+  status?: 'active' | 'paused' | 'ended' | 'pending', 
+  paymentReceiptUrl?: string,
+  isCreator?: boolean,
+  isEventDayOrPast?: boolean
+}) {
   const [step, setStep] = useState<Step>('frame');
   const [selectedFrame, setSelectedFrame] = useState(FRAMES[0]);
   
@@ -36,8 +52,36 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess, statu
   const [isOpen, setIsOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   
-  const isLocked = status === 'pending' && !paymentReceiptUrl;
-  const isVerifying = status === 'pending' && paymentReceiptUrl;
+  // Locking Logic
+  // 1. If status is pending AND no receipt -> Locked (Waiting payment)
+  // 2. If status is pending AND receipt exists:
+  //    - If Creator -> Unlocked (Test mode / Pre-event check)
+  //    - If Guest -> Locked (Until event day)
+  
+  const hasReceipt = !!paymentReceiptUrl;
+  const isPending = status === 'pending';
+  
+  let isLocked = false;
+  let lockMessage = '';
+
+  if (isPending && !hasReceipt) {
+    isLocked = true;
+    lockMessage = 'Aguardando envio do comprovante para liberar envios.';
+  } else if (isPending && hasReceipt) {
+    if (isCreator) {
+      isLocked = false; // Creator can access
+    } else {
+      if (!isEventDayOrPast) {
+        isLocked = true;
+        lockMessage = 'O envio de fotos será liberado no dia do evento.';
+      } else {
+        isLocked = false; // Event day reached
+      }
+    }
+  }
+  
+  // Remove "Verifying" message as requested ("retire esse modo de teste")
+  // We just unlock it for the creator.
   
   // Cropper state
   const [crop, setCrop] = useState({ x: 0, y: 0 });
@@ -255,13 +299,7 @@ export function UploadMemory({ eventId, isPaused = false, onUploadSuccess, statu
             
             {isLocked && (
               <div className="p-4 bg-red-50 text-red-700 rounded-xl mb-6 text-center text-sm font-medium">
-                Aguardando envio do comprovante para liberar envios.
-              </div>
-            )}
-
-            {isVerifying && (
-              <div className="p-4 bg-yellow-50 text-yellow-700 rounded-xl mb-6 text-center text-sm font-medium">
-                Modo de Teste: Envios liberados enquanto verificamos seu pagamento.
+                {lockMessage}
               </div>
             )}
             

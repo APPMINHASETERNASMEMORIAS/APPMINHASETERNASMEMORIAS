@@ -1152,10 +1152,26 @@ function EventPage() {
   const [isReceiptModalOpen, setIsReceiptModalOpen] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const navigate = useNavigate();
-  const { getEvent, uploadPaymentReceipt } = useEvents();
+  const { getEvent, uploadPaymentReceipt, isEventCreator } = useEvents();
   
   const event = id ? getEvent(id) : undefined;
-  const isPaused = event?.status === 'paused' || event?.status === 'ended' || event?.status === 'pending';
+  const isCreator = id ? isEventCreator(id) : false;
+  
+  // Logic for locking/pausing
+  // 1. If status is paused/ended -> Paused for everyone
+  // 2. If status is pending:
+  //    - If no receipt -> Locked for everyone (waiting payment)
+  //    - If receipt exists:
+  //      - Creator -> Unlocked (to test/print)
+  //      - Guest -> Locked until event day
+  
+  const today = new Date().toISOString().split('T')[0];
+  const isEventDayOrPast = event ? today >= event.eventDate : false;
+  
+  const isPaused = event?.status === 'paused' || event?.status === 'ended';
+  
+  // We pass these down to components to handle their specific locking UI
+  
   const isEnded = event?.status === 'ended';
 
   return (
@@ -1226,6 +1242,8 @@ function EventPage() {
                 isPaused={isPaused} 
                 status={event?.status} 
                 paymentReceiptUrl={event?.paymentReceiptUrl}
+                isCreator={isCreator}
+                isEventDayOrPast={isEventDayOrPast}
                 onUploadSuccess={() => setRefreshGallery(prev => prev + 1)} 
               />
               <MemoryGallery eventId={id} refreshTrigger={refreshGallery} event={event} />
@@ -1254,6 +1272,8 @@ function EventPage() {
           frameSettings={event.settings.frameSettings}
           status={event.status}
           paymentReceiptUrl={event.paymentReceiptUrl}
+          isCreator={isCreator}
+          isEventDayOrPast={isEventDayOrPast}
         />
       )}
     </div>

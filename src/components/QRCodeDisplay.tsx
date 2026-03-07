@@ -19,15 +19,47 @@ interface QRCodeDisplayProps {
   frameSettings?: FrameSettings;
   status: 'active' | 'paused' | 'ended' | 'pending';
   paymentReceiptUrl?: string;
+  isCreator?: boolean;
+  isEventDayOrPast?: boolean;
 }
 
-export function QRCodeDisplay({ eventId, eventName, isOpen, onClose, frameSettings, status, paymentReceiptUrl }: QRCodeDisplayProps) {
+export function QRCodeDisplay({ 
+  eventId, 
+  eventName, 
+  isOpen, 
+  onClose, 
+  frameSettings, 
+  status, 
+  paymentReceiptUrl,
+  isCreator = false,
+  isEventDayOrPast = false
+}: QRCodeDisplayProps) {
   const [copied, setCopied] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
   
   const eventUrl = `${window.location.origin}/#/evento/${eventId}`;
-  const isLocked = status === 'pending' && !paymentReceiptUrl;
-  const isVerifying = status === 'pending' && paymentReceiptUrl;
+  
+  const hasReceipt = !!paymentReceiptUrl;
+  const isPending = status === 'pending';
+  
+  let isLocked = false;
+  let lockMessage = '';
+
+  if (isPending && !hasReceipt) {
+    isLocked = true;
+    lockMessage = 'Aguardando envio do comprovante.';
+  } else if (isPending && hasReceipt) {
+    if (isCreator) {
+      isLocked = false;
+    } else {
+      if (!isEventDayOrPast) {
+        isLocked = true;
+        lockMessage = 'QR Code liberado apenas no dia do evento.';
+      } else {
+        isLocked = false;
+      }
+    }
+  }
   
   const handleCopyLink = async () => {
     try {
@@ -202,9 +234,7 @@ export function QRCodeDisplay({ eventId, eventName, isOpen, onClose, frameSettin
           <div className="text-center">
             <h3 className="font-semibold text-lg text-gray-800">{eventName}</h3>
             {isLocked ? (
-              <p className="text-sm text-red-500 mt-1 font-medium">Aguardando envio do comprovante</p>
-            ) : isVerifying ? (
-              <p className="text-sm text-yellow-600 mt-1 font-medium">Em análise (Liberado para teste)</p>
+              <p className="text-sm text-red-500 mt-1 font-medium">{lockMessage}</p>
             ) : (
               <p className="text-sm text-gray-500 mt-1">Escaneie para participar</p>
             )}

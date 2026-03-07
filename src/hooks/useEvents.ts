@@ -169,15 +169,34 @@ export function useEvents() {
         }]);
 
         if (error) throw error;
+        
+        // Save to local storage as creator
+        const createdEvents = JSON.parse(localStorage.getItem('created_events') || '[]');
+        if (!createdEvents.includes(newEvent.id)) {
+          createdEvents.push(newEvent.id);
+          localStorage.setItem('created_events', JSON.stringify(createdEvents));
+        }
       } catch (error) {
         console.error('Error creating event in Supabase:', error);
         toast.error('Erro ao salvar evento no servidor.');
         // Revert optimistic update on error
         setEvents(prev => prev.filter(e => e.id !== id));
       }
+    } else {
+       // Save to local storage as creator even if offline/demo
+        const createdEvents = JSON.parse(localStorage.getItem('created_events') || '[]');
+        if (!createdEvents.includes(newEvent.id)) {
+          createdEvents.push(newEvent.id);
+          localStorage.setItem('created_events', JSON.stringify(createdEvents));
+        }
     }
 
     return newEvent;
+  }, []);
+
+  const isEventCreator = useCallback((eventId: string): boolean => {
+    const createdEvents = JSON.parse(localStorage.getItem('created_events') || '[]');
+    return createdEvents.includes(eventId);
   }, []);
 
   const updateEvent = useCallback(async (id: string, updates: Partial<Event>) => {
@@ -387,5 +406,6 @@ export function useEvents() {
     approveMedia,
     deleteMedia,
     stats: getStats(),
+    isEventCreator,
   };
 }

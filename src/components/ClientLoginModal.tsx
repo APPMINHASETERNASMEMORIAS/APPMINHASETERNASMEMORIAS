@@ -50,11 +50,9 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
   }, [isOpen]);
 
   const hasStarted = (event: Event) => {
-    if (event.startedAt) return true;
-    
-    const createdDate = new Date(event.createdAt);
-    createdDate.setHours(12, 0, 0, 0);
-    return new Date() >= createdDate;
+    const [year, month, day] = event.eventDate.split('-').map(Number);
+    const startDate = new Date(year, month - 1, day, 12, 0, 0, 0);
+    return new Date() >= startDate;
   };
 
   const handleLogin = (e: React.FormEvent) => {
@@ -93,19 +91,6 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
         description: selectedEvent.description,
       });
       setMode('edit');
-    }
-  };
-
-  const handleStartEvent = async () => {
-    if (selectedEvent && selectedEvent.id) {
-      try {
-        const now = new Date().toISOString();
-        await updateEvent(selectedEvent.id, { startedAt: now });
-        toast.success('Evento iniciado com sucesso! A contagem de 12 horas começou.');
-        setSelectedEvent({ ...selectedEvent, startedAt: now } as Event);
-      } catch (error) {
-        toast.error('Erro ao iniciar evento.');
-      }
     }
   };
 
@@ -219,16 +204,6 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
                 >
                   Ver Galeria
                 </Button>
-
-                {!selectedEvent.startedAt && (
-                  <Button 
-                    onClick={handleStartEvent}
-                    className="w-full bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    <Clock className="w-4 h-4 mr-2" />
-                    Iniciar Evento Agora (12h)
-                  </Button>
-                )}
 
                 <Button 
                   onClick={async () => {

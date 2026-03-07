@@ -3,13 +3,13 @@ import { Clock, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 interface CountdownTimerProps {
-  createdAt: string;
-  startedAt?: string;
+  eventDate: string;
+  eventTime: string;
   onEnd?: () => void;
   clientPhone?: string;
 }
 
-export function CountdownTimer({ createdAt, startedAt, onEnd, clientPhone }: CountdownTimerProps) {
+export function CountdownTimer({ eventDate, eventTime, onEnd, clientPhone }: CountdownTimerProps) {
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [notified, setNotified] = useState(false);
 
@@ -18,15 +18,12 @@ export function CountdownTimer({ createdAt, startedAt, onEnd, clientPhone }: Cou
 
   useEffect(() => {
     const calculateTimeLeft = () => {
-      let startTime: number;
+      const [year, month, day] = eventDate.split('-').map(Number);
+      const [hours, minutes] = eventTime.split(':').map(Number);
       
-      if (startedAt) {
-        startTime = new Date(startedAt).getTime();
-      } else {
-        const createdDate = new Date(createdAt);
-        createdDate.setHours(12, 0, 0, 0);
-        startTime = createdDate.getTime();
-      }
+      // Start at 12:00 PM on the event date
+      const startDate = new Date(year, month - 1, day, 12, 0, 0, 0);
+      const startTime = startDate.getTime();
 
       const now = new Date().getTime();
       const difference = startTime + DURATION_MS - now;
@@ -62,7 +59,7 @@ export function CountdownTimer({ createdAt, startedAt, onEnd, clientPhone }: Cou
     const timer = setInterval(calculateTimeLeft, 1000);
 
     return () => clearInterval(timer);
-  }, [createdAt, startedAt, notified, clientPhone, onEnd]);
+  }, [eventDate, eventTime, notified, clientPhone, onEnd]);
 
   const formatTime = (ms: number) => {
     const hours = Math.floor(ms / (1000 * 60 * 60));

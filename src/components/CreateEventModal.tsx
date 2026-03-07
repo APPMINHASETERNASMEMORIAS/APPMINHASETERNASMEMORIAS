@@ -15,7 +15,6 @@ import {
   Layout,
   Sparkles
 } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -133,14 +132,6 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
   const handleGeneratePayment = async (overridePrice?: number, isTestOverride?: boolean) => {
     setIsSubmitting(true);
     try {
-      const { data: { user } } = await supabase!.auth.getUser();
-      
-      if (!user) {
-        toast.error('Você precisa estar logado para realizar o pagamento.');
-        setIsSubmitting(false);
-        return;
-      }
-
       const finalPrice = overridePrice !== undefined ? overridePrice : totalPrice;
       const finalIsTest = isTestOverride !== undefined ? isTestOverride : isTestMode;
 
@@ -156,7 +147,6 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
               description: planDetails.name + (frameSettings.enabled ? ' + Moldura' : '')
             }
           ],
-          userId: user.id,
           isTest: finalIsTest
         })
       });

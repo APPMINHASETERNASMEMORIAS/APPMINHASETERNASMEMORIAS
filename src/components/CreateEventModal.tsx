@@ -128,12 +128,10 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       const generatedEventName = `${EVENT_TYPES.find(t => t.value === formData.eventType)?.label || 'Evento'} de ${formData.clientName}`;
-      const generatedEventTime = new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
       onCreate({ 
         ...formData, 
         eventName: generatedEventName,
-        eventTime: generatedEventTime,
         settings: { 
           ...settings, 
           frameSettings: frameSettings.enabled ? frameSettings : undefined,
@@ -180,7 +178,12 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
     });
   };
 
-  const isStep1Valid = formData.clientName && formData.clientPhone && formData.eventDate && formData.eventType;
+  const isStep1Valid = 
+    formData.clientName && 
+    formData.clientPhone && 
+    formData.eventDate && 
+    formData.eventTime && 
+    formData.eventType;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => {
@@ -247,16 +250,22 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
               </Select>
             </div>
 
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2"><Calendar className="w-4 h-4" />Data *</Label>
-              <Input type="date" value={formData.eventDate} onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })} />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2"><Calendar className="w-4 h-4" />Data *</Label>
+                <Input type="date" value={formData.eventDate} onChange={(e) => setFormData({ ...formData, eventDate: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2"><Clock className="w-4 h-4" />Hora de Início *</Label>
+                <Input type="time" value={formData.eventTime} onChange={(e) => setFormData({ ...formData, eventTime: e.target.value })} />
+              </div>
             </div>
 
             <div className="p-4 bg-purple-50 rounded-lg border border-purple-100 flex items-start gap-3">
               <Clock className="w-5 h-5 text-purple-600 mt-0.5" />
               <div>
                 <h4 className="font-medium text-purple-900">Duração do Evento</h4>
-                <p className="text-sm text-purple-700">O evento durará 12 horas a partir da sua criação.</p>
+                <p className="text-sm text-purple-700">O evento durará 12 horas a partir do horário de início definido.</p>
               </div>
             </div>
 

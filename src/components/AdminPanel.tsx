@@ -570,7 +570,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                 <div className="flex items-center justify-between text-sm text-gray-600 mb-4">
                   <span className="flex items-center gap-1">
                     <Calendar className="w-4 h-4" />
-                    {new Date(event.eventDate).toLocaleDateString('pt-BR')}
+                    {new Date(event.eventDate).toLocaleDateString('pt-BR')} às {event.eventTime}
                   </span>
                   <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
                     event.status === 'active' ? 'bg-green-100 text-green-700' :

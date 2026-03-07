@@ -1153,7 +1153,7 @@ function EventPage() {
   const [refreshGallery, setRefreshGallery] = useState(0);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const navigate = useNavigate();
-  const { getEvent, isEventCreator, getEventMedia } = useEvents();
+  const { getEvent, isEventCreator, getEventMedia, updateEvent } = useEvents();
   
   const event = id ? getEvent(id) : undefined;
   const isCreator = id ? isEventCreator(id) : false;
@@ -1167,8 +1167,23 @@ function EventPage() {
   //      - Creator -> Unlocked (to test/print)
   //      - Guest -> Locked until event day
   
-  const today = new Date().toISOString().split('T')[0];
-  const isEventDayOrPast = event ? today >= event.eventDate : false;
+  const getEventStatus = () => {
+    if (!event) return { isEventDayOrPast: false, isWithin12Hours: false };
+    
+    const [year, month, day] = event.eventDate.split('-').map(Number);
+    const [hours, minutes] = event.eventTime.split(':').map(Number);
+    const startDate = new Date(year, month - 1, day, hours, minutes, 0, 0);
+    const startTime = startDate.getTime();
+    const now = new Date().getTime();
+    const DURATION_MS = 12 * 60 * 60 * 1000;
+    
+    const isEventDayOrPast = now >= startTime;
+    const isWithin12Hours = now >= startTime && now <= (startTime + DURATION_MS);
+    
+    return { isEventDayOrPast, isWithin12Hours };
+  };
+
+  const { isEventDayOrPast, isWithin12Hours } = getEventStatus();
   
   const isPaused = event?.status === 'paused' || event?.status === 'ended';
   
@@ -1206,6 +1221,11 @@ function EventPage() {
                 eventDate={event.eventDate} 
                 eventTime={event.eventTime}
                 clientPhone={event.clientPhone}
+                onEnd={() => {
+                  if (event.status !== 'ended') {
+                    updateEvent(event.id, { status: 'ended' });
+                  }
+                }}
               />
             </div>
           )}

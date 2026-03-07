@@ -21,8 +21,8 @@ export function CountdownTimer({ eventDate, eventTime, onEnd, clientPhone }: Cou
       const [year, month, day] = eventDate.split('-').map(Number);
       const [hours, minutes] = eventTime.split(':').map(Number);
       
-      // Start at 12:00 PM on the event date
-      const startDate = new Date(year, month - 1, day, 12, 0, 0, 0);
+      // Use the provided eventTime for the start date
+      const startDate = new Date(year, month - 1, day, hours, minutes, 0, 0);
       const startTime = startDate.getTime();
 
       const now = new Date().getTime();

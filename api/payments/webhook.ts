@@ -1,4 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createClient } from '@supabase/supabase-js';
+
+// Initialize Supabase client
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const supabase = supabaseUrl && (supabaseServiceKey || supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseServiceKey || supabaseAnonKey)
+  : null;
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
@@ -8,6 +18,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const payload = req.body;
     const signature = req.headers['x-infinitepay-signature']; // Exemplo de header de assinatura
+
+    console.log('[WEBHOOK RECEIVED]', payload);
+
+    // Log to Supabase if client is available
+    if (supabase) {
+      try {
+        await supabase.from('webhook_logs').insert({
+          payload: payload,
+          headers: req.headers,
+          created_at: new Date().toISOString()
+        });
+      } catch (logError) {
+        console.error('Failed to log webhook to Supabase:', logError);
+      }
+    }
 
     // 1. VERIFICAÇÃO DE SEGURANÇA (CRÍTICO)
     // Você DEVE validar a assinatura para garantir que o webhook veio da InfinitePay

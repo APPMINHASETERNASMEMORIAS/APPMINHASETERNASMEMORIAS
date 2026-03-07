@@ -5,9 +5,10 @@ import { RefreshCw, Send, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react
 import toast from 'react-hot-toast';
 
 interface WebhookLog {
-  timestamp: string;
+  id?: string;
+  created_at: string;
   headers: any;
-  body: any;
+  payload: any;
 }
 
 export function WebhookTester() {
@@ -21,13 +22,17 @@ export function WebhookTester() {
       const response = await fetch('/api/payments/webhook-logs');
       if (response.ok) {
         const data = await response.json();
-        setLogs(data);
+        // Map data if necessary, or ensure backend returns expected format
+        // Backend returns: { created_at, payload, headers }
+        // If backend returns old format (from memory), handle that too?
+        // No, we are switching to Supabase.
+        setLogs(Array.isArray(data) ? data : []);
       } else {
-        toast.error('Failed to fetch logs');
+        console.error('Failed to fetch logs:', response.statusText);
+        // Don't toast on every poll error to avoid spamming
       }
     } catch (error) {
       console.error('Error fetching logs:', error);
-      toast.error('Error fetching logs');
     } finally {
       setIsLoading(false);
     }
@@ -126,14 +131,14 @@ export function WebhookTester() {
                     <div key={index} className="border rounded-lg p-4 bg-white shadow-sm">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-mono text-gray-500">
-                          {new Date(log.timestamp).toLocaleString()}
+                          {new Date(log.created_at || new Date().toISOString()).toLocaleString()}
                         </span>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          log.body.status === 'approved' 
+                          log.payload?.status === 'approved' 
                             ? 'bg-green-100 text-green-800' 
                             : 'bg-yellow-100 text-yellow-800'
                         }`}>
-                          {log.body.status || 'unknown'}
+                          {log.payload?.status || 'unknown'}
                         </span>
                       </div>
                       
@@ -141,7 +146,7 @@ export function WebhookTester() {
                         <div>
                           <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">Payload</h4>
                           <pre className="bg-gray-50 p-3 rounded text-xs overflow-auto max-h-40">
-                            {JSON.stringify(log.body, null, 2)}
+                            {JSON.stringify(log.payload, null, 2)}
                           </pre>
                         </div>
                         <div>

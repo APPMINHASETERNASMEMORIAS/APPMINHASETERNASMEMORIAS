@@ -63,10 +63,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const data = await response.json();
+    console.log('[PAYMENT API RESPONSE]', data);
     
+    const paymentUrl = data.payment_url || data.pix_qr_code_url || data.url || (data.metadata && data.metadata.payment_url);
+
+    if (!paymentUrl) {
+      throw new Error('A API da InfinitePay não retornou um link de pagamento válido. Verifique as credenciais e o formato da requisição.');
+    }
+
     res.json({
       success: true,
-      paymentUrl: data.payment_url || data.pix_qr_code_url,
+      paymentUrl: paymentUrl,
       transactionId: data.id
     });
 

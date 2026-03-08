@@ -195,25 +195,44 @@ export function UploadMemory({
       const isVideo = file.type.startsWith('video/');
 
       if (isVideo) {
-        // Validação de duração
-        const video = document.createElement('video');
-        video.preload = 'metadata';
-        
-        const duration = await new Promise<number>((resolve, reject) => {
-          video.onloadedmetadata = () => {
-            console.log('Metadados carregados, duração:', video.duration);
-            resolve(video.duration);
-            URL.revokeObjectURL(video.src);
-          };
-          video.onerror = (e) => {
-            console.error('Erro ao ler metadados do vídeo:', e);
-            reject(new Error('Erro ao ler metadados do vídeo'));
-            URL.revokeObjectURL(video.src);
-          };
-          video.src = URL.createObjectURL(file);
-        });
+        // Validação de duração - Mais resiliente para dispositivos móveis
+        let duration = 0;
+        try {
+          const video = document.createElement('video');
+          video.preload = 'metadata';
+          video.muted = true;
+          video.playsInline = true;
+          
+          duration = await new Promise<number>((resolve) => {
+            // Timeout de 4 segundos para não travar o upload se o browser demorar a ler
+            const timeout = setTimeout(() => {
+              console.warn('Timeout ao ler metadados do vídeo');
+              resolve(0);
+            }, 4000);
 
-        if (duration > 20.5) { // Margem de 0.5s
+            video.onloadedmetadata = () => {
+              clearTimeout(timeout);
+              console.log('Metadados carregados, duração:', video.duration);
+              resolve(video.duration || 0);
+            };
+            
+            video.onerror = () => {
+              clearTimeout(timeout);
+              console.warn('Erro ao ler metadados do vídeo, permitindo upload sem validação de tempo');
+              resolve(0); // Resolve com 0 para não bloquear o upload em dispositivos problemáticos
+            };
+            
+            video.src = URL.createObjectURL(file);
+          });
+          
+          if (video.src) URL.revokeObjectURL(video.src);
+        } catch (e) {
+          console.error('Erro na extração de metadados:', e);
+          duration = 0;
+        }
+
+        // Só bloqueia se tivermos certeza que a duração é maior que o limite
+        if (duration > 0 && duration > 20.5) { 
           toast.error('Vídeo muito longo (Máx 20 segundos).');
           setIsUploading(false);
           return;

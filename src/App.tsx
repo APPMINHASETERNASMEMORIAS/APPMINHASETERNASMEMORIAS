@@ -1159,6 +1159,9 @@ function EventPage() {
   const isCreator = id ? isEventCreator(id) : false;
   const media = id ? getEventMedia(id) : [];
   
+  const uploaderId = localStorage.getItem('memory_uploader_id');
+  const userMediaCount = media.filter(m => m.uploaderId === uploaderId).length;
+  
   // Logic for locking/pausing
   // 1. If status is paused/ended -> Paused for everyone
   // 2. If status is pending:
@@ -1190,6 +1193,15 @@ function EventPage() {
   // We pass these down to components to handle their specific locking UI
   
   const isEnded = event?.status === 'ended';
+  const isPending = event?.status === 'pending';
+  
+  // Check if event is in test mode
+  const isTestMode = event?.paymentStatus !== 'paid';
+  const trialStartTime = event ? new Date(event.createdAt).getTime() : 0;
+  const TRIAL_DURATION_MS = 10 * 60 * 1000; // 10 minutes
+  const isTestEnded = isTestMode && (new Date().getTime() - trialStartTime > TRIAL_DURATION_MS);
+
+  const canUpload = !isEnded && !isPaused && !isPending && !isTestEnded;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -1220,10 +1232,17 @@ function EventPage() {
               <CountdownTimer 
                 eventDate={event.eventDate} 
                 eventTime={event.eventTime}
+                createdAt={event.createdAt}
+                paymentStatus={event.paymentStatus}
                 clientPhone={event.clientPhone}
                 onEnd={() => {
                   if (event.status !== 'ended') {
                     updateEvent(event.id, { status: 'ended' });
+                  }
+                }}
+                onTestEnd={() => {
+                  if (event.status !== 'paused') {
+                    updateEvent(event.id, { status: 'paused' });
                   }
                 }}
               />
@@ -1255,7 +1274,7 @@ function EventPage() {
                 paymentStatus={event?.paymentStatus}
                 isCreator={isCreator}
                 isEventDayOrPast={isEventDayOrPast}
-                mediaCount={media.length}
+                mediaCount={userMediaCount}
                 onUploadSuccess={() => setRefreshGallery(prev => prev + 1)} 
               />
               {event && (

@@ -59,31 +59,20 @@ export function UploadMemory({
   const { uploadPaymentReceipt } = useEvents();
   
   // Locking Logic
-  // 1. Creator: Needs paymentStatus === 'paid' to upload before event. Limit 20.
-  // 2. Guest: Only on event day.
+  // 1. If event is paused (e.g., test mode ended), it's locked.
+  // 2. Otherwise, it's unlocked.
   
   const isPaid = paymentStatus === 'paid';
-  const creatorLimit = 20;
   
-  let isLocked = false;
+  let isLocked = isPaused;
   let lockMessage = '';
 
-  if (isEventDayOrPast) {
-    // On event day or after, everyone can upload (if not paused/ended)
-    isLocked = false;
-  } else if (isCreator) {
-    // Before event day, creator can upload if paid, up to 20 photos
+  if (isLocked) {
     if (!isPaid) {
-      isLocked = true;
-      lockMessage = 'Aguardando confirmação de pagamento para liberar seus envios exclusivos.';
-    } else if (mediaCount >= creatorLimit) {
-      isLocked = true;
-      lockMessage = `Você atingiu o limite de ${creatorLimit} envios antecipados. Mais envios estarão disponíveis no dia do evento.`;
+      lockMessage = 'O tempo de teste acabou. Aguardando confirmação de pagamento para liberar os envios.';
+    } else {
+      lockMessage = 'O recebimento de fotos para este evento está pausado.';
     }
-  } else {
-    // Guest before event day
-    isLocked = true;
-    lockMessage = 'O envio de fotos para convidados será liberado apenas no dia do evento.';
   }
   
   // Remove "Verifying" message as requested ("retire esse modo de teste")

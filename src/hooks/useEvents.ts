@@ -83,6 +83,7 @@ export function useEvents() {
           caption: row.message || undefined,
           uploadedBy: row.uploader_name,
           uploadedAt: row.created_at,
+          uploaderId: row.uploader_id,
           status: 'approved', // Default to approved since we don't have status in DB yet
           fileSize: 0,
         });

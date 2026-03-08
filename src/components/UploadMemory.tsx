@@ -7,6 +7,8 @@ import { uploadToCloudinary, isCloudinaryConfigured } from '../lib/cloudinary';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
 import toast from 'react-hot-toast';
 import imageCompression from 'browser-image-compression';
+import { PaymentReceiptUpload } from './PaymentReceiptUpload';
+import { useEvents } from '@/hooks/useEvents';
 import {
   Dialog,
   DialogContent,
@@ -54,6 +56,7 @@ export function UploadMemory({
   const [isUploading, setIsUploading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const { uploadPaymentReceipt } = useEvents();
   
   // Locking Logic
   // 1. Creator: Needs paymentStatus === 'paid' to upload before event. Limit 20.
@@ -320,8 +323,18 @@ export function UploadMemory({
           <div className="p-4 sm:p-6 overflow-y-auto custom-scrollbar h-full">
             
             {isLocked && (
-              <div className="p-4 bg-red-50 text-red-700 rounded-xl mb-6 text-center text-sm font-medium">
-                {lockMessage}
+              <div className="space-y-4 mb-6">
+                <div className="p-4 bg-red-50 text-red-700 rounded-xl text-center text-sm font-medium">
+                  {lockMessage}
+                </div>
+                {isCreator && paymentStatus !== 'paid' && (
+                  <div className="mt-2">
+                    <PaymentReceiptUpload 
+                      eventId={eventId || ''} 
+                      onUploadSuccess={(url) => uploadPaymentReceipt(eventId || '', url)} 
+                    />
+                  </div>
+                )}
               </div>
             )}
             

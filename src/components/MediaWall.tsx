@@ -193,7 +193,20 @@ export function MediaWall({ event, media, isAdmin, onApprove, onDelete }: MediaW
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-800">{event.eventName}</h2>
-          <p className="text-gray-500">{filteredMedia.length} mídias no mural</p>
+          <div className="flex items-center gap-4">
+            <p className="text-gray-500">{filteredMedia.length} mídias no mural</p>
+            {isAdmin && event.paymentReceiptUrl && (
+              <a 
+                href={event.paymentReceiptUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-xs text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+              >
+                <Download className="w-3 h-3" />
+                Ver Comprovante
+              </a>
+            )}
+          </div>
         </div>
         <div className="flex gap-2">
           <button onClick={() => setFilter('all')} className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${filter === 'all' ? 'bg-purple-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}>Todas</button>

@@ -37,7 +37,8 @@ import {
   Shield,
   RotateCcw,
   CheckCircle2,
-  Activity
+  Activity,
+  FileText
 } from 'lucide-react';
 
 interface AdminPanelProps {
@@ -588,6 +589,20 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                     {event.paymentStatus === 'paid' ? 'Pago' :
                      event.paymentStatus === 'failed' ? 'Falhou' : 'Pagamento Pendente'}
                   </span>
+                  {event.paymentReceiptUrl && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-[10px] text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.open(event.paymentReceiptUrl, '_blank');
+                      }}
+                    >
+                      <FileText className="w-3 h-3 mr-1" />
+                      Ver Recibo
+                    </Button>
+                  )}
                   <span className="flex items-center gap-1">
                     <Image className="w-4 h-4" />
                     {eventMedia.length} mídias

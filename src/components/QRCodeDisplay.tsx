@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Download, Share2, Copy, Check, Printer, Lock } from 'lucide-react';
+import { Download, Share2, Copy, Check, Printer, Lock, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -10,6 +10,8 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 import { FrameSettings } from '@/types';
+import { PaymentReceiptUpload } from './PaymentReceiptUpload';
+import { useEvents } from '@/hooks/useEvents';
 
 interface QRCodeDisplayProps {
   eventId: string;
@@ -36,6 +38,7 @@ export function QRCodeDisplay({
 }: QRCodeDisplayProps) {
   const [copied, setCopied] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
+  const { uploadPaymentReceipt } = useEvents();
   
   const eventUrl = `${window.location.origin}/#/evento/${eventId}`;
   
@@ -44,10 +47,12 @@ export function QRCodeDisplay({
   
   let isLocked = false;
   let lockMessage = '';
+  let showUploadButton = false;
 
   if (isPending && !hasReceipt) {
     isLocked = true;
     lockMessage = 'Aguardando envio do comprovante.';
+    showUploadButton = true;
   } else if (isPending && hasReceipt) {
     if (isCreator) {
       isLocked = false;
@@ -231,10 +236,20 @@ export function QRCodeDisplay({
             )}
           </div>
 
-          <div className="text-center">
+          <div className="text-center w-full">
             <h3 className="font-semibold text-lg text-gray-800">{eventName}</h3>
             {isLocked ? (
-              <p className="text-sm text-red-500 mt-1 font-medium">{lockMessage}</p>
+              <div className="space-y-4 mt-2">
+                <p className="text-sm text-red-500 font-medium">{lockMessage}</p>
+                {showUploadButton && (
+                  <div className="mt-4">
+                    <PaymentReceiptUpload 
+                      eventId={eventId} 
+                      onUploadSuccess={(url) => uploadPaymentReceipt(eventId, url)} 
+                    />
+                  </div>
+                )}
+              </div>
             ) : (
               <p className="text-sm text-gray-500 mt-1">Escaneie para participar</p>
             )}

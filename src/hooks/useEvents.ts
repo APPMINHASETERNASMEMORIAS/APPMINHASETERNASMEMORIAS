@@ -354,6 +354,21 @@ export function useEvents() {
     }
   }, []);
 
+  const uploadPaymentReceipt = useCallback(async (eventId: string, receiptUrl: string) => {
+    try {
+      // Update event with receipt URL and mark as paid/active
+      await updateEvent(eventId, { 
+        paymentReceiptUrl: receiptUrl,
+        paymentStatus: 'paid',
+        status: 'active'
+      });
+      toast.success('Comprovante enviado! Evento liberado com sucesso.');
+    } catch (error) {
+      console.error('Error uploading payment receipt:', error);
+      toast.error('Erro ao processar comprovante.');
+    }
+  }, [updateEvent]);
+
   const getStats = useCallback(() => {
     try {
       const safeMedia = media || {};
@@ -428,6 +443,7 @@ export function useEvents() {
     getEventMedia,
     approveMedia,
     deleteMedia,
+    uploadPaymentReceipt,
     stats: getStats(),
     isEventCreator,
   };

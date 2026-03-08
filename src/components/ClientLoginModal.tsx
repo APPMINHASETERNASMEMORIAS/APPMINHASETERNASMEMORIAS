@@ -10,9 +10,10 @@ import { useEvents } from '@/hooks/useEvents';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Switch } from '@/components/ui/switch';
-import { User, Phone, Edit2, Calendar, Clock, Camera, ArrowLeft, Save, QrCode, CreditCard, Upload } from 'lucide-react';
+import { User, Phone, Edit2, Calendar, Clock, Camera, ArrowLeft, Save, QrCode, CreditCard, Upload, Loader2 } from 'lucide-react';
 import { Event, EventType } from '@/types';
 import { QRCodeDisplay } from './QRCodeDisplay';
+import { uploadToCloudinary } from '@/lib/cloudinary';
 
 interface ClientLoginModalProps {
   isOpen: boolean;
@@ -39,7 +40,9 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [withFrame, setWithFrame] = useState(false);
   
-  const { events, updateEvent } = useEvents();
+  const [isUploadingReceipt, setIsUploadingReceipt] = useState(false);
+  
+  const { events, updateEvent, uploadPaymentReceipt } = useEvents();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -111,6 +114,31 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
         setMode('manage');
       } catch (error) {
         toast.error('Erro ao atualizar evento.');
+      }
+    }
+  };
+
+  const handleReceiptUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0] && selectedEvent) {
+      const file = e.target.files[0];
+      try {
+        setIsUploadingReceipt(true);
+        toast.loading('Enviando comprovante...', { id: 'upload-receipt' });
+        const fileUrl = await uploadToCloudinary(file);
+        await uploadPaymentReceipt(selectedEvent.id, fileUrl);
+        toast.dismiss('upload-receipt');
+        // Update local state to reflect changes
+        setSelectedEvent(prev => prev ? { 
+          ...prev, 
+          paymentStatus: 'paid', 
+          status: 'active', 
+          paymentReceiptUrl: fileUrl 
+        } as Event : null);
+      } catch (error) {
+        console.error('Error uploading receipt:', error);
+        toast.error('Erro ao enviar comprovante.');
+      } finally {
+        setIsUploadingReceipt(false);
       }
     }
   };
@@ -253,6 +281,24 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
                   <CreditCard className="w-4 h-4 mr-2" />
                   Realizar Pagamento
                 </Button>
+
+                {selectedEvent.paymentStatus !== 'paid' && (
+                  <div className="w-full">
+                    <label className="w-full cursor-pointer">
+                      <div className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md font-medium transition-colors">
+                        {isUploadingReceipt ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                        {isUploadingReceipt ? 'Enviando...' : 'Enviar Comprovante'}
+                      </div>
+                      <input 
+                        type="file" 
+                        accept="image/*,application/pdf" 
+                        className="hidden" 
+                        onChange={handleReceiptUpload} 
+                        disabled={isUploadingReceipt} 
+                      />
+                    </label>
+                  </div>
+                )}
 
                 {!hasStarted(selectedEvent) ? (
                   <Button 

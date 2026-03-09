@@ -163,12 +163,6 @@ export function ClientLoginModal({ isOpen, onClose, initialEventId }: ClientLogi
         const fileUrl = await uploadToCloudinary(file);
         await uploadPaymentReceipt(selectedEvent.id, fileUrl);
         
-        // Send WhatsApp message to support
-        const supportPhone = '5512988937872';
-        const message = `Olá, suporte! Recebi um novo comprovante de pagamento para o evento: ${selectedEvent.eventName}. Link: ${fileUrl}`;
-        const whatsappUrl = `https://wa.me/${supportPhone}?text=${encodeURIComponent(message)}`;
-        window.open(whatsappUrl, '_blank');
-
         toast.dismiss('upload-receipt');
         toast.success('Comprovante enviado com sucesso!');
         // Update local state to reflect changes

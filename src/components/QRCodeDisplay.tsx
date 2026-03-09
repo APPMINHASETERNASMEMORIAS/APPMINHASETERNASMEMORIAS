@@ -43,6 +43,32 @@ export function QRCodeDisplay({
   const qrRef = useRef<HTMLDivElement>(null);
   const { uploadPaymentReceipt } = useEvents();
   
+  // Check for pending payments when window gains focus
+  useEffect(() => {
+    const handleFocus = async () => {
+      const pendingEventId = localStorage.getItem('pendingPaymentEventId');
+      if (pendingEventId && isOpen && eventId === pendingEventId && isCreator && (isPending || status === 'paused')) {
+        try {
+          const response = await fetch('/api/payments/claim', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ eventId: pendingEventId })
+          });
+          const data = await response.json();
+          if (data.success) {
+            localStorage.removeItem('pendingPaymentEventId');
+            toast.success('Pagamento confirmado! Evento liberado.');
+          }
+        } catch (error) {
+          console.error('Failed to claim payment:', error);
+        }
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [isOpen, eventId, isCreator, isPending, status]);
+
   const eventUrl = `${window.location.origin}/#/evento/${eventId}`;
   
   const hasReceipt = !!paymentReceiptUrl;

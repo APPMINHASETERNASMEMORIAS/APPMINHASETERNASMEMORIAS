@@ -136,6 +136,52 @@ async function startServer() {
 
   // In-memory storage for webhook logs (for testing purposes)
   const webhookLogs: any[] = [];
+  
+  // In-memory storage for unmatched payments (for static link fallback)
+  const unmatchedPayments: any[] = [];
+
+  // Endpoint to claim an unmatched payment
+  app.post('/api/payments/claim', async (req, res) => {
+    try {
+      const { eventId } = req.body;
+      if (!eventId) return res.status(400).json({ error: 'eventId is required' });
+
+      // Find an unmatched payment from the last 15 minutes
+      const fifteenMinutesAgo = Date.now() - 15 * 60 * 1000;
+      const recentUnmatched = unmatchedPayments.filter(p => p.timestamp > fifteenMinutesAgo);
+
+      if (recentUnmatched.length > 0) {
+        // Take the most recent one
+        const payment = recentUnmatched[recentUnmatched.length - 1];
+        
+        if (supabase) {
+          const { error } = await supabase
+            .from('events')
+            .update({ 
+              status: 'active',
+              payment_status: 'paid',
+              payment_id: payment.transactionId,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', eventId);
+
+          if (!error) {
+            // Remove from unmatched
+            const index = unmatchedPayments.indexOf(payment);
+            if (index > -1) unmatchedPayments.splice(index, 1);
+            
+            console.log(`[PAYMENT CLAIMED] Event ${eventId} claimed payment ${payment.transactionId}`);
+            return res.json({ success: true, message: 'Payment claimed successfully' });
+          }
+        }
+      }
+
+      res.json({ success: false, message: 'No recent unmatched payments found' });
+    } catch (error) {
+      console.error('[CLAIM ERROR]', error);
+      res.status(500).json({ error: 'Failed to claim payment' });
+    }
+  });
 
   // InfinitePay Webhook (Receives payment confirmation)
   app.post('/api/payments/webhook', async (req, res) => {
@@ -151,6 +197,14 @@ async function startServer() {
         headers: req.headers,
         body: payload
       });
+      
+      // Write to file for debugging
+      try {
+        const fs = require('fs');
+        fs.writeFileSync('webhook_debug.json', JSON.stringify(webhookLogs, null, 2));
+      } catch (e) {
+        console.error('Failed to write debug file', e);
+      }
       
       // Limit logs to 50
       if (webhookLogs.length > 50) webhookLogs.pop();
@@ -177,33 +231,82 @@ async function startServer() {
       if (status === 'approved') {
         const planId = metadata?.planId;
         const userId = metadata?.userId; // Você deve enviar o userId no momento da criação
-        const eventId = metadata?.eventId; // Assuming eventId is passed in metadata
+        let eventId = metadata?.eventId; // Assuming eventId is passed in metadata
 
-        console.log(`[WEBHOOK] Payment ${transactionId} approved for user ${userId}, event ${eventId}`);
-        
-        // 3. ATUALIZAÇÃO NO SUPABASE
-        if (supabase && eventId) {
-          try {
-            const { error } = await supabase
+        // Se não tiver eventId no metadata (caso de link estático), tenta encontrar pelo cliente
+        if (!eventId && supabase) {
+          const customer = payload.customer || payload.data?.customer;
+          const customerPhone = customer?.phone?.replace(/\D/g, '');
+          const customerName = customer?.name?.toLowerCase();
+          const customerEmail = customer?.email?.toLowerCase();
+          
+          console.log(`[WEBHOOK] No eventId in metadata. Trying to match by customer:`, { customerPhone, customerName, customerEmail });
+          
+          if (customerPhone || customerName || customerEmail) {
+            // Busca eventos pendentes
+            const { data: pendingEvents } = await supabase
               .from('events')
-              .update({ 
-                status: 'active',
-                plan: planId || 'festa',
-                payment_status: 'paid',
-                updated_at: new Date().toISOString()
-              })
-              .eq('id', eventId);
-
-            if (error) {
-              console.error('[WEBHOOK] Failed to update event status:', error);
-            } else {
-              console.log(`[WEBHOOK] Event ${eventId} updated to active`);
+              .select('id, clientPhone, clientName, clientEmail')
+              .eq('status', 'pending');
+              
+            if (pendingEvents && pendingEvents.length > 0) {
+              // Tenta encontrar um match exato
+              const matchedEvent = pendingEvents.find(e => {
+                const ePhone = e.clientPhone?.replace(/\D/g, '');
+                const eName = e.clientName?.toLowerCase();
+                const eEmail = e.clientEmail?.toLowerCase();
+                
+                return (customerPhone && ePhone && ePhone === customerPhone) ||
+                       (customerEmail && eEmail && eEmail === customerEmail) ||
+                       (customerName && eName && eName.includes(customerName));
+              });
+              
+              if (matchedEvent) {
+                eventId = matchedEvent.id;
+                console.log(`[WEBHOOK] Matched payment to event ${eventId} via customer details`);
+              }
             }
-          } catch (dbError) {
-            console.error('[WEBHOOK] Database update failed:', dbError);
+          }
+        }
+
+        if (eventId) {
+          console.log(`[WEBHOOK] Payment ${transactionId} approved for user ${userId}, event ${eventId}`);
+          
+          // 3. ATUALIZAÇÃO NO SUPABASE
+          if (supabase) {
+            try {
+              const { error } = await supabase
+                .from('events')
+                .update({ 
+                  status: 'active',
+                  plan: planId || 'festa',
+                  payment_status: 'paid',
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', eventId);
+
+              if (error) {
+                console.error('[WEBHOOK] Failed to update event status:', error);
+              } else {
+                console.log(`[WEBHOOK] Event ${eventId} updated to active`);
+              }
+            } catch (dbError) {
+              console.error('[WEBHOOK] Database update failed:', dbError);
+            }
           }
         } else {
-          console.warn('[WEBHOOK] Missing Supabase client or eventId');
+          console.log(`[WEBHOOK] Payment ${transactionId} approved, but could not match to any event. Storing as unmatched.`);
+          unmatchedPayments.push({
+            transactionId,
+            status,
+            timestamp: Date.now(),
+            payload
+          });
+          
+          // Keep unmatched payments array from growing too large (max 100)
+          if (unmatchedPayments.length > 100) {
+            unmatchedPayments.shift();
+          }
         }
       }
       

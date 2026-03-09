@@ -53,6 +53,33 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
     }
   }, [isOpen]);
 
+  // Check for pending payments when window gains focus
+  useEffect(() => {
+    const handleFocus = async () => {
+      const pendingEventId = localStorage.getItem('pendingPaymentEventId');
+      if (pendingEventId && isOpen && selectedEvent?.id === pendingEventId) {
+        try {
+          const response = await fetch('/api/payments/claim', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ eventId: pendingEventId })
+          });
+          const data = await response.json();
+          if (data.success) {
+            localStorage.removeItem('pendingPaymentEventId');
+            toast.success('Pagamento confirmado! Evento liberado.');
+            // The real-time listener will update the event status automatically
+          }
+        } catch (error) {
+          console.error('Failed to claim payment:', error);
+        }
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, [isOpen, selectedEvent]);
+
   const hasStarted = (event: Event) => {
     const [year, month, day] = event.eventDate.split('-').map(Number);
     const startDate = new Date(year, month - 1, day, 12, 0, 0, 0);
@@ -259,6 +286,7 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
                     if (selectedEvent.settings.isOneRealTestMode) {
                       const plan = PLANS.test;
                       if (plan && plan.link) {
+                        localStorage.setItem('pendingPaymentEventId', selectedEvent.id);
                         window.open(plan.link, '_blank');
                       } else {
                         toast.error('Link de teste não disponível.');
@@ -293,11 +321,13 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
                       toast.dismiss('payment-link');
                       
                       if (data.success && data.paymentUrl) {
+                        localStorage.setItem('pendingPaymentEventId', selectedEvent.id);
                         window.open(data.paymentUrl, '_blank');
                       } else {
                         // Fallback to static link if API fails or credentials missing
                         console.warn('API de pagamento falhou, usando link estático de fallback.');
                         if (plan && plan.link) {
+                          localStorage.setItem('pendingPaymentEventId', selectedEvent.id);
                           // Try to append metadata to static link just in case InfinitePay supports it
                           try {
                             const url = new URL(plan.link);
@@ -315,6 +345,7 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
                       console.error('Erro ao gerar pagamento:', error);
                       // Fallback to static link
                       if (plan && plan.link) {
+                        localStorage.setItem('pendingPaymentEventId', selectedEvent.id);
                         try {
                           const url = new URL(plan.link);
                           url.searchParams.append('metadata', JSON.stringify({ eventId: selectedEvent.id }));
@@ -332,6 +363,38 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
                   <CreditCard className="w-4 h-4 mr-2" />
                   Realizar Pagamento
                 </Button>
+
+                {localStorage.getItem('pendingPaymentEventId') === selectedEvent.id && (
+                  <Button 
+                    variant="outline"
+                    onClick={async () => {
+                      try {
+                        toast.loading('Verificando pagamento...', { id: 'check-payment' });
+                        const response = await fetch('/api/payments/claim', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ eventId: selectedEvent.id })
+                        });
+                        const data = await response.json();
+                        toast.dismiss('check-payment');
+                        
+                        if (data.success) {
+                          localStorage.removeItem('pendingPaymentEventId');
+                          toast.success('Pagamento confirmado! Evento liberado.');
+                        } else {
+                          toast.error('Pagamento ainda não reconhecido. Tente novamente em alguns segundos.');
+                        }
+                      } catch (error) {
+                        toast.dismiss('check-payment');
+                        console.error('Failed to claim payment:', error);
+                        toast.error('Erro ao verificar pagamento.');
+                      }
+                    }}
+                    className="w-full border-emerald-600 text-emerald-600 hover:bg-emerald-50"
+                  >
+                    Já realizei o pagamento
+                  </Button>
+                )}
 
                 {selectedEvent.paymentStatus !== 'paid' && (
                   <div className="w-full">

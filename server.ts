@@ -388,6 +388,7 @@ async function startServer() {
   
   // Endpoint to simulate a webhook (Test Ping)
   app.post('/api/payments/simulate-webhook', async (req, res) => {
+    console.log('[SIMULATION] Request received:', req.body);
     try {
         const { eventId, status, amount } = req.body;
         
@@ -403,7 +404,7 @@ async function startServer() {
             created_at: new Date().toISOString()
         };
         
-        console.log('[SIMULATION] Request body:', req.body);
+        console.log('[SIMULATION] Mock payload:', mockPayload);
         
         console.log('[SIMULATION] Processing mock webhook internally...');
         
@@ -422,10 +423,12 @@ async function startServer() {
         
         if (paymentStatus === 'approved' || paymentStatus === 'paid') {
           const targetEventId = metadata.eventId;
+          console.log(`[SIMULATION] Target event ID: ${targetEventId}`);
           
           if (targetEventId && targetEventId !== 'test_event_id') {
             console.log(`[SIMULATION] Payment approved for event ${targetEventId}`);
             if (supabase) {
+              console.log('[SIMULATION] Supabase client found, updating event...');
               const { error } = await supabase
                 .from('events')
                 .update({ 
@@ -437,7 +440,11 @@ async function startServer() {
 
               if (error) {
                 console.error('[SIMULATION] Error updating event in Supabase:', error);
+                throw error; // Throw error to trigger catch block
               }
+              console.log('[SIMULATION] Event updated successfully');
+            } else {
+              console.log('[SIMULATION] Supabase client NOT found');
             }
           }
         }
@@ -445,7 +452,7 @@ async function startServer() {
         res.json({ success: true, message: 'Webhook simulated successfully' });
     } catch (error: any) {
         console.error('[SIMULATION ERROR]', error);
-        res.status(500).json({ success: false, error: error.message });
+        res.status(500).json({ success: false, error: error.message || 'Unknown error' });
     }
   });
 

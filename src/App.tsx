@@ -44,6 +44,7 @@ import { CountdownTimer } from './components/CountdownTimer';
 import { DownloadEventButton } from './components/DownloadEventButton';
 import { WhatsAppButton } from './components/WhatsAppButton';
 import { WebhookTester } from './components/WebhookTester';
+import { ReceiptNotifier } from './components/ReceiptNotifier';
 import { Event } from './types';
 
 // Error Boundary Component
@@ -342,6 +343,7 @@ function LandingPage() {
 
   return (
     <div className="min-h-screen bg-white overflow-x-hidden">
+      <ReceiptNotifier />
       {/* Navigation */}
       <motion.nav 
         initial={{ y: -100 }}

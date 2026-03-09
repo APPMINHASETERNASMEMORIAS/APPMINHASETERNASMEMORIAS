@@ -41,6 +41,7 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
   const [withFrame, setWithFrame] = useState(false);
   
   const [isUploadingReceipt, setIsUploadingReceipt] = useState(false);
+  const [pendingPaymentId, setPendingPaymentId] = useState<string | null>(localStorage.getItem('pendingPaymentEventId'));
   
   const { events, updateEvent, uploadPaymentReceipt } = useEvents();
   const navigate = useNavigate();
@@ -67,6 +68,7 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
           const data = await response.json();
           if (data.success) {
             localStorage.removeItem('pendingPaymentEventId');
+            setPendingPaymentId(null);
             toast.success('Pagamento confirmado! Evento liberado.');
             // The real-time listener will update the event status automatically
           }
@@ -287,6 +289,7 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
                       const plan = PLANS.test;
                       if (plan && plan.link) {
                         localStorage.setItem('pendingPaymentEventId', selectedEvent.id);
+                        setPendingPaymentId(selectedEvent.id);
                         window.open(plan.link, '_blank');
                       } else {
                         toast.error('Link de teste não disponível.');
@@ -322,12 +325,14 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
                       
                       if (data.success && data.paymentUrl) {
                         localStorage.setItem('pendingPaymentEventId', selectedEvent.id);
+                        setPendingPaymentId(selectedEvent.id);
                         window.open(data.paymentUrl, '_blank');
                       } else {
                         // Fallback to static link if API fails or credentials missing
                         console.warn('API de pagamento falhou, usando link estático de fallback.');
                         if (plan && plan.link) {
                           localStorage.setItem('pendingPaymentEventId', selectedEvent.id);
+                          setPendingPaymentId(selectedEvent.id);
                           // Try to append metadata to static link just in case InfinitePay supports it
                           try {
                             const url = new URL(plan.link);
@@ -346,6 +351,7 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
                       // Fallback to static link
                       if (plan && plan.link) {
                         localStorage.setItem('pendingPaymentEventId', selectedEvent.id);
+                        setPendingPaymentId(selectedEvent.id);
                         try {
                           const url = new URL(plan.link);
                           url.searchParams.append('metadata', JSON.stringify({ eventId: selectedEvent.id }));
@@ -364,7 +370,7 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
                   Realizar Pagamento
                 </Button>
 
-                {localStorage.getItem('pendingPaymentEventId') === selectedEvent.id && (
+                {pendingPaymentId === selectedEvent.id && (
                   <Button 
                     variant="outline"
                     onClick={async () => {
@@ -380,6 +386,7 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
                         
                         if (data.success) {
                           localStorage.removeItem('pendingPaymentEventId');
+                          setPendingPaymentId(null);
                           toast.success('Pagamento confirmado! Evento liberado.');
                         } else {
                           toast.error('Pagamento ainda não reconhecido. Tente novamente em alguns segundos.');

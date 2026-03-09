@@ -339,24 +339,46 @@ async function startServer() {
             created_at: new Date().toISOString()
         };
         
-        // Call the webhook handler internally or via fetch
-        // Here we just push to logs directly to simulate reception
-        console.log('[SIMULATION] Sending mock webhook...');
+        console.log('[SIMULATION] Processing mock webhook internally...');
         
-        // Simulate the fetch to our own webhook endpoint
-        const response = await fetch(`http://127.0.0.1:${PORT}/api/payments/webhook`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'x-infinitepay-signature': 'mock_signature'
-            },
-            body: JSON.stringify(mockPayload)
+        // Store log for viewing
+        webhookLogs.unshift({
+          timestamp: new Date().toISOString(),
+          headers: { 'x-infinitepay-signature': 'mock_signature', 'content-type': 'application/json' },
+          body: mockPayload
         });
         
-        const result = await response.json();
-        res.json({ success: true, result });
+        if (webhookLogs.length > 50) webhookLogs.pop();
+
+        const paymentStatus = mockPayload.status;
+        const metadata = mockPayload.metadata;
+        
+        if (paymentStatus === 'approved' || paymentStatus === 'paid') {
+          const targetEventId = metadata.eventId;
+          
+          if (targetEventId && targetEventId !== 'test_event_id') {
+            console.log(`[SIMULATION] Payment approved for event ${targetEventId}`);
+            if (supabase) {
+              const { error } = await supabase
+                .from('events')
+                .update({ 
+                  status: 'active',
+                  payment_status: 'paid',
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', targetEventId);
+
+              if (error) {
+                console.error('[SIMULATION] Error updating event in Supabase:', error);
+              }
+            }
+          }
+        }
+        
+        res.json({ success: true, message: 'Webhook simulated successfully' });
     } catch (error: any) {
-        res.status(500).json({ error: error.message });
+        console.error('[SIMULATION ERROR]', error);
+        res.status(500).json({ success: false, error: error.message });
     }
   });
 

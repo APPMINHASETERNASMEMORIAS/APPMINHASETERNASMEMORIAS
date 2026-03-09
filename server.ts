@@ -369,8 +369,21 @@ async function startServer() {
   });
 
   // Endpoint to view webhook logs
-  app.get('/api/payments/webhook-logs', (req, res) => {
-    res.json(webhookLogs);
+  app.get('/api/payments/webhook-logs', async (req, res) => {
+    if (!supabase) {
+      return res.json([]);
+    }
+    const { data, error } = await supabase
+      .from('webhook_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50);
+      
+    if (error) {
+      console.error('Error fetching logs:', error);
+      return res.status(500).json({ error: error.message });
+    }
+    res.json(data || []);
   });
   
   // Endpoint to simulate a webhook (Test Ping)
@@ -389,6 +402,8 @@ async function startServer() {
             },
             created_at: new Date().toISOString()
         };
+        
+        console.log('[SIMULATION] Request body:', req.body);
         
         console.log('[SIMULATION] Processing mock webhook internally...');
         

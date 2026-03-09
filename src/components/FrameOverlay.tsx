@@ -44,7 +44,7 @@ export function FrameOverlay({ settings, className = '', children }: FrameOverla
       
       {/* Frame Overlay */}
       {isImageFrame ? (
-        <div className="absolute inset-0 pointer-events-none z-10 opacity-30">
+        <div className="absolute inset-0 pointer-events-none z-10 opacity-50">
           <img 
             src={settings.templateId} 
             alt="Moldura" 
@@ -54,7 +54,7 @@ export function FrameOverlay({ settings, className = '', children }: FrameOverla
         </div>
       ) : (
         <div 
-          className={`absolute inset-0 pointer-events-none transition-all duration-500 opacity-30 ${getTemplateStyles()}`}
+          className={`absolute inset-0 pointer-events-none transition-all duration-500 opacity-50 ${getTemplateStyles()}`}
           style={{ 
             borderColor: settings.color, 
             color: settings.color,

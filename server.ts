@@ -136,18 +136,24 @@ async function startServer() {
   });
 
   // In-memory storage for webhook logs (for testing purposes)
-  const webhookLogs: any[] = [];
   const LOG_FILE = 'logs.json';
+  let webhookLogs: any[] = [];
+  try {
+    const fs = require('fs');
+    if (fs.existsSync(LOG_FILE)) {
+      webhookLogs = JSON.parse(fs.readFileSync(LOG_FILE, 'utf8'));
+    }
+  } catch (e) {
+    console.error('Failed to load logs', e);
+  }
+
   function addLog(entry: any) {
     try {
       const fs = require('fs');
-      let logs = [];
-      if (fs.existsSync(LOG_FILE)) {
-        logs = JSON.parse(fs.readFileSync(LOG_FILE, 'utf8'));
-      }
-      logs.unshift({ timestamp: new Date().toISOString(), ...entry });
-      if (logs.length > 50) logs.pop();
-      fs.writeFileSync(LOG_FILE, JSON.stringify(logs, null, 2));
+      const logEntry = { timestamp: new Date().toISOString(), ...entry };
+      webhookLogs.unshift(logEntry);
+      if (webhookLogs.length > 50) webhookLogs.pop();
+      fs.writeFileSync(LOG_FILE, JSON.stringify(webhookLogs, null, 2));
     } catch (e) {
       console.error('Failed to save log', e);
     }
@@ -372,17 +378,7 @@ async function startServer() {
 
   // Endpoint to view webhook logs
   app.get('/api/payments/webhook-logs', (req, res) => {
-    try {
-      const fs = require('fs');
-      if (fs.existsSync(LOG_FILE)) {
-        res.json(JSON.parse(fs.readFileSync(LOG_FILE, 'utf8')));
-      } else {
-        res.json([]);
-      }
-    } catch (e) {
-      console.error('Failed to read logs', e);
-      res.json([]);
-    }
+    res.json(webhookLogs);
   });
   
   // Endpoint to simulate a webhook (Test Ping)

@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { resolve } from 'path';
 import crypto from 'crypto';
 import { createClient } from '@supabase/supabase-js';
+import nodemailer from 'nodemailer';
 
 // Load environment variables
 dotenv.config();
@@ -52,6 +53,52 @@ async function startServer() {
     res.json({ status: 'ok', message: 'Server is running' });
   });
 
+  // Endpoint to notify support about a new receipt
+  app.post('/api/notify-support', async (req, res) => {
+    try {
+      const { eventId, eventName, receiptUrl } = req.body;
+      console.log(`[NOTIFY] New receipt for event ${eventId}: ${receiptUrl}`);
+
+      // 1. Send Email
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST,
+        port: Number(process.env.SMTP_PORT),
+        secure: true,
+        auth: {
+          user: process.env.SMTP_USER,
+          pass: process.env.SMTP_PASS,
+        },
+      });
+
+      await transporter.sendMail({
+        from: '"Minhas Eternas Memórias" <suporte@minhaseternasmemorias.com.br>',
+        to: 'linktestadoeaprovado@gmail.com',
+        subject: `Novo Comprovante: ${eventName}`,
+        text: `Novo comprovante recebido para o evento ${eventName} (ID: ${eventId}). URL: ${receiptUrl}`,
+        html: `<p>Novo comprovante recebido para o evento <strong>${eventName}</strong> (ID: ${eventId}).</p><p><a href="${receiptUrl}">Ver Comprovante</a></p>`,
+      });
+
+      // 2. Send Webhook
+      if (process.env.SUPPORT_WEBHOOK_URL) {
+        await fetch(process.env.SUPPORT_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            eventId,
+            eventName,
+            receiptUrl,
+            timestamp: new Date().toISOString()
+          })
+        });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error('[NOTIFY ERROR]', error);
+      res.status(500).json({ success: false, error: 'Failed to send notification' });
+    }
+  });
+
   // InfinitePay Payment Intent Creation
   app.post('/api/payments/create', async (req, res) => {
     try {
@@ -68,7 +115,6 @@ async function startServer() {
       }
 
       console.log(`[PAYMENT] Creating payment intent for handle ${handle}`);
-      addLog({ type: 'PAYMENT_CREATE', handle: handle, timestamp: new Date().toISOString() });
 
       // Check for required environment variables
       const apiKey = process.env.INFINITEPAY_API_KEY;
@@ -136,48 +182,10 @@ async function startServer() {
   });
 
   // In-memory storage for webhook logs (for testing purposes)
-  const LOG_FILE = 'logs.json';
-  let webhookLogs: any[] = [];
-  try {
-    const fs = require('fs');
-    if (fs.existsSync(LOG_FILE)) {
-      webhookLogs = JSON.parse(fs.readFileSync(LOG_FILE, 'utf8'));
-    }
-  } catch (e) {
-    console.error('Failed to load logs', e);
-  }
-
-  function addLog(entry: any) {
-    try {
-      const fs = require('fs');
-      const logEntry = { timestamp: new Date().toISOString(), ...entry };
-      webhookLogs.unshift(logEntry);
-      if (webhookLogs.length > 50) webhookLogs.pop();
-      fs.writeFileSync(LOG_FILE, JSON.stringify(webhookLogs, null, 2));
-    } catch (e) {
-      console.error('Failed to save log', e);
-    }
-  }
+  const webhookLogs: any[] = [];
   
   // In-memory storage for unmatched payments (for static link fallback)
-  let unmatchedPayments: any[] = [];
-  try {
-    const fs = require('fs');
-    if (fs.existsSync('unmatched_payments.json')) {
-      unmatchedPayments = JSON.parse(fs.readFileSync('unmatched_payments.json', 'utf8'));
-    }
-  } catch (e) {
-    console.error('Failed to load unmatched payments', e);
-  }
-
-  function saveUnmatchedPayments() {
-    try {
-      const fs = require('fs');
-      fs.writeFileSync('unmatched_payments.json', JSON.stringify(unmatchedPayments, null, 2));
-    } catch (e) {
-      console.error('Failed to save unmatched payments', e);
-    }
-  }
+  const unmatchedPayments: any[] = [];
 
   // Endpoint to claim an unmatched payment
   app.post('/api/payments/claim', async (req, res) => {
@@ -219,10 +227,7 @@ async function startServer() {
           if (!error) {
             // Remove from unmatched
             const index = unmatchedPayments.indexOf(payment);
-            if (index > -1) {
-              unmatchedPayments.splice(index, 1);
-              saveUnmatchedPayments();
-            }
+            if (index > -1) unmatchedPayments.splice(index, 1);
             
             console.log(`[PAYMENT CLAIMED] Event ${eventId} claimed payment ${payment.transactionId}`);
             return res.json({ success: true, message: 'Payment claimed successfully' });
@@ -246,8 +251,8 @@ async function startServer() {
       console.log('[WEBHOOK RECEIVED]', payload);
       
       // Store log for viewing
-      addLog({
-        type: 'WEBHOOK',
+      webhookLogs.unshift({
+        timestamp: new Date().toISOString(),
         headers: req.headers,
         body: payload
       });
@@ -255,8 +260,7 @@ async function startServer() {
       // Write to file for debugging
       try {
         const fs = require('fs');
-        const logs = JSON.parse(fs.readFileSync(LOG_FILE, 'utf8'));
-        fs.writeFileSync('webhook_debug.json', JSON.stringify(logs, null, 2));
+        fs.writeFileSync('webhook_debug.json', JSON.stringify(webhookLogs, null, 2));
       } catch (e) {
         console.error('Failed to write debug file', e);
       }
@@ -266,14 +270,17 @@ async function startServer() {
 
       // 1. VERIFICAÇÃO DE SEGURANÇA (CRÍTICO)
       // Você DEVE validar a assinatura para garantir que o webhook veio da InfinitePay
-      const isValid = verifySignature(payload, signature, process.env.INFINITEPAY_WEBHOOK_SECRET);
+      console.log('[WEBHOOK] Signature header:', signature);
+      console.log('[WEBHOOK] Secret set:', !!process.env.INFINITEPAY_WEBHOOK_SECRET);
+      console.log('[WEBHOOK] Payload:', JSON.stringify(payload));
       
-      if (!isValid && process.env.NODE_ENV === 'production') {
-        if (!process.env.INFINITEPAY_WEBHOOK_SECRET) {
-          console.warn('[WEBHOOK] Webhook secret not set. Bypassing signature verification for now, but this is INSECURE.');
-        } else {
-          console.warn('[WEBHOOK] Invalid signature received');
-          return res.status(401).send('Invalid signature');
+      const isValid = verifySignature(payload, signature, process.env.INFINITEPAY_WEBHOOK_SECRET);
+      console.log('[WEBHOOK] Signature valid:', isValid);
+      
+      if (!isValid) {
+        console.warn('[WEBHOOK] Invalid signature received or verification failed');
+        if (process.env.NODE_ENV === 'production' && process.env.INFINITEPAY_WEBHOOK_SECRET) {
+           return res.status(401).send('Invalid signature');
         }
       }
 
@@ -283,12 +290,14 @@ async function startServer() {
       const transactionId = payload.id || payload.data?.id;
       const metadata = payload.metadata || payload.data?.metadata;
       
-      console.log(`[WEBHOOK] Processing payment ${transactionId} with status: ${status}`);
+      console.log('[WEBHOOK] Extracted data:', { status, transactionId, metadata });
 
       if (status === 'approved' || status === 'paid' || status === 'confirmed') {
         const planId = metadata?.planId;
         const userId = metadata?.userId;
         let eventId = metadata?.eventId;
+
+        console.log('[WEBHOOK] Event ID from metadata:', eventId);
 
         // Se não tiver eventId no metadata (caso de link estático), tenta encontrar pelo cliente
         if (!eventId && supabase) {
@@ -359,12 +368,10 @@ async function startServer() {
             timestamp: Date.now(),
             payload
           });
-          saveUnmatchedPayments();
           
           // Keep unmatched payments array from growing too large (max 100)
           if (unmatchedPayments.length > 100) {
             unmatchedPayments.shift();
-            saveUnmatchedPayments();
           }
         }
       }
@@ -401,11 +408,13 @@ async function startServer() {
         console.log('[SIMULATION] Processing mock webhook internally...');
         
         // Store log for viewing
-        addLog({
-          type: 'SIMULATION',
+        webhookLogs.unshift({
+          timestamp: new Date().toISOString(),
           headers: { 'x-infinitepay-signature': 'mock_signature', 'content-type': 'application/json' },
           body: mockPayload
         });
+        
+        if (webhookLogs.length > 50) webhookLogs.pop();
 
         const paymentStatus = mockPayload.status;
         const metadata = mockPayload.metadata;

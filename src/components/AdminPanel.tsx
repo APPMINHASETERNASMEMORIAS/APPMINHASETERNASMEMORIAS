@@ -45,7 +45,7 @@ interface AdminPanelProps {
   onClose: () => void;
 }
 
-type AdminView = 'dashboard' | 'events' | 'media' | 'settings' | 'webhooks' | 'receipts';
+type AdminView = 'dashboard' | 'events' | 'media' | 'settings' | 'webhooks';
 
 export function AdminPanel({ onClose }: AdminPanelProps) {
   const ADMIN_EMAIL = 'linktestadoeaprovado@gmail.com';
@@ -406,34 +406,6 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
             )}
           </CardContent>
         </Card>
-      </div>
-    </div>
-  );
-
-  const renderReceipts = () => (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-gray-800">Comprovantes de Pagamento</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {events.filter(e => e.paymentReceiptUrl).map(event => (
-          <Card key={event.id}>
-            <CardHeader>
-              <CardTitle className="text-lg">{event.eventName}</CardTitle>
-              <p className="text-sm text-gray-500">{event.clientName}</p>
-            </CardHeader>
-            <CardContent>
-              <img src={event.paymentReceiptUrl} alt="Comprovante" className="w-full h-48 object-cover rounded-lg mb-4" />
-              <Button 
-                className="w-full"
-                onClick={() => window.open(event.paymentReceiptUrl, '_blank')}
-              >
-                Ver Comprovante Original
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-        {events.filter(e => e.paymentReceiptUrl).length === 0 && (
-          <p className="text-center text-gray-500 py-8 col-span-full">Nenhum comprovante enviado ainda.</p>
-        )}
       </div>
     </div>
   );
@@ -879,13 +851,6 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                 )}
               </button>
               <button
-                onClick={() => setView('receipts')}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${view === 'receipts' ? 'bg-purple-50 text-purple-600' : 'text-gray-600 hover:bg-gray-50'}`}
-              >
-                <FileText className="w-5 h-5" />
-                Comprovantes
-              </button>
-              <button
                 onClick={() => setView('webhooks')}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${view === 'webhooks' ? 'bg-purple-50 text-purple-600' : 'text-gray-600 hover:bg-gray-50'}`}
               >
@@ -965,7 +930,6 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
           <div className="max-w-7xl mx-auto">
             {view === 'dashboard' && renderDashboard()}
             {view === 'events' && renderEvents()}
-            {view === 'receipts' && renderReceipts()}
             {view === 'media' && (
               <div className="space-y-6">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">

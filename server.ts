@@ -38,20 +38,18 @@ function verifySignature(payload: any, signature: string | string[] | undefined,
   }
 }
 
-async function startServer() {
-  const app = express();
-  const PORT = 3000;
+const app = express();
 
-  // Middleware to parse JSON bodies
-  app.use(express.json());
+// Middleware to parse JSON bodies
+app.use(express.json());
 
-  // ==========================================
-  // API Routes (Backend)
-  // ==========================================
-  
-  app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', message: 'Server is running' });
-  });
+// ==========================================
+// API Routes (Backend)
+// ==========================================
+
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', message: 'Server is running' });
+});
 
   // Endpoint to notify support about a new receipt
   app.post('/api/notify-support', async (req, res) => {
@@ -90,6 +88,26 @@ async function startServer() {
             timestamp: new Date().toISOString()
           })
         });
+      }
+
+      // 3. Send to Make.com Webhook (if configured)
+      if (process.env.MAKE_WEBHOOK_URL) {
+        try {
+          await fetch(process.env.MAKE_WEBHOOK_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              event: 'new_receipt',
+              eventId,
+              eventName,
+              receiptUrl,
+              timestamp: new Date().toISOString()
+            })
+          });
+          console.log(`[NOTIFY] Successfully sent receipt notification to Make.com`);
+        } catch (makeError) {
+          console.error('[NOTIFY] Failed to send to Make.com:', makeError);
+        }
       }
 
       res.json({ success: true });
@@ -355,6 +373,27 @@ async function startServer() {
                 console.error('[WEBHOOK] Failed to update event status:', error);
               } else {
                 console.log(`[WEBHOOK] Event ${eventId} updated to active`);
+                
+                // Send webhook to Make.com if configured
+                if (process.env.MAKE_WEBHOOK_URL) {
+                  try {
+                    await fetch(process.env.MAKE_WEBHOOK_URL, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        event: 'payment_confirmed',
+                        eventId,
+                        transactionId,
+                        planId,
+                        userId,
+                        timestamp: new Date().toISOString()
+                      })
+                    });
+                    console.log(`[WEBHOOK] Successfully sent payment confirmation to Make.com`);
+                  } catch (makeError) {
+                    console.error('[WEBHOOK] Failed to send to Make.com:', makeError);
+                  }
+                }
               }
             } catch (dbError) {
               console.error('[WEBHOOK] Database update failed:', dbError);
@@ -452,6 +491,9 @@ async function startServer() {
   // Vite Integration (Frontend)
   // ==========================================
   
+async function startServer() {
+  const PORT = process.env.PORT || 3000;
+
   if (process.env.NODE_ENV !== 'production') {
     // Development mode: Use Vite middleware
     const vite = await createViteServer({
@@ -467,9 +509,14 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  app.listen(PORT as number, '0.0.0.0', () => {
     console.log(`Server running on http://0.0.0.0:${PORT}`);
   });
 }
 
-startServer().catch(console.error);
+// Only start the server if not running in a serverless environment like Vercel
+if (!process.env.VERCEL) {
+  startServer().catch(console.error);
+}
+
+export default app;

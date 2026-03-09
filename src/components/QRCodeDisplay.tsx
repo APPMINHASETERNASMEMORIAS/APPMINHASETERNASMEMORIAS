@@ -23,6 +23,7 @@ interface QRCodeDisplayProps {
   paymentReceiptUrl?: string;
   isCreator?: boolean;
   isEventDayOrPast?: boolean;
+  onGoToPayment?: () => void;
 }
 
 export function QRCodeDisplay({ 
@@ -34,7 +35,8 @@ export function QRCodeDisplay({
   status, 
   paymentReceiptUrl,
   isCreator = false,
-  isEventDayOrPast = false
+  isEventDayOrPast = false,
+  onGoToPayment
 }: QRCodeDisplayProps) {
   const [copied, setCopied] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
@@ -241,6 +243,14 @@ export function QRCodeDisplay({
             {isLocked ? (
               <div className="space-y-4 mt-2">
                 <p className="text-sm text-red-500 font-medium">{lockMessage}</p>
+                {onGoToPayment && (
+                  <Button 
+                    onClick={onGoToPayment}
+                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white mt-4"
+                  >
+                    Realizar Pagamento
+                  </Button>
+                )}
                 {showUploadButton && (
                   <div className="mt-4">
                     <PaymentReceiptUpload 

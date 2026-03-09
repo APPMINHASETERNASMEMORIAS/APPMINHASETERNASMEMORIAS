@@ -1142,6 +1142,10 @@ function LandingPage() {
           onClose={() => setIsQRModalOpen(false)}
           frameSettings={createdEvent.settings.frameSettings}
           status={createdEvent.status}
+          onGoToPayment={() => {
+            setIsQRModalOpen(false);
+            setIsClientLoginModalOpen(true);
+          }}
         />
       )}
     </div>

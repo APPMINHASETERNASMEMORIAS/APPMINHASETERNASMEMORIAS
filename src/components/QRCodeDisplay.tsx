@@ -305,7 +305,7 @@ export function QRCodeDisplay({
                                 toast.success('Pagamento confirmado! Evento liberado.', { id: 'check-payment-qr' });
                                 // The real-time listener or parent state update will handle the rest
                               } else {
-                                toast.error('Pagamento ainda não reconhecido. Se você já pagou, envie o comprovante acima.', { id: 'check-payment-qr' });
+                                toast.error('Pagamento ainda não reconhecido pela InfinitePay. Isso pode levar alguns minutos. Se você já pagou, envie o comprovante acima.', { id: 'check-payment-qr', duration: 5000 });
                               }
                             } catch (error) {
                               console.error('Failed to claim payment:', error);

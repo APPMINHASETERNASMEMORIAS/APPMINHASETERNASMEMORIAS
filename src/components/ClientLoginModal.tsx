@@ -410,7 +410,7 @@ export function ClientLoginModal({ isOpen, onClose, initialEventId }: ClientLogi
                           toast.success('Pagamento confirmado! Evento liberado.', { id: 'check-payment' });
                           setSelectedEvent(prev => prev ? { ...prev, paymentStatus: 'paid', status: 'active' } as Event : null);
                         } else {
-                          toast.error('Pagamento ainda não reconhecido. Se você já pagou, envie o comprovante abaixo para agilizar a liberação.', { id: 'check-payment' });
+                          toast.error('Pagamento ainda não reconhecido pela InfinitePay. Isso pode levar alguns minutos. Se você já pagou, envie o comprovante abaixo para agilizar.', { id: 'check-payment', duration: 5000 });
                         }
                       } catch (error) {
                         console.error('Failed to claim payment:', error);

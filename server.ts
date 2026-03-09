@@ -146,15 +146,27 @@ async function startServer() {
       const { eventId } = req.body;
       if (!eventId) return res.status(400).json({ error: 'eventId is required' });
 
-      // Find an unmatched payment from the last 15 minutes
-      const fifteenMinutesAgo = Date.now() - 15 * 60 * 1000;
-      const recentUnmatched = unmatchedPayments.filter(p => p.timestamp > fifteenMinutesAgo);
+      if (supabase) {
+        // First, check if the event is already paid in the database
+        const { data: event, error: fetchError } = await supabase
+          .from('events')
+          .select('payment_status, status')
+          .eq('id', eventId)
+          .single();
 
-      if (recentUnmatched.length > 0) {
-        // Take the most recent one
-        const payment = recentUnmatched[recentUnmatched.length - 1];
-        
-        if (supabase) {
+        if (event && event.payment_status === 'paid') {
+          console.log(`[PAYMENT CLAIM] Event ${eventId} is already marked as paid in database.`);
+          return res.json({ success: true, message: 'Payment already confirmed' });
+        }
+
+        // Find an unmatched payment from the last 1 hour
+        const oneHourAgo = Date.now() - 60 * 60 * 1000;
+        const recentUnmatched = unmatchedPayments.filter(p => p.timestamp > oneHourAgo);
+
+        if (recentUnmatched.length > 0) {
+          // Take the most recent one
+          const payment = recentUnmatched[recentUnmatched.length - 1];
+          
           const { error } = await supabase
             .from('events')
             .update({ 
@@ -224,14 +236,16 @@ async function startServer() {
 
       // 2. PROCESSAMENTO DO PAGAMENTO
       // Supondo que o payload contenha o status e o ID da transação
-      const status = payload.status || payload.data?.status;
+      const status = (payload.status || payload.data?.status || '').toLowerCase();
       const transactionId = payload.id || payload.data?.id;
       const metadata = payload.metadata || payload.data?.metadata;
       
-      if (status === 'approved') {
+      console.log(`[WEBHOOK] Processing payment ${transactionId} with status: ${status}`);
+
+      if (status === 'approved' || status === 'paid' || status === 'confirmed') {
         const planId = metadata?.planId;
-        const userId = metadata?.userId; // Você deve enviar o userId no momento da criação
-        let eventId = metadata?.eventId; // Assuming eventId is passed in metadata
+        const userId = metadata?.userId;
+        let eventId = metadata?.eventId;
 
         // Se não tiver eventId no metadata (caso de link estático), tenta encontrar pelo cliente
         if (!eventId && supabase) {

@@ -451,7 +451,7 @@ async function startServer() {
         
         res.json({ success: true, message: 'Webhook simulated successfully' });
     } catch (error: any) {
-        console.error('[SIMULATION ERROR]', error);
+        console.error('[SIMULATION ERROR] Full error:', error);
         res.status(500).json({ success: false, error: error.message || 'Unknown error' });
     }
   });

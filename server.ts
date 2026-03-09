@@ -231,20 +231,6 @@ async function startServer() {
       });
       console.log('[WEBHOOK] Log added. Current logs count:', webhookLogs.length);
       
-      // Log to Supabase if client is available
-      if (supabase) {
-        try {
-          await supabase.from('webhook_logs').insert({
-            payload: payload,
-            headers: req.headers,
-            is_valid: isValid,
-            created_at: new Date().toISOString()
-          });
-        } catch (logError) {
-          console.error('Failed to log webhook to Supabase:', logError);
-        }
-      }
-      
       // Write to file for debugging
       try {
         const fs = require('fs');
@@ -259,6 +245,20 @@ async function startServer() {
       // 1. VERIFICAÇÃO DE SEGURANÇA (CRÍTICO)
       // Você DEVE validar a assinatura para garantir que o webhook veio da InfinitePay
       const isValid = verifySignature(payload, signature, process.env.INFINITEPAY_WEBHOOK_SECRET);
+      
+      // Log to Supabase if client is available
+      if (supabase) {
+        try {
+          await supabase.from('webhook_logs').insert({
+            payload: payload,
+            headers: req.headers,
+            is_valid: isValid,
+            created_at: new Date().toISOString()
+          });
+        } catch (logError) {
+          console.error('Failed to log webhook to Supabase:', logError);
+        }
+      }
       
       if (!isValid && process.env.NODE_ENV === 'production') {
         if (!process.env.INFINITEPAY_WEBHOOK_SECRET) {

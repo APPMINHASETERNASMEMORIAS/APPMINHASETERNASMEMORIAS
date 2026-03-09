@@ -72,7 +72,7 @@ async function startServer() {
 
       await transporter.sendMail({
         from: '"Minhas Eternas Memórias" <suporte@minhaseternasmemorias.com.br>',
-        to: 'suporte@minhaseternasmemorias.com.br',
+        to: 'linktestadoeaprovado@gmail.com',
         subject: `Novo Comprovante: ${eventName}`,
         text: `Novo comprovante recebido para o evento ${eventName} (ID: ${eventId}). URL: ${receiptUrl}`,
         html: `<p>Novo comprovante recebido para o evento <strong>${eventName}</strong> (ID: ${eventId}).</p><p><a href="${receiptUrl}">Ver Comprovante</a></p>`,
@@ -270,7 +270,11 @@ async function startServer() {
 
       // 1. VERIFICAÇÃO DE SEGURANÇA (CRÍTICO)
       // Você DEVE validar a assinatura para garantir que o webhook veio da InfinitePay
+      console.log('[WEBHOOK] Signature header:', signature);
+      console.log('[WEBHOOK] Secret set:', !!process.env.INFINITEPAY_WEBHOOK_SECRET);
+      
       const isValid = verifySignature(payload, signature, process.env.INFINITEPAY_WEBHOOK_SECRET);
+      console.log('[WEBHOOK] Signature valid:', isValid);
       
       if (!isValid && process.env.NODE_ENV === 'production') {
         if (!process.env.INFINITEPAY_WEBHOOK_SECRET) {
@@ -287,12 +291,14 @@ async function startServer() {
       const transactionId = payload.id || payload.data?.id;
       const metadata = payload.metadata || payload.data?.metadata;
       
-      console.log(`[WEBHOOK] Processing payment ${transactionId} with status: ${status}`);
+      console.log('[WEBHOOK] Extracted data:', { status, transactionId, metadata });
 
       if (status === 'approved' || status === 'paid' || status === 'confirmed') {
         const planId = metadata?.planId;
         const userId = metadata?.userId;
         let eventId = metadata?.eventId;
+
+        console.log('[WEBHOOK] Event ID from metadata:', eventId);
 
         // Se não tiver eventId no metadata (caso de link estático), tenta encontrar pelo cliente
         if (!eventId && supabase) {

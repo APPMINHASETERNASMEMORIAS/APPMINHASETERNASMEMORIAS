@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RefreshCw, Send, Trash2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import { PaymentFlowTester } from './PaymentFlowTester';
 
 interface WebhookLog {
@@ -71,24 +70,8 @@ export function WebhookTester() {
 
   useEffect(() => {
     fetchLogs();
-    
-    if (!isSupabaseConfigured) return;
-
-    // Assinatura em tempo real para novos logs
-    const channel = supabase!
-      .channel('public:webhook_logs')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'webhook_logs' },
-        (payload) => {
-          setLogs(prev => [payload.new as WebhookLog, ...prev]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase!.removeChannel(channel);
-    };
+    const interval = setInterval(fetchLogs, 5000); // Poll every 5 seconds
+    return () => clearInterval(interval);
   }, []);
 
   return (

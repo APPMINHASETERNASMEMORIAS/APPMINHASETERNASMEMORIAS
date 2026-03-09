@@ -229,6 +229,7 @@ async function startServer() {
         headers: req.headers,
         body: payload
       });
+      console.log('[WEBHOOK] Log added. Current logs count:', webhookLogs.length);
       
       // Write to file for debugging
       try {
@@ -383,6 +384,7 @@ async function startServer() {
           headers: { 'x-infinitepay-signature': 'mock_signature', 'content-type': 'application/json' },
           body: mockPayload
         });
+        console.log('[SIMULATION] Log added. Current logs count:', webhookLogs.length);
         
         if (webhookLogs.length > 50) webhookLogs.pop();
 

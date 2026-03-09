@@ -51,6 +51,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const signature = req.headers['x-infinitepay-signature'];
 
     console.log('[WEBHOOK RECEIVED]', payload);
+    console.log('[WEBHOOK] Supabase initialized:', !!supabase);
 
     // 1. VERIFICAÇÃO DE SEGURANÇA (CRÍTICO)
     const isValid = verifySignature(payload, signature, process.env.INFINITEPAY_WEBHOOK_SECRET);
@@ -58,12 +59,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // Log to Supabase if client is available
     if (supabase && Object.keys(payload).length > 0) {
       try {
-        await supabase.from('webhook_logs').insert({
+        console.log('[WEBHOOK] Inserting log into Supabase...');
+        const { error } = await supabase.from('webhook_logs').insert({
           payload: payload,
           headers: req.headers,
           is_valid: isValid,
           created_at: new Date().toISOString()
         });
+        if (error) {
+          console.error('[WEBHOOK] Failed to log webhook to Supabase:', error);
+        } else {
+          console.log('[WEBHOOK] Log inserted into Supabase successfully.');
+        }
       } catch (logError) {
         console.error('Failed to log webhook to Supabase:', logError);
       }

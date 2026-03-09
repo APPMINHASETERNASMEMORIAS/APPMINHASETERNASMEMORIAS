@@ -231,6 +231,20 @@ async function startServer() {
       });
       console.log('[WEBHOOK] Log added. Current logs count:', webhookLogs.length);
       
+      // Log to Supabase if client is available
+      if (supabase) {
+        try {
+          await supabase.from('webhook_logs').insert({
+            payload: payload,
+            headers: req.headers,
+            is_valid: isValid,
+            created_at: new Date().toISOString()
+          });
+        } catch (logError) {
+          console.error('Failed to log webhook to Supabase:', logError);
+        }
+      }
+      
       // Write to file for debugging
       try {
         const fs = require('fs');

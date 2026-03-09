@@ -138,7 +138,24 @@ async function startServer() {
   const webhookLogs: any[] = [];
   
   // In-memory storage for unmatched payments (for static link fallback)
-  const unmatchedPayments: any[] = [];
+  let unmatchedPayments: any[] = [];
+  try {
+    const fs = require('fs');
+    if (fs.existsSync('unmatched_payments.json')) {
+      unmatchedPayments = JSON.parse(fs.readFileSync('unmatched_payments.json', 'utf8'));
+    }
+  } catch (e) {
+    console.error('Failed to load unmatched payments', e);
+  }
+
+  function saveUnmatchedPayments() {
+    try {
+      const fs = require('fs');
+      fs.writeFileSync('unmatched_payments.json', JSON.stringify(unmatchedPayments, null, 2));
+    } catch (e) {
+      console.error('Failed to save unmatched payments', e);
+    }
+  }
 
   // Endpoint to claim an unmatched payment
   app.post('/api/payments/claim', async (req, res) => {
@@ -180,7 +197,10 @@ async function startServer() {
           if (!error) {
             // Remove from unmatched
             const index = unmatchedPayments.indexOf(payment);
-            if (index > -1) unmatchedPayments.splice(index, 1);
+            if (index > -1) {
+              unmatchedPayments.splice(index, 1);
+              saveUnmatchedPayments();
+            }
             
             console.log(`[PAYMENT CLAIMED] Event ${eventId} claimed payment ${payment.transactionId}`);
             return res.json({ success: true, message: 'Payment claimed successfully' });
@@ -316,10 +336,12 @@ async function startServer() {
             timestamp: Date.now(),
             payload
           });
+          saveUnmatchedPayments();
           
           // Keep unmatched payments array from growing too large (max 100)
           if (unmatchedPayments.length > 100) {
             unmatchedPayments.shift();
+            saveUnmatchedPayments();
           }
         }
       }

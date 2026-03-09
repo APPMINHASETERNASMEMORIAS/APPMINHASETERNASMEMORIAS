@@ -39,7 +39,6 @@ export function ClientLoginModal({ isOpen, onClose, initialEventId }: ClientLogi
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [editFormData, setEditFormData] = useState<Partial<Event>>({});
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
-  const [withFrame, setWithFrame] = useState(false);
   const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   
   const [isUploadingReceipt, setIsUploadingReceipt] = useState(false);
@@ -289,17 +288,6 @@ export function ClientLoginModal({ isOpen, onClose, initialEventId }: ClientLogi
                   Ver Galeria
                 </Button>
 
-                <div className="flex items-center space-x-2 bg-gray-50 p-3 rounded-lg border border-gray-100">
-                  <Switch 
-                    id="frame-mode" 
-                    checked={withFrame} 
-                    onCheckedChange={setWithFrame} 
-                  />
-                  <Label htmlFor="frame-mode" className="text-sm font-medium cursor-pointer">
-                    Adicionar Moldura (+ R$ 10,00)
-                  </Label>
-                </div>
-
                 <Button 
                   onClick={async () => {
                     if (!selectedEvent) return;
@@ -317,7 +305,7 @@ export function ClientLoginModal({ isOpen, onClose, initialEventId }: ClientLogi
                     }
 
                     const basePlanKey = selectedEvent.plan || 'festa';
-                    const planKey = withFrame ? `${basePlanKey}_moldura` : basePlanKey;
+                    const planKey = basePlanKey;
                     const plan = PLANS[planKey as keyof typeof PLANS];
                     
                     try {

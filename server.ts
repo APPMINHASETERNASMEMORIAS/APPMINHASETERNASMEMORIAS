@@ -68,7 +68,6 @@ async function startServer() {
       }
 
       console.log(`[PAYMENT] Creating payment intent for handle ${handle}`);
-      addLog({ type: 'PAYMENT_CREATE', handle: handle, timestamp: new Date().toISOString() });
 
       // Check for required environment variables
       const apiKey = process.env.INFINITEPAY_API_KEY;
@@ -137,21 +136,6 @@ async function startServer() {
 
   // In-memory storage for webhook logs (for testing purposes)
   const webhookLogs: any[] = [];
-  const LOG_FILE = 'logs.json';
-  function addLog(entry: any) {
-    try {
-      const fs = require('fs');
-      let logs = [];
-      if (fs.existsSync(LOG_FILE)) {
-        logs = JSON.parse(fs.readFileSync(LOG_FILE, 'utf8'));
-      }
-      logs.unshift({ timestamp: new Date().toISOString(), ...entry });
-      if (logs.length > 50) logs.pop();
-      fs.writeFileSync(LOG_FILE, JSON.stringify(logs, null, 2));
-    } catch (e) {
-      console.error('Failed to save log', e);
-    }
-  }
   
   // In-memory storage for unmatched payments (for static link fallback)
   let unmatchedPayments: any[] = [];
@@ -240,17 +224,17 @@ async function startServer() {
       console.log('[WEBHOOK RECEIVED]', payload);
       
       // Store log for viewing
-      addLog({
-        type: 'WEBHOOK',
+      webhookLogs.unshift({
+        timestamp: new Date().toISOString(),
         headers: req.headers,
         body: payload
       });
+      console.log('[WEBHOOK] Log added. Current logs count:', webhookLogs.length);
       
       // Write to file for debugging
       try {
         const fs = require('fs');
-        const logs = JSON.parse(fs.readFileSync(LOG_FILE, 'utf8'));
-        fs.writeFileSync('webhook_debug.json', JSON.stringify(logs, null, 2));
+        fs.writeFileSync('webhook_debug.json', JSON.stringify(webhookLogs, null, 2));
       } catch (e) {
         console.error('Failed to write debug file', e);
       }
@@ -261,6 +245,20 @@ async function startServer() {
       // 1. VERIFICAÇÃO DE SEGURANÇA (CRÍTICO)
       // Você DEVE validar a assinatura para garantir que o webhook veio da InfinitePay
       const isValid = verifySignature(payload, signature, process.env.INFINITEPAY_WEBHOOK_SECRET);
+      
+      // Log to Supabase if client is available
+      if (supabase) {
+        try {
+          await supabase.from('webhook_logs').insert({
+            payload: payload,
+            headers: req.headers,
+            is_valid: isValid,
+            created_at: new Date().toISOString()
+          });
+        } catch (logError) {
+          console.error('Failed to log webhook to Supabase:', logError);
+        }
+      }
       
       if (!isValid && process.env.NODE_ENV === 'production') {
         if (!process.env.INFINITEPAY_WEBHOOK_SECRET) {
@@ -371,22 +369,26 @@ async function startServer() {
   });
 
   // Endpoint to view webhook logs
-  app.get('/api/payments/webhook-logs', (req, res) => {
-    try {
-      const fs = require('fs');
-      if (fs.existsSync(LOG_FILE)) {
-        res.json(JSON.parse(fs.readFileSync(LOG_FILE, 'utf8')));
-      } else {
-        res.json([]);
-      }
-    } catch (e) {
-      console.error('Failed to read logs', e);
-      res.json([]);
+  app.get('/api/payments/webhook-logs', async (req, res) => {
+    if (!supabase) {
+      return res.json([]);
     }
+    const { data, error } = await supabase
+      .from('webhook_logs')
+      .select('*')
+      .order('created_at', { ascending: false })
+      .limit(50);
+      
+    if (error) {
+      console.error('Error fetching logs:', error);
+      return res.status(500).json({ error: error.message });
+    }
+    res.json(data || []);
   });
   
   // Endpoint to simulate a webhook (Test Ping)
   app.post('/api/payments/simulate-webhook', async (req, res) => {
+    console.log('[SIMULATION] Request received:', req.body);
     try {
         const { eventId, status, amount } = req.body;
         
@@ -402,24 +404,31 @@ async function startServer() {
             created_at: new Date().toISOString()
         };
         
+        console.log('[SIMULATION] Mock payload:', mockPayload);
+        
         console.log('[SIMULATION] Processing mock webhook internally...');
         
         // Store log for viewing
-        addLog({
-          type: 'SIMULATION',
+        webhookLogs.unshift({
+          timestamp: new Date().toISOString(),
           headers: { 'x-infinitepay-signature': 'mock_signature', 'content-type': 'application/json' },
           body: mockPayload
         });
+        console.log('[SIMULATION] Log added. Current logs count:', webhookLogs.length);
+        
+        if (webhookLogs.length > 50) webhookLogs.pop();
 
         const paymentStatus = mockPayload.status;
         const metadata = mockPayload.metadata;
         
         if (paymentStatus === 'approved' || paymentStatus === 'paid') {
           const targetEventId = metadata.eventId;
+          console.log(`[SIMULATION] Target event ID: ${targetEventId}`);
           
           if (targetEventId && targetEventId !== 'test_event_id') {
             console.log(`[SIMULATION] Payment approved for event ${targetEventId}`);
             if (supabase) {
+              console.log('[SIMULATION] Supabase client found, updating event...');
               const { error } = await supabase
                 .from('events')
                 .update({ 
@@ -431,15 +440,19 @@ async function startServer() {
 
               if (error) {
                 console.error('[SIMULATION] Error updating event in Supabase:', error);
+                throw error; // Throw error to trigger catch block
               }
+              console.log('[SIMULATION] Event updated successfully');
+            } else {
+              console.log('[SIMULATION] Supabase client NOT found');
             }
           }
         }
         
         res.json({ success: true, message: 'Webhook simulated successfully' });
     } catch (error: any) {
-        console.error('[SIMULATION ERROR]', error);
-        res.status(500).json({ success: false, error: error.message });
+        console.error('[SIMULATION ERROR] Full error:', error);
+        res.status(500).json({ success: false, error: error.message || 'Unknown error' });
     }
   });
 

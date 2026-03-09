@@ -68,6 +68,7 @@ async function startServer() {
       }
 
       console.log(`[PAYMENT] Creating payment intent for handle ${handle}`);
+      addLog({ type: 'PAYMENT_CREATE', handle: handle, timestamp: new Date().toISOString() });
 
       // Check for required environment variables
       const apiKey = process.env.INFINITEPAY_API_KEY;
@@ -136,6 +137,21 @@ async function startServer() {
 
   // In-memory storage for webhook logs (for testing purposes)
   const webhookLogs: any[] = [];
+  const LOG_FILE = 'logs.json';
+  function addLog(entry: any) {
+    try {
+      const fs = require('fs');
+      let logs = [];
+      if (fs.existsSync(LOG_FILE)) {
+        logs = JSON.parse(fs.readFileSync(LOG_FILE, 'utf8'));
+      }
+      logs.unshift({ timestamp: new Date().toISOString(), ...entry });
+      if (logs.length > 50) logs.pop();
+      fs.writeFileSync(LOG_FILE, JSON.stringify(logs, null, 2));
+    } catch (e) {
+      console.error('Failed to save log', e);
+    }
+  }
   
   // In-memory storage for unmatched payments (for static link fallback)
   let unmatchedPayments: any[] = [];
@@ -224,31 +240,17 @@ async function startServer() {
       console.log('[WEBHOOK RECEIVED]', payload);
       
       // Store log for viewing
-      webhookLogs.unshift({
-        timestamp: new Date().toISOString(),
+      addLog({
+        type: 'WEBHOOK',
         headers: req.headers,
         body: payload
       });
-      console.log('[WEBHOOK] Log added. Current logs count:', webhookLogs.length);
-      
-      // Log to Supabase if client is available
-      if (supabase) {
-        try {
-          await supabase.from('webhook_logs').insert({
-            payload: payload,
-            headers: req.headers,
-            is_valid: isValid,
-            created_at: new Date().toISOString()
-          });
-        } catch (logError) {
-          console.error('Failed to log webhook to Supabase:', logError);
-        }
-      }
       
       // Write to file for debugging
       try {
         const fs = require('fs');
-        fs.writeFileSync('webhook_debug.json', JSON.stringify(webhookLogs, null, 2));
+        const logs = JSON.parse(fs.readFileSync(LOG_FILE, 'utf8'));
+        fs.writeFileSync('webhook_debug.json', JSON.stringify(logs, null, 2));
       } catch (e) {
         console.error('Failed to write debug file', e);
       }
@@ -370,7 +372,17 @@ async function startServer() {
 
   // Endpoint to view webhook logs
   app.get('/api/payments/webhook-logs', (req, res) => {
-    res.json(webhookLogs);
+    try {
+      const fs = require('fs');
+      if (fs.existsSync(LOG_FILE)) {
+        res.json(JSON.parse(fs.readFileSync(LOG_FILE, 'utf8')));
+      } else {
+        res.json([]);
+      }
+    } catch (e) {
+      console.error('Failed to read logs', e);
+      res.json([]);
+    }
   });
   
   // Endpoint to simulate a webhook (Test Ping)
@@ -393,14 +405,11 @@ async function startServer() {
         console.log('[SIMULATION] Processing mock webhook internally...');
         
         // Store log for viewing
-        webhookLogs.unshift({
-          timestamp: new Date().toISOString(),
+        addLog({
+          type: 'SIMULATION',
           headers: { 'x-infinitepay-signature': 'mock_signature', 'content-type': 'application/json' },
           body: mockPayload
         });
-        console.log('[SIMULATION] Log added. Current logs count:', webhookLogs.length);
-        
-        if (webhookLogs.length > 50) webhookLogs.pop();
 
         const paymentStatus = mockPayload.status;
         const metadata = mockPayload.metadata;

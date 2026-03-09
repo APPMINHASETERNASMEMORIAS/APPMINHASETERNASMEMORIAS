@@ -248,11 +248,11 @@ export function useEvents() {
     }
   }, [fetchEventsAndMedia]);
 
-  // Grace period check (5 minutes)
+  // Grace period check (10 minutes)
   useEffect(() => {
     const checkGracePeriod = () => {
       const now = Date.now();
-      const GRACE_PERIOD = 5 * 60 * 1000; // 5 minutes
+      const GRACE_PERIOD = 10 * 60 * 1000; // 10 minutes
 
       events.forEach(event => {
         if (event.status === 'active' && event.paymentStatus !== 'paid') {

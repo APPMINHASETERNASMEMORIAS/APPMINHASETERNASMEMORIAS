@@ -1211,7 +1211,6 @@ function EventPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Toaster position="top-center" />
       
       {/* Simple Header */}
       <header className="bg-white shadow-sm sticky top-0 z-50">

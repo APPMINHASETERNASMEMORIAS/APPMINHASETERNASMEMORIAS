@@ -1,7 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { toast } from 'react-hot-toast';
-import { Download, Share2, Copy, Check, Printer, Lock, FileText } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { Download, Share2, Copy, Check, Printer, Lock, FileText, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -40,9 +40,13 @@ export function QRCodeDisplay({
   onGoToPayment
 }: QRCodeDisplayProps) {
   const [copied, setCopied] = useState(false);
+  const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
   const { uploadPaymentReceipt } = useEvents();
   
+  const hasReceipt = !!paymentReceiptUrl;
+  const isPending = status === 'pending';
+
   // Check for pending payments when window gains focus
   useEffect(() => {
     const handleFocus = async () => {
@@ -70,9 +74,6 @@ export function QRCodeDisplay({
   }, [isOpen, eventId, isCreator, isPending, status]);
 
   const eventUrl = `${window.location.origin}/#/evento/${eventId}`;
-  
-  const hasReceipt = !!paymentReceiptUrl;
-  const isPending = status === 'pending';
   
   let isLocked = false;
   let lockMessage = '';
@@ -291,6 +292,7 @@ export function QRCodeDisplay({
                           variant="outline"
                           onClick={async () => {
                             try {
+                              setIsCheckingPayment(true);
                               toast.loading('Verificando pagamento...', { id: 'check-payment-qr' });
                               const response = await fetch('/api/payments/claim', {
                                 method: 'POST',
@@ -298,23 +300,30 @@ export function QRCodeDisplay({
                                 body: JSON.stringify({ eventId: eventId })
                               });
                               const data = await response.json();
-                              toast.dismiss('check-payment-qr');
                               
                               if (data.success) {
-                                toast.success('Pagamento confirmado! Evento liberado.');
+                                toast.success('Pagamento confirmado! Evento liberado.', { id: 'check-payment-qr' });
                                 // The real-time listener or parent state update will handle the rest
                               } else {
-                                toast.error('Pagamento ainda não reconhecido. Se você já pagou, envie o comprovante acima.');
+                                toast.error('Pagamento ainda não reconhecido. Se você já pagou, envie o comprovante acima.', { id: 'check-payment-qr' });
                               }
                             } catch (error) {
-                              toast.dismiss('check-payment-qr');
                               console.error('Failed to claim payment:', error);
-                              toast.error('Erro ao verificar pagamento.');
+                              toast.error('Erro ao verificar pagamento.', { id: 'check-payment-qr' });
+                            } finally {
+                              setIsCheckingPayment(false);
                             }
                           }}
                           className="w-full border-emerald-600 text-emerald-600 hover:bg-emerald-50 text-xs"
                         >
-                          Já fiz o pagamento (Verificar)
+                          {isCheckingPayment ? (
+                            <>
+                              <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+                              Verificando...
+                            </>
+                          ) : (
+                            'Já fiz o pagamento (Verificar)'
+                          )}
                         </Button>
                         <Button 
                           variant="link"

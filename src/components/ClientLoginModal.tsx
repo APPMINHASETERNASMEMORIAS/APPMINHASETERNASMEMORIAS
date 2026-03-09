@@ -40,23 +40,22 @@ export function ClientLoginModal({ isOpen, onClose, initialEventId }: ClientLogi
   const [editFormData, setEditFormData] = useState<Partial<Event>>({});
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [withFrame, setWithFrame] = useState(false);
+  const [isCheckingPayment, setIsCheckingPayment] = useState(false);
   
   const [isUploadingReceipt, setIsUploadingReceipt] = useState(false);
   const [pendingPaymentId, setPendingPaymentId] = useState<string | null>(localStorage.getItem('pendingPaymentEventId'));
   
-  const { events, updateEvent, uploadPaymentReceipt, getEvent } = useEvents();
+  const { events, updateEvent, uploadPaymentReceipt, getEvent, loading } = useEvents();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isOpen) {
-      if (initialEventId) {
-        const event = getEvent(initialEventId);
-        if (event) {
-          setSelectedEvent(event);
-          setMode('manage');
-        }
+    if (isOpen && initialEventId) {
+      const event = getEvent(initialEventId);
+      if (event) {
+        setSelectedEvent(event);
+        setMode('manage');
       }
-    } else {
+    } else if (!isOpen) {
       setMode('login');
       setInputValue('');
       setSelectedEvent(null);
@@ -180,6 +179,17 @@ export function ClientLoginModal({ isOpen, onClose, initialEventId }: ClientLogi
       }
     }
   };
+
+  if (isOpen && initialEventId && loading && !selectedEvent) {
+    return (
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-md flex flex-col items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-purple-600 mb-4" />
+          <p className="text-gray-500 text-sm">Carregando detalhes do evento...</p>
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <>
@@ -382,8 +392,10 @@ export function ClientLoginModal({ isOpen, onClose, initialEventId }: ClientLogi
                 {selectedEvent.paymentStatus !== 'paid' && (
                   <Button 
                     variant="outline"
+                    disabled={isCheckingPayment}
                     onClick={async () => {
                       try {
+                        setIsCheckingPayment(true);
                         toast.loading('Verificando pagamento...', { id: 'check-payment' });
                         const response = await fetch('/api/payments/claim', {
                           method: 'POST',
@@ -391,25 +403,32 @@ export function ClientLoginModal({ isOpen, onClose, initialEventId }: ClientLogi
                           body: JSON.stringify({ eventId: selectedEvent.id })
                         });
                         const data = await response.json();
-                        toast.dismiss('check-payment');
                         
                         if (data.success) {
                           localStorage.removeItem('pendingPaymentEventId');
                           setPendingPaymentId(null);
-                          toast.success('Pagamento confirmado! Evento liberado.');
+                          toast.success('Pagamento confirmado! Evento liberado.', { id: 'check-payment' });
                           setSelectedEvent(prev => prev ? { ...prev, paymentStatus: 'paid', status: 'active' } as Event : null);
                         } else {
-                          toast.error('Pagamento ainda não reconhecido. Se você já pagou, envie o comprovante abaixo para agilizar a liberação.');
+                          toast.error('Pagamento ainda não reconhecido. Se você já pagou, envie o comprovante abaixo para agilizar a liberação.', { id: 'check-payment' });
                         }
                       } catch (error) {
-                        toast.dismiss('check-payment');
                         console.error('Failed to claim payment:', error);
-                        toast.error('Erro ao verificar pagamento.');
+                        toast.error('Erro ao verificar pagamento.', { id: 'check-payment' });
+                      } finally {
+                        setIsCheckingPayment(false);
                       }
                     }}
                     className="w-full border-emerald-600 text-emerald-600 hover:bg-emerald-50"
                   >
-                    Já realizei o pagamento (Verificar)
+                    {isCheckingPayment ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Verificando...
+                      </>
+                    ) : (
+                      'Já realizei o pagamento (Verificar)'
+                    )}
                   </Button>
                 )}
 

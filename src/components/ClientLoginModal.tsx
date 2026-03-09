@@ -253,7 +253,7 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
                 </div>
 
                 <Button 
-                  onClick={() => {
+                  onClick={async () => {
                     if (!selectedEvent) return;
                     
                     if (selectedEvent.settings.isOneRealTestMode) {
@@ -270,10 +270,61 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
                     const planKey = withFrame ? `${basePlanKey}_moldura` : basePlanKey;
                     const plan = PLANS[planKey as keyof typeof PLANS];
                     
-                    if (plan && plan.link) {
-                      window.open(plan.link, '_blank');
-                    } else {
-                      toast.error('Link de pagamento não disponível para este plano.');
+                    try {
+                      toast.loading('Gerando link de pagamento...', { id: 'payment-link' });
+                      const response = await fetch('/api/payments/create', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          handle: 'crysramosfotografia',
+                          items: [{
+                            id: planKey,
+                            description: plan.name,
+                            amount: Math.round(plan.price * 100),
+                            quantity: 1
+                          }],
+                          userId: selectedEvent.clientPhone,
+                          plan: planKey,
+                          eventId: selectedEvent.id
+                        })
+                      });
+                      
+                      const data = await response.json();
+                      toast.dismiss('payment-link');
+                      
+                      if (data.success && data.paymentUrl) {
+                        window.open(data.paymentUrl, '_blank');
+                      } else {
+                        // Fallback to static link if API fails or credentials missing
+                        console.warn('API de pagamento falhou, usando link estático de fallback.');
+                        if (plan && plan.link) {
+                          // Try to append metadata to static link just in case InfinitePay supports it
+                          try {
+                            const url = new URL(plan.link);
+                            url.searchParams.append('metadata', JSON.stringify({ eventId: selectedEvent.id }));
+                            window.open(url.toString(), '_blank');
+                          } catch (e) {
+                            window.open(plan.link, '_blank');
+                          }
+                        } else {
+                          toast.error('Link de pagamento não disponível para este plano.');
+                        }
+                      }
+                    } catch (error) {
+                      toast.dismiss('payment-link');
+                      console.error('Erro ao gerar pagamento:', error);
+                      // Fallback to static link
+                      if (plan && plan.link) {
+                        try {
+                          const url = new URL(plan.link);
+                          url.searchParams.append('metadata', JSON.stringify({ eventId: selectedEvent.id }));
+                          window.open(url.toString(), '_blank');
+                        } catch (e) {
+                          window.open(plan.link, '_blank');
+                        }
+                      } else {
+                        toast.error('Link de pagamento não disponível.');
+                      }
                     }
                   }}
                   className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"

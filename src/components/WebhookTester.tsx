@@ -7,9 +7,11 @@ import { PaymentFlowTester } from './PaymentFlowTester';
 
 interface WebhookLog {
   id?: string;
-  created_at: string;
+  created_at?: string;
+  timestamp?: string;
   headers: any;
-  payload: any;
+  payload?: any;
+  body?: any;
 }
 
 export function WebhookTester() {
@@ -138,14 +140,14 @@ export function WebhookTester() {
                     <div key={index} className="border rounded-lg p-4 bg-white shadow-sm">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-mono text-gray-500">
-                          {new Date(log.created_at || new Date().toISOString()).toLocaleString()}
+                          {new Date(log.timestamp || log.created_at || new Date().toISOString()).toLocaleString()}
                         </span>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          log.payload?.status === 'approved' 
+                          (log.body?.status || log.body?.data?.status || log.payload?.status) === 'approved' 
                             ? 'bg-green-100 text-green-800' 
                             : 'bg-yellow-100 text-yellow-800'
                         }`}>
-                          {log.payload?.status || 'unknown'}
+                          {log.body?.status || log.body?.data?.status || log.payload?.status || 'unknown'}
                         </span>
                       </div>
                       
@@ -153,7 +155,7 @@ export function WebhookTester() {
                         <div>
                           <h4 className="text-xs font-semibold text-gray-500 uppercase mb-1">Payload</h4>
                           <pre className="bg-gray-50 p-3 rounded text-xs overflow-auto max-h-40">
-                            {JSON.stringify(log.payload, null, 2)}
+                            {JSON.stringify(log.body || log.payload, null, 2)}
                           </pre>
                         </div>
                         <div>

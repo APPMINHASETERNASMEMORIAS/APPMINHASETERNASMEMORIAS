@@ -1142,6 +1142,7 @@ function LandingPage() {
           onClose={() => setIsQRModalOpen(false)}
           frameSettings={createdEvent.settings.frameSettings}
           status={createdEvent.status}
+          isCreator={true}
           onGoToPayment={() => {
             setIsQRModalOpen(false);
             setIsClientLoginModalOpen(true);
@@ -1156,6 +1157,7 @@ function EventPage() {
   const { id } = useParams();
   const [refreshGallery, setRefreshGallery] = useState(0);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
+  const [isClientLoginModalOpen, setIsClientLoginModalOpen] = useState(false);
   const navigate = useNavigate();
   const { getEvent, isEventCreator, getEventMedia, updateEvent } = useEvents();
   
@@ -1304,8 +1306,18 @@ function EventPage() {
           paymentReceiptUrl={event.paymentReceiptUrl}
           isCreator={isCreator}
           isEventDayOrPast={isEventDayOrPast}
+          onGoToPayment={() => {
+            setIsQRModalOpen(false);
+            setIsClientLoginModalOpen(true);
+          }}
         />
       )}
+
+      <ClientLoginModal
+        isOpen={isClientLoginModalOpen}
+        onClose={() => setIsClientLoginModalOpen(false)}
+        initialEventId={id}
+      />
     </div>
   );
 }

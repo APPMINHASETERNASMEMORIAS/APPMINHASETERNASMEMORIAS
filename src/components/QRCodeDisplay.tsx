@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
+import { toast } from 'react-hot-toast';
 import { Download, Share2, Copy, Check, Printer, Lock, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -51,20 +52,22 @@ export function QRCodeDisplay({
   let lockMessage = '';
   let showUploadButton = false;
 
-  if (isPending && !hasReceipt) {
-    isLocked = true;
-    lockMessage = 'Aguardando envio do comprovante.';
-    showUploadButton = true;
-  } else if (isPending && hasReceipt) {
-    if (isCreator) {
-      isLocked = false;
-    } else {
-      if (!isEventDayOrPast) {
-        isLocked = true;
-        lockMessage = 'QR Code liberado apenas no dia do evento.';
-      } else {
-        isLocked = false;
-      }
+  if (isCreator) {
+    // Creator never sees the lock icon, but sees the upload button if pending
+    isLocked = false;
+    if (isPending && !hasReceipt) {
+      showUploadButton = true;
+    }
+  } else {
+    // Guest view
+    if (isPending && !hasReceipt) {
+      isLocked = true;
+      lockMessage = 'Aguardando confirmação de pagamento pelo organizador.';
+      showUploadButton = false;
+    } else if (isPending && hasReceipt) {
+      isLocked = true;
+      lockMessage = 'Pagamento em análise. O QR Code será liberado em breve.';
+      showUploadButton = false;
     }
   }
   
@@ -243,25 +246,69 @@ export function QRCodeDisplay({
             {isLocked ? (
               <div className="space-y-4 mt-2">
                 <p className="text-sm text-red-500 font-medium">{lockMessage}</p>
-                {onGoToPayment && (
-                  <Button 
-                    onClick={onGoToPayment}
-                    className="w-full bg-emerald-600 hover:bg-emerald-700 text-white mt-4"
-                  >
-                    Realizar Pagamento
-                  </Button>
-                )}
-                {showUploadButton && (
-                  <div className="mt-4">
+              </div>
+            ) : (
+              <>
+                <p className="text-sm text-gray-500 mt-1">Escaneie para participar</p>
+                {isCreator && (isPending || status === 'paused') && !hasReceipt && (
+                  <div className="mt-6 p-4 bg-amber-50 border border-amber-200 rounded-xl text-center">
+                    <p className="text-sm text-amber-800 font-medium mb-3">
+                      Seu evento está aguardando pagamento para ser liberado para os convidados.
+                    </p>
                     <PaymentReceiptUpload 
                       eventId={eventId} 
                       onUploadSuccess={(url) => uploadPaymentReceipt(eventId, url)} 
                     />
+                    {onGoToPayment && (
+                      <div className="flex flex-col gap-2 mt-2">
+                        <Button 
+                          variant="outline"
+                          onClick={async () => {
+                            try {
+                              toast.loading('Verificando pagamento...', { id: 'check-payment-qr' });
+                              const response = await fetch('/api/payments/claim', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ eventId: eventId })
+                              });
+                              const data = await response.json();
+                              toast.dismiss('check-payment-qr');
+                              
+                              if (data.success) {
+                                toast.success('Pagamento confirmado! Evento liberado.');
+                                // The real-time listener or parent state update will handle the rest
+                              } else {
+                                toast.error('Pagamento ainda não reconhecido. Se você já pagou, envie o comprovante acima.');
+                              }
+                            } catch (error) {
+                              toast.dismiss('check-payment-qr');
+                              console.error('Failed to claim payment:', error);
+                              toast.error('Erro ao verificar pagamento.');
+                            }
+                          }}
+                          className="w-full border-emerald-600 text-emerald-600 hover:bg-emerald-50 text-xs"
+                        >
+                          Já fiz o pagamento (Verificar)
+                        </Button>
+                        <Button 
+                          variant="link"
+                          onClick={onGoToPayment}
+                          className="text-amber-700 text-xs"
+                        >
+                          Ainda não pagou? Ir para pagamento
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
-              </div>
-            ) : (
-              <p className="text-sm text-gray-500 mt-1">Escaneie para participar</p>
+                {isCreator && isPending && hasReceipt && (
+                  <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl text-center">
+                    <p className="text-sm text-blue-800 font-medium">
+                      Comprovante enviado! Estamos analisando seu pagamento para liberar o evento.
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </div>
 

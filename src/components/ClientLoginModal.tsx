@@ -18,6 +18,7 @@ import { uploadToCloudinary } from '@/lib/cloudinary';
 interface ClientLoginModalProps {
   isOpen: boolean;
   onClose: () => void;
+  initialEventId?: string;
 }
 
 const EVENT_TYPES: { value: EventType; label: string; emoji: string }[] = [
@@ -31,7 +32,7 @@ const EVENT_TYPES: { value: EventType; label: string; emoji: string }[] = [
   { value: 'outro', label: 'Outro', emoji: '✨' },
 ];
 
-export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
+export function ClientLoginModal({ isOpen, onClose, initialEventId }: ClientLoginModalProps) {
   const [mode, setMode] = useState<'login' | 'manage' | 'edit'>('login');
   const [loginMethod, setLoginMethod] = useState<'name' | 'phone'>('phone');
   const [inputValue, setInputValue] = useState('');
@@ -43,16 +44,24 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
   const [isUploadingReceipt, setIsUploadingReceipt] = useState(false);
   const [pendingPaymentId, setPendingPaymentId] = useState<string | null>(localStorage.getItem('pendingPaymentEventId'));
   
-  const { events, updateEvent, uploadPaymentReceipt } = useEvents();
+  const { events, updateEvent, uploadPaymentReceipt, getEvent } = useEvents();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen) {
+      if (initialEventId) {
+        const event = getEvent(initialEventId);
+        if (event) {
+          setSelectedEvent(event);
+          setMode('manage');
+        }
+      }
+    } else {
       setMode('login');
       setInputValue('');
       setSelectedEvent(null);
     }
-  }, [isOpen]);
+  }, [isOpen, initialEventId, getEvent]);
 
   // Check for pending payments when window gains focus
   useEffect(() => {
@@ -370,7 +379,7 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
                   Realizar Pagamento
                 </Button>
 
-                {pendingPaymentId === selectedEvent.id && (
+                {selectedEvent.paymentStatus !== 'paid' && (
                   <Button 
                     variant="outline"
                     onClick={async () => {
@@ -388,8 +397,9 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
                           localStorage.removeItem('pendingPaymentEventId');
                           setPendingPaymentId(null);
                           toast.success('Pagamento confirmado! Evento liberado.');
+                          setSelectedEvent(prev => prev ? { ...prev, paymentStatus: 'paid', status: 'active' } as Event : null);
                         } else {
-                          toast.error('Pagamento ainda não reconhecido. Tente novamente em alguns segundos.');
+                          toast.error('Pagamento ainda não reconhecido. Se você já pagou, envie o comprovante abaixo para agilizar a liberação.');
                         }
                       } catch (error) {
                         toast.dismiss('check-payment');
@@ -399,7 +409,7 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
                     }}
                     className="w-full border-emerald-600 text-emerald-600 hover:bg-emerald-50"
                   >
-                    Já realizei o pagamento
+                    Já realizei o pagamento (Verificar)
                   </Button>
                 )}
 
@@ -526,6 +536,8 @@ export function ClientLoginModal({ isOpen, onClose }: ClientLoginModalProps) {
           onClose={() => setIsQRModalOpen(false)}
           frameSettings={selectedEvent.settings.frameSettings}
           status={selectedEvent.status}
+          paymentReceiptUrl={selectedEvent.paymentReceiptUrl}
+          isCreator={true}
         />
       )}
     </>

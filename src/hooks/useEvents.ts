@@ -242,10 +242,15 @@ export function useEvents() {
           .eq('id', id);
 
         if (error) throw error;
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error updating event in Supabase:', error);
-        toast.error('Erro ao atualizar evento no servidor.');
+        if (error?.message?.includes('column "payment_receipt_url" of relation "events" does not exist')) {
+          toast.error('Erro: A coluna payment_receipt_url não existe no banco de dados. Execute o comando SQL para adicioná-la.', { duration: 8000 });
+        } else {
+          toast.error('Erro ao atualizar evento no servidor.');
+        }
         fetchEventsAndMedia(); // Revert on error
+        throw error;
       }
     }
   }, [fetchEventsAndMedia]);

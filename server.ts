@@ -530,13 +530,18 @@ async function startServer() {
 
   if (process.env.NODE_ENV !== 'production') {
     // Development mode: Use Vite middleware
-    const viteModule = 'vite';
-    const { createServer: createViteServer } = await import(viteModule);
-    const vite = await createViteServer({
-      server: { middlewareMode: true },
-      appType: 'spa',
-    });
-    app.use(vite.middlewares);
+    try {
+      const { createRequire } = await import('module');
+      const require = createRequire(import.meta.url);
+      const { createServer: createViteServer } = require('vite');
+      const vite = await createViteServer({
+        server: { middlewareMode: true },
+        appType: 'spa',
+      });
+      app.use(vite.middlewares);
+    } catch (e) {
+      console.warn('Vite not available, skipping middleware');
+    }
   } else {
     // Production mode: Serve static files from dist
     app.use(express.static('dist'));

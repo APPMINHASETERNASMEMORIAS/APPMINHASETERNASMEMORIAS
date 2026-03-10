@@ -18,7 +18,7 @@ export function PaymentReceiptUpload({ eventId, onUploadSuccess }: PaymentReceip
       try {
         setIsUploading(true);
         toast.loading('Enviando comprovante...', { id: 'upload-receipt' });
-        const fileUrl = await uploadToCloudinary(file);
+        const fileUrl = await uploadToCloudinary(file, 'comprovantes');
         toast.dismiss('upload-receipt');
         toast.success('Comprovante enviado com sucesso!');
         onUploadSuccess(fileUrl);

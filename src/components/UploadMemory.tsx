@@ -253,7 +253,7 @@ export function UploadMemory({
       }
       
       toast.loading('Enviando...', { id: 'upload' });
-      const fileUrl = await uploadToCloudinary(fileToUpload);
+      const fileUrl = await uploadToCloudinary(fileToUpload, 'memorias');
       toast.dismiss('upload');
       
       const { error } = await supabase!.from('memories').insert([

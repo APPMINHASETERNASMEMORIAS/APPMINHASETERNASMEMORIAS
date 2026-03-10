@@ -160,7 +160,7 @@ export function ClientLoginModal({ isOpen, onClose, initialEventId }: ClientLogi
       try {
         setIsUploadingReceipt(true);
         toast.loading('Enviando comprovante...', { id: 'upload-receipt' });
-        const fileUrl = await uploadToCloudinary(file);
+        const fileUrl = await uploadToCloudinary(file, 'comprovantes');
         await uploadPaymentReceipt(selectedEvent.id, fileUrl);
         
         toast.dismiss('upload-receipt');

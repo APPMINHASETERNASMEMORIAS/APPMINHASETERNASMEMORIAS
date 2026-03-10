@@ -421,7 +421,15 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
               <p className="text-sm text-gray-500">{event.clientName}</p>
             </CardHeader>
             <CardContent>
-              <img src={event.paymentReceiptUrl} alt="Comprovante" className="w-full h-48 object-cover rounded-lg mb-4" />
+              <img 
+                src={event.paymentReceiptUrl} 
+                alt="Comprovante" 
+                className="w-full h-48 object-cover rounded-lg mb-4" 
+                onError={(e) => {
+                  console.error(`Erro ao carregar imagem do comprovante: ${event.paymentReceiptUrl}`);
+                  (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x200?text=Erro+ao+carregar';
+                }}
+              />
               <Button 
                 className="w-full"
                 onClick={() => window.open(event.paymentReceiptUrl, '_blank')}

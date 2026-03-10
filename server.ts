@@ -556,7 +556,7 @@ async function startServer() {
 }
 
 // Only start the server if not running in a serverless environment like Vercel
-if (!process.env.VERCEL) {
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   startServer().catch(console.error);
 }
 

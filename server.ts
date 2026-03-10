@@ -57,23 +57,27 @@ app.get('/api/health', (req, res) => {
       console.log(`[NOTIFY] New receipt for event ${eventId}: ${receiptUrl}`);
 
       // 1. Send Email
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST,
-        port: Number(process.env.SMTP_PORT),
-        secure: true,
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASS,
-        },
-      });
+      if (process.env.SMTP_HOST && process.env.SMTP_PORT && process.env.SMTP_USER && process.env.SMTP_PASS) {
+        const transporter = nodemailer.createTransport({
+          host: process.env.SMTP_HOST,
+          port: Number(process.env.SMTP_PORT),
+          secure: true,
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS,
+          },
+        });
 
-      await transporter.sendMail({
-        from: '"Minhas Eternas Memórias" <suporte@minhaseternasmemorias.com.br>',
-        to: 'linktestadoeaprovado@gmail.com',
-        subject: `Novo Comprovante: ${eventName}`,
-        text: `Novo comprovante recebido para o evento ${eventName} (ID: ${eventId}). URL: ${receiptUrl}`,
-        html: `<p>Novo comprovante recebido para o evento <strong>${eventName}</strong> (ID: ${eventId}).</p><p><a href="${receiptUrl}">Ver Comprovante</a></p>`,
-      });
+        await transporter.sendMail({
+          from: '"Minhas Eternas Memórias" <suporte@minhaseternasmemorias.com.br>',
+          to: 'linktestadoeaprovado@gmail.com',
+          subject: `Novo Comprovante: ${eventName}`,
+          text: `Novo comprovante recebido para o evento ${eventName} (ID: ${eventId}). URL: ${receiptUrl}`,
+          html: `<p>Novo comprovante recebido para o evento <strong>${eventName}</strong> (ID: ${eventId}).</p><p><a href="${receiptUrl}">Ver Comprovante</a></p>`,
+        });
+      } else {
+        console.warn('[NOTIFY] SMTP configuration missing, skipping email notification.');
+      }
 
       // 2. Send Webhook
       if (process.env.SUPPORT_WEBHOOK_URL) {

@@ -522,27 +522,10 @@ app.get('/api/health', (req, res) => {
   });
 
   // ==========================================
-  // Vite Integration (Frontend)
+  // Production Integration (Frontend fallback)
   // ==========================================
   
-async function startServer() {
-  const PORT = process.env.PORT || 3000;
-
-  if (process.env.NODE_ENV !== 'production') {
-    // Development mode: Use Vite middleware
-    try {
-      const { createRequire } = await import('module');
-      const require = createRequire(import.meta.url);
-      const { createServer: createViteServer } = require('vite');
-      const vite = await createViteServer({
-        server: { middlewareMode: true },
-        appType: 'spa',
-      });
-      app.use(vite.middlewares);
-    } catch (e) {
-      console.warn('Vite not available, skipping middleware');
-    }
-  } else {
+  if (process.env.NODE_ENV === 'production') {
     // Production mode: Serve static files from dist
     app.use(express.static('dist'));
     app.get('*', (req, res) => {
@@ -550,14 +533,12 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT as number, '0.0.0.0', () => {
-    console.log(`Server running on http://0.0.0.0:${PORT}`);
-  });
-}
-
-// Only start the server if not running in a serverless environment like Vercel
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-  startServer().catch(console.error);
-}
+  // Only start the server if not running in a serverless environment like Vercel
+  if (process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
+    const PORT = process.env.PORT || 3000;
+    app.listen(PORT as number, '0.0.0.0', () => {
+      console.log(`Server running on http://0.0.0.0:${PORT}`);
+    });
+  }
 
 export default app;

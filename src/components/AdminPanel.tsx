@@ -440,19 +440,12 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
               <Button 
                 className="w-full"
                 onClick={() => {
-                  const link = document.createElement('a');
-                  // Tenta converter para 'raw' se for PDF para evitar erro de acesso
-                  let url = event.paymentReceiptUrl;
-                  if (url.toLowerCase().endsWith('.pdf')) {
-                    url = url.replace('/image/upload/', '/raw/upload/');
-                  }
-                  link.href = url;
-                  link.download = 'comprovante';
-                  link.target = '_blank';
-                  link.click();
+                  // Abre a URL original diretamente. 
+                  // O Cloudinary deve servir o arquivo corretamente se a URL estiver correta.
+                  window.open(event.paymentReceiptUrl, '_blank');
                 }}
               >
-                Baixar Comprovante
+                Ver Comprovante
               </Button>
             </CardContent>
           </Card>

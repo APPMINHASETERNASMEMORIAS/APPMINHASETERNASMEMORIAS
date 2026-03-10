@@ -109,7 +109,7 @@ app.get('/api/health', (req, res) => {
           });
           
           if (response.ok) {
-            console.log(`[NOTIFY] Successfully sent receipt notification to Make.com`);
+            console.log(`[NOTIFY] Successfully sent receipt notification to Make.com. URL: ${process.env.MAKE_WEBHOOK_URL}`);
           } else {
             const errorText = await response.text();
             console.error(`[NOTIFY] Failed to send to Make.com. Status: ${response.status}, Body: ${errorText}`);

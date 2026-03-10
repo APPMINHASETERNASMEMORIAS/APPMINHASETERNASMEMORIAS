@@ -421,15 +421,22 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
               <p className="text-sm text-gray-500">{event.clientName}</p>
             </CardHeader>
             <CardContent>
-              <img 
-                src={event.paymentReceiptUrl} 
-                alt="Comprovante" 
-                className="w-full h-48 object-cover rounded-lg mb-4" 
-                onError={(e) => {
-                  console.error(`Erro ao carregar imagem do comprovante: ${event.paymentReceiptUrl}`);
-                  (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x200?text=Erro+ao+carregar';
-                }}
-              />
+              {event.paymentReceiptUrl.toLowerCase().endsWith('.pdf') ? (
+                <div className="w-full h-48 flex flex-col items-center justify-center bg-gray-100 rounded-lg mb-4 border border-gray-200">
+                  <FileText className="w-16 h-16 text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-500">Documento PDF</p>
+                </div>
+              ) : (
+                <img 
+                  src={event.paymentReceiptUrl} 
+                  alt="Comprovante" 
+                  className="w-full h-48 object-cover rounded-lg mb-4" 
+                  onError={(e) => {
+                    console.error(`Erro ao carregar imagem do comprovante: ${event.paymentReceiptUrl}`);
+                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/400x200?text=Erro+ao+carregar';
+                  }}
+                />
+              )}
               <Button 
                 className="w-full"
                 onClick={() => window.open(event.paymentReceiptUrl, '_blank')}

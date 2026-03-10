@@ -441,7 +441,12 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                 className="w-full"
                 onClick={() => {
                   const link = document.createElement('a');
-                  link.href = event.paymentReceiptUrl;
+                  // Tenta converter para 'raw' se for PDF para evitar erro de acesso
+                  let url = event.paymentReceiptUrl;
+                  if (url.toLowerCase().endsWith('.pdf')) {
+                    url = url.replace('/image/upload/', '/raw/upload/');
+                  }
+                  link.href = url;
                   link.download = 'comprovante';
                   link.target = '_blank';
                   link.click();

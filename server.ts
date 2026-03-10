@@ -525,7 +525,8 @@ app.get('/api/health', (req, res) => {
   // Production Integration (Frontend fallback)
   // ==========================================
   
-  if (process.env.NODE_ENV === 'production') {
+  // Only serve static files if not running in a serverless environment like Vercel
+  if (process.env.NODE_ENV === 'production' && !process.env.VERCEL) {
     // Production mode: Serve static files from dist
     app.use(express.static('dist'));
     app.get('*', (req, res) => {

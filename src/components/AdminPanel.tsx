@@ -440,12 +440,12 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
               <Button 
                 className="w-full"
                 onClick={() => {
-                  // Abre a URL original diretamente. 
-                  // O Cloudinary deve servir o arquivo corretamente se a URL estiver correta.
-                  window.open(event.paymentReceiptUrl, '_blank');
+                  // Adiciona fl_attachment para forçar o download do arquivo pelo navegador
+                  const url = event.paymentReceiptUrl.replace('/upload/', '/upload/fl_attachment/');
+                  window.open(url, '_blank');
                 }}
               >
-                Ver Comprovante
+                Baixar Comprovante
               </Button>
             </CardContent>
           </Card>

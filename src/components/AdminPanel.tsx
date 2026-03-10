@@ -439,9 +439,15 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
               )}
               <Button 
                 className="w-full"
-                onClick={() => window.open(event.paymentReceiptUrl, '_blank')}
+                onClick={() => {
+                  const link = document.createElement('a');
+                  link.href = event.paymentReceiptUrl;
+                  link.download = 'comprovante';
+                  link.target = '_blank';
+                  link.click();
+                }}
               >
-                Ver Comprovante Original
+                Baixar Comprovante
               </Button>
             </CardContent>
           </Card>

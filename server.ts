@@ -96,7 +96,7 @@ app.get('/api/health', (req, res) => {
       // 3. Send to Make.com Webhook (if configured)
       if (process.env.MAKE_WEBHOOK_URL) {
         try {
-          await fetch(process.env.MAKE_WEBHOOK_URL, {
+          const response = await fetch(process.env.MAKE_WEBHOOK_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -107,9 +107,15 @@ app.get('/api/health', (req, res) => {
               timestamp: new Date().toISOString()
             })
           });
-          console.log(`[NOTIFY] Successfully sent receipt notification to Make.com`);
+          
+          if (response.ok) {
+            console.log(`[NOTIFY] Successfully sent receipt notification to Make.com`);
+          } else {
+            const errorText = await response.text();
+            console.error(`[NOTIFY] Failed to send to Make.com. Status: ${response.status}, Body: ${errorText}`);
+          }
         } catch (makeError) {
-          console.error('[NOTIFY] Failed to send to Make.com:', makeError);
+          console.error('[NOTIFY] Failed to send to Make.com (Network Error):', makeError);
         }
       }
 

@@ -1,5 +1,4 @@
 import express from 'express';
-import { createServer as createViteServer } from 'vite';
 import dotenv from 'dotenv';
 import { resolve } from 'path';
 import crypto from 'crypto';
@@ -269,22 +268,28 @@ app.get('/api/health', (req, res) => {
       console.log('[WEBHOOK RECEIVED]', payload);
       
       // Store log for viewing
-      webhookLogs.unshift({
+      const logEntry = {
         timestamp: new Date().toISOString(),
         headers: req.headers,
         body: payload
-      });
-      
-      // Write to file for debugging
-      try {
-        const fs = require('fs');
-        fs.writeFileSync('webhook_debug.json', JSON.stringify(webhookLogs, null, 2));
-      } catch (e) {
-        console.error('Failed to write debug file', e);
-      }
+      };
+      webhookLogs.unshift(logEntry);
       
       // Limit logs to 50
       if (webhookLogs.length > 50) webhookLogs.pop();
+
+      // Insert into Supabase if available
+      if (supabase) {
+        try {
+          await supabase.from('webhook_logs').insert([{
+            headers: req.headers,
+            payload: payload,
+            body: payload
+          }]);
+        } catch (dbError) {
+          console.error('[WEBHOOK] Failed to insert log into Supabase:', dbError);
+        }
+      }
 
       // 1. VERIFICAÇÃO DE SEGURANÇA (CRÍTICO)
       // Você DEVE validar a assinatura para garantir que o webhook veio da InfinitePay
@@ -423,7 +428,22 @@ app.get('/api/health', (req, res) => {
   });
 
   // Endpoint to view webhook logs
-  app.get('/api/payments/webhook-logs', (req, res) => {
+  app.get('/api/payments/webhook-logs', async (req, res) => {
+    if (supabase) {
+      try {
+        const { data, error } = await supabase
+          .from('webhook_logs')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(50);
+          
+        if (!error && data) {
+          return res.json(data);
+        }
+      } catch (dbError) {
+        console.error('[LOGS] Failed to fetch from Supabase:', dbError);
+      }
+    }
     res.json(webhookLogs);
   });
   
@@ -447,13 +467,27 @@ app.get('/api/health', (req, res) => {
         console.log('[SIMULATION] Processing mock webhook internally...');
         
         // Store log for viewing
-        webhookLogs.unshift({
+        const logEntry = {
           timestamp: new Date().toISOString(),
           headers: { 'x-infinitepay-signature': 'mock_signature', 'content-type': 'application/json' },
           body: mockPayload
-        });
+        };
+        webhookLogs.unshift(logEntry);
         
         if (webhookLogs.length > 50) webhookLogs.pop();
+
+        // Insert into Supabase if available
+        if (supabase) {
+          try {
+            await supabase.from('webhook_logs').insert([{
+              headers: logEntry.headers,
+              payload: mockPayload,
+              body: mockPayload
+            }]);
+          } catch (dbError) {
+            console.error('[SIMULATION] Failed to insert log into Supabase:', dbError);
+          }
+        }
 
         const paymentStatus = mockPayload.status;
         const metadata = mockPayload.metadata;
@@ -496,6 +530,8 @@ async function startServer() {
 
   if (process.env.NODE_ENV !== 'production') {
     // Development mode: Use Vite middleware
+    const viteModule = 'vite';
+    const { createServer: createViteServer } = await import(viteModule);
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: 'spa',

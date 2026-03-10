@@ -52,6 +52,7 @@ export function useEvents() {
         startedAt: row.settings?.startedAt,
         status: row.status as 'active' | 'paused' | 'ended',
         paymentStatus: row.payment_status as 'pending' | 'paid' | 'failed',
+        paymentReceiptUrl: row.payment_receipt_url,
         settings: row.settings || DEFAULT_SETTINGS,
         stats: row.stats || { totalPhotos: 0, totalVideos: 0, totalViews: 0, totalDownloads: 0 },
         plan: row.plan || 'festa',
@@ -223,6 +224,7 @@ export function useEvents() {
         if (updates.description !== undefined) dbUpdates.description = updates.description;
         if (updates.status) dbUpdates.status = updates.status;
         if (updates.paymentStatus) dbUpdates.payment_status = updates.paymentStatus;
+        if (updates.paymentReceiptUrl) dbUpdates.payment_receipt_url = updates.paymentReceiptUrl;
         if (updates.plan) dbUpdates.plan = updates.plan;
         if (updates.settings) dbUpdates.settings = updates.settings;
         if (updates.stats) dbUpdates.stats = updates.stats;

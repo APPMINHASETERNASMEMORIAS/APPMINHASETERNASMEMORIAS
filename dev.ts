@@ -14,8 +14,8 @@ async function startDevServer() {
   // Use vite's connect instance as middleware
   app.use(vite.middlewares);
 
-  app.listen(PORT, () => {
-    console.log(`Dev server running on http://localhost:${PORT}`);
+  app.listen(PORT as number, '0.0.0.0', () => {
+    console.log(`Dev server running on http://0.0.0.0:${PORT}`);
   });
 }
 

@@ -34,7 +34,7 @@ const EVENT_TYPES: { value: EventType; label: string; emoji: string }[] = [
 
 export function ClientLoginModal({ isOpen, onClose, initialEventId }: ClientLoginModalProps) {
   const [mode, setMode] = useState<'login' | 'manage' | 'edit'>('login');
-  const [loginMethod, setLoginMethod] = useState<'name' | 'phone'>('phone');
+  const [loginMethod, setLoginMethod] = useState<'name' | 'phone'>('name');
   const [inputValue, setInputValue] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [editFormData, setEditFormData] = useState<Partial<Event>>({});
@@ -209,18 +209,6 @@ export function ClientLoginModal({ isOpen, onClose, initialEventId }: ClientLogi
               <div className="flex gap-2 mb-4">
                 <Button
                   type="button"
-                  variant={loginMethod === 'phone' ? 'default' : 'outline'}
-                  className={`flex-1 ${loginMethod === 'phone' ? 'bg-purple-600 hover:bg-purple-700 text-white' : ''}`}
-                  onClick={() => {
-                    setLoginMethod('phone');
-                    setInputValue('');
-                  }}
-                >
-                  <Phone className="w-4 h-4 mr-2" />
-                  Telefone
-                </Button>
-                <Button
-                  type="button"
                   variant={loginMethod === 'name' ? 'default' : 'outline'}
                   className={`flex-1 ${loginMethod === 'name' ? 'bg-purple-600 hover:bg-purple-700 text-white' : ''}`}
                   onClick={() => {
@@ -230,6 +218,18 @@ export function ClientLoginModal({ isOpen, onClose, initialEventId }: ClientLogi
                 >
                   <User className="w-4 h-4 mr-2" />
                   Nome
+                </Button>
+                <Button
+                  type="button"
+                  variant={loginMethod === 'phone' ? 'default' : 'outline'}
+                  className={`flex-1 ${loginMethod === 'phone' ? 'bg-purple-600 hover:bg-purple-700 text-white' : ''}`}
+                  onClick={() => {
+                    setLoginMethod('phone');
+                    setInputValue('');
+                  }}
+                >
+                  <Phone className="w-4 h-4 mr-2" />
+                  Telefone
                 </Button>
               </div>
 

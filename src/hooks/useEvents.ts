@@ -38,25 +38,36 @@ export function useEvents() {
         throw eventsError;
       }
 
-      const mappedEvents: Event[] = (eventsData || []).map(row => ({
-        id: row.id,
-        clientName: row.client_name,
-        clientPhone: row.settings?.clientPhone || '',
-        eventName: row.event_name,
-        eventDate: row.event_date,
-        eventTime: row.event_time,
-        eventType: row.event_type as EventType,
-        description: row.description || '',
-        qrCode: row.qr_code || `${window.location.origin}/#/evento/${row.id}`,
-        createdAt: row.created_at,
-        startedAt: row.settings?.startedAt,
-        status: row.status as 'active' | 'paused' | 'ended',
-        paymentStatus: row.payment_status as 'pending' | 'paid' | 'failed',
-        paymentReceiptUrl: row.payment_receipt_url,
-        settings: row.settings || DEFAULT_SETTINGS,
-        stats: row.stats || { totalPhotos: 0, totalVideos: 0, totalViews: 0, totalDownloads: 0 },
-        plan: row.plan || 'festa',
-      }));
+      const mappedEvents: Event[] = (eventsData || []).map(row => {
+        let currentStatus = row.status;
+        
+        // Auto-activate if paid and currently paused
+        if (row.payment_status === 'paid' && row.status === 'paused') {
+          currentStatus = 'active';
+          // Fire and forget update to DB to fix the status
+          supabase!.from('events').update({ status: 'active' }).eq('id', row.id).then();
+        }
+
+        return {
+          id: row.id,
+          clientName: row.client_name,
+          clientPhone: row.settings?.clientPhone || '',
+          eventName: row.event_name,
+          eventDate: row.event_date,
+          eventTime: row.event_time,
+          eventType: row.event_type as EventType,
+          description: row.description || '',
+          qrCode: row.qr_code || `${window.location.origin}/#/evento/${row.id}`,
+          createdAt: row.created_at,
+          startedAt: row.settings?.startedAt,
+          status: currentStatus as 'active' | 'paused' | 'ended',
+          paymentStatus: row.payment_status as 'pending' | 'paid' | 'failed',
+          paymentReceiptUrl: row.payment_receipt_url,
+          settings: row.settings || DEFAULT_SETTINGS,
+          stats: row.stats || { totalPhotos: 0, totalVideos: 0, totalViews: 0, totalDownloads: 0 },
+          plan: row.plan || 'festa',
+        };
+      });
 
       setEvents(mappedEvents);
 

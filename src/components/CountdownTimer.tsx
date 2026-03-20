@@ -112,6 +112,10 @@ export function CountdownTimer({ eventDate, eventTime, createdAt, paymentStatus,
     return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  if (isInfiniteFreeMode) {
+    return null;
+  }
+
   if (timeLeft <= 0) {
     if (isTestMode) {
       return (

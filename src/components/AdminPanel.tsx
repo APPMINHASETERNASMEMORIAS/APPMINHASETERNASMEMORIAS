@@ -501,7 +501,6 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
             onClick={() => {
               setIsFreeTestMode(false);
               setIsOneRealTestMode(false);
-              setIsInfiniteFreeMode(false);
               setShowCreateModal(true);
             }}
             className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"

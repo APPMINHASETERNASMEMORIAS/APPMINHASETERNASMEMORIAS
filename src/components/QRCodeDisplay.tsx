@@ -270,6 +270,9 @@ export function QRCodeDisplay({
 
           <div className="text-center w-full">
             <h3 className="font-semibold text-lg text-gray-800">{eventName}</h3>
+            <p className="text-sm text-gray-600 mt-2 italic">
+              Ajude a eternizar nosso dia! Escaneie e compartilhe suas fotos e vídeos.
+            </p>
             {isLocked ? (
               <div className="space-y-4 mt-2">
                 <p className="text-sm text-red-500 font-medium">{lockMessage}</p>

@@ -213,6 +213,10 @@ export function QRCodeDisplay({
       ctx.font = 'bold 40px sans-serif';
       ctx.fillText(eventName, size / 2, (size - qrSize) / 2 + qrSize + 20);
       
+      // Phrase
+      ctx.font = '30px sans-serif';
+      ctx.fillText('Ajude a eternizar nosso dia! Escaneie e compartilhe suas fotos e vídeos.', size / 2, (size - qrSize) / 2 + qrSize + 70);
+      
       const pngFile = canvas.toDataURL('image/png');
       const downloadLink = document.createElement('a');
       downloadLink.download = `qrcode-${withFrame ? 'moldura-' : ''}${eventName.replace(/\s+/g, '-').toLowerCase()}.png`;

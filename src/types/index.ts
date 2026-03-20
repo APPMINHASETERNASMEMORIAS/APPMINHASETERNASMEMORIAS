@@ -40,6 +40,7 @@ export interface EventSettings {
   clientPhone?: string;
   startedAt?: string;
   isOneRealTestMode?: boolean;
+  isInfiniteFreeMode?: boolean;
 }
 
 export interface FrameSettings {

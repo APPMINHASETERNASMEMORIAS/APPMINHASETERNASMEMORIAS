@@ -44,6 +44,7 @@ interface CreateEventModalProps {
   selectedPlan?: string;
   isTestMode?: boolean;
   isOneRealTestMode?: boolean;
+  isInfiniteFreeMode?: boolean;
   onCreate: (data: {
     clientName: string;
     clientPhone?: string;
@@ -83,7 +84,7 @@ const FRAME_TEMPLATES = [
   { id: 'https://lh3.googleusercontent.com/d/1uQUN0-Jmggl678plcCFQWRhXoppMOQ5j', name: 'Moldura 12', preview: '' },
 ];
 
-export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTestMode = false, isOneRealTestMode = false, onCreate }: CreateEventModalProps) {
+export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTestMode = false, isOneRealTestMode = false, isInfiniteFreeMode = false, onCreate }: CreateEventModalProps) {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     clientName: '',
@@ -97,7 +98,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
   const [settings, setSettings] = useState<EventSettings>({
     allowUploads: true,
     requireApproval: false,
-    maxFileSize: 50,
+    maxFileSize: isInfiniteFreeMode ? 200 : 50,
     allowedTypes: ['image', 'video'],
     revealMode: 'immediate',
   });
@@ -119,7 +120,7 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
 
   const activePlan = localPlan || 'festa';
   const planDetails = PLANS[activePlan as keyof typeof PLANS] || PLANS.festa;
-  const totalPrice = isOneRealTestMode ? 1.00 : (isTestMode ? 0.00 : (planDetails.price + (frameSettings.enabled ? 9.99 : 0)));
+  const totalPrice = isInfiniteFreeMode ? 0.00 : (isOneRealTestMode ? 1.00 : (isTestMode ? 0.00 : (planDetails.price + (frameSettings.enabled ? 9.99 : 0))));
 
   const handleConfirmEvent = async () => {
     setIsSubmitting(true);
@@ -135,7 +136,8 @@ export function CreateEventModal({ isOpen, onClose, selectedPlan = 'festa', isTe
         settings: { 
           ...settings, 
           frameSettings: frameSettings.enabled ? frameSettings : undefined,
-          isOneRealTestMode: isOneRealTestMode
+          isOneRealTestMode: isOneRealTestMode,
+          isInfiniteFreeMode: isInfiniteFreeMode
         }, 
         plan: activePlan 
       });

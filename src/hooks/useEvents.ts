@@ -153,7 +153,7 @@ export function useEvents() {
       qrCode: `${window.location.origin}/#/evento/${id}`,
       createdAt: new Date().toISOString(),
       status: 'active', // Start active for grace period
-      paymentStatus: 'pending',
+      paymentStatus: data.settings?.isInfiniteFreeMode ? 'paid' : 'pending',
       settings: { ...(data.settings || DEFAULT_SETTINGS), clientPhone: data.clientPhone },
       stats: {
         totalPhotos: 0,
@@ -273,7 +273,7 @@ export function useEvents() {
       const GRACE_PERIOD = 10 * 60 * 1000; // 10 minutes
 
       events.forEach(event => {
-        if (event.status === 'active' && event.paymentStatus !== 'paid') {
+        if (event.status === 'active' && event.paymentStatus !== 'paid' && !event.settings?.isInfiniteFreeMode) {
           const createdAt = new Date(event.createdAt).getTime();
           if (now - createdAt > GRACE_PERIOD) {
             console.log(`Pausing event ${event.id} due to unpaid grace period expiration.`);

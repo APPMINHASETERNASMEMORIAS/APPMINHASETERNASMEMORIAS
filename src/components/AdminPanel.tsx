@@ -65,6 +65,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isFreeTestMode, setIsFreeTestMode] = useState(false);
   const [isOneRealTestMode, setIsOneRealTestMode] = useState(false);
+  const [isInfiniteFreeMode, setIsInfiniteFreeMode] = useState(false);
 
   const {
     events,
@@ -477,10 +478,18 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
               onCheckedChange={setIsFreeTestMode}
             />
           </div>
+          <div className="flex items-center gap-2 bg-white border border-gray-200 px-4 py-2 rounded-lg shadow-sm">
+            <span className="text-sm font-medium text-gray-700">Modo Infinito Grátis</span>
+            <Switch 
+              checked={isInfiniteFreeMode} 
+              onCheckedChange={setIsInfiniteFreeMode}
+            />
+          </div>
           <Button
             onClick={() => {
               setIsFreeTestMode(false);
               setIsOneRealTestMode(true);
+              setIsInfiniteFreeMode(false);
               setShowCreateModal(true);
             }}
             variant="outline"
@@ -492,6 +501,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
             onClick={() => {
               setIsFreeTestMode(false);
               setIsOneRealTestMode(false);
+              setIsInfiniteFreeMode(false);
               setShowCreateModal(true);
             }}
             className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
@@ -1082,10 +1092,12 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
         onClose={() => {
           setShowCreateModal(false);
           setIsOneRealTestMode(false);
+          setIsInfiniteFreeMode(false);
         }}
-        selectedPlan={isFreeTestMode ? 'test' : 'festa'}
+        selectedPlan={isInfiniteFreeMode ? 'infinito' : (isFreeTestMode ? 'test' : 'festa')}
         isTestMode={isFreeTestMode}
         isOneRealTestMode={isOneRealTestMode}
+        isInfiniteFreeMode={isInfiniteFreeMode}
         onCreate={async (data) => {
           const newEvent = await createEvent(data);
           setSelectedEvent(newEvent);

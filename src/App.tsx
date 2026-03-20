@@ -1252,6 +1252,7 @@ function EventPage() {
                     updateEvent(event.id, { status: 'paused' });
                   }
                 }}
+                isInfiniteFreeMode={event.settings?.isInfiniteFreeMode}
               />
             </div>
           )}

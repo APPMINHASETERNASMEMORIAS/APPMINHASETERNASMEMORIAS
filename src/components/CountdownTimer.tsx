@@ -10,9 +10,10 @@ interface CountdownTimerProps {
   onEnd?: () => void;
   onTestEnd?: () => void;
   clientPhone?: string;
+  isInfiniteFreeMode?: boolean;
 }
 
-export function CountdownTimer({ eventDate, eventTime, createdAt, paymentStatus, onEnd, onTestEnd, clientPhone }: CountdownTimerProps) {
+export function CountdownTimer({ eventDate, eventTime, createdAt, paymentStatus, onEnd, onTestEnd, clientPhone, isInfiniteFreeMode }: CountdownTimerProps) {
   const [timeLeft, setTimeLeft] = useState<number>(0);
   const [timeUntilStart, setTimeUntilStart] = useState<number>(0);
   const [notified, setNotified] = useState(false);
@@ -26,6 +27,12 @@ export function CountdownTimer({ eventDate, eventTime, createdAt, paymentStatus,
     const calculateTimeLeft = () => {
       const now = new Date().getTime();
       const isPaid = paymentStatus === 'paid';
+      
+      if (isInfiniteFreeMode) {
+        setTimeLeft(Infinity);
+        setIsTestMode(false);
+        return;
+      }
       
       if (!isPaid) {
         setIsTestMode(true);

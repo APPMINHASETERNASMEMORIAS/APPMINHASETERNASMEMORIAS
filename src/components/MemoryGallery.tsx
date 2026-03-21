@@ -230,11 +230,26 @@ export function MemoryGallery({ eventId, refreshTrigger, event, isAdmin = false 
         (payload) => {
           const newMemory = payload.new as Memory;
           if (eventId && newMemory.event_id !== eventId) return;
+          
+          // Check if this media is blacklisted in the event settings
+          if (event?.settings?.deletedMediaIds?.includes(newMemory.id)) return;
 
           setMemories((current) => {
             if (current.some(m => m.id === newMemory.id)) return current;
             return [newMemory, ...current];
           });
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'memories',
+        },
+        (payload) => {
+          const deletedMemory = payload.old as Memory;
+          setMemories((current) => current.filter(m => m.id !== deletedMemory.id));
         }
       )
       .subscribe();

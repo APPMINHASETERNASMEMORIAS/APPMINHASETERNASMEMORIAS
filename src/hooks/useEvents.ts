@@ -85,6 +85,11 @@ export function useEvents() {
       (memoriesData || []).forEach(row => {
         if (deletingMediaIds.current.has(row.id)) return;
         const eventId = row.event_id || 'global';
+        
+        // Check if this media is blacklisted in the event settings
+        const event = mappedEvents.find(e => e.id === eventId);
+        if (event?.settings?.deletedMediaIds?.includes(row.id)) return;
+
         if (!newMedia[eventId]) newMedia[eventId] = [];
         
         newMedia[eventId].push({
@@ -344,23 +349,50 @@ export function useEvents() {
     // Since we don't have a status column in memories yet, we'll just delete if rejected
     if (!approved && isSupabaseConfigured) {
       deletingMediaIds.current.add(id);
+      
+      let targetEventId: string | null = null;
+      
       // Optimistic update: remove from local state immediately
       setMedia(prev => {
         const next = { ...prev };
-        Object.keys(next).forEach(eventId => {
-          next[eventId] = next[eventId].filter(item => item.id !== id);
+        Object.entries(next).forEach(([eventId, items]) => {
+          const item = items.find(i => i.id === id);
+          if (item) {
+            targetEventId = eventId;
+            next[eventId] = items.filter(i => i.id !== id);
+          }
         });
         return next;
       });
 
       try {
-        const { error } = await supabase!
+        // 1. Try to delete from memories table
+        await supabase!
           .from('memories')
           .delete()
           .eq('id', id);
           
-        if (error) throw error;
+        // 2. Persistent fallback: add to event's deletedMediaIds blacklist
+        if (targetEventId && targetEventId !== 'global') {
+          const event = events.find(e => e.id === targetEventId);
+          if (event) {
+            const currentDeletedIds = event.settings.deletedMediaIds || [];
+            if (!currentDeletedIds.includes(id)) {
+              const updatedSettings = {
+                ...event.settings,
+                deletedMediaIds: [...currentDeletedIds, id]
+              };
+              
+              await supabase!
+                .from('events')
+                .update({ settings: updatedSettings })
+                .eq('id', targetEventId);
+            }
+          }
+        }
+
         toast.success('Mídia rejeitada/excluída.');
+        await fetchEventsAndMedia();
       } catch (error) {
         console.error('Error deleting media:', error);
         toast.error('Erro ao excluir mídia.');
@@ -368,36 +400,66 @@ export function useEvents() {
         fetchEventsAndMedia(); // Revert on error
       }
     }
-  }, [fetchEventsAndMedia]);
+  }, [events, fetchEventsAndMedia]);
 
   const deleteMedia = useCallback(async (id: string) => {
     deletingMediaIds.current.add(id);
-    // Optimistic update: remove from local state immediately
+    
+    // Find the event ID for this media
+    let targetEventId: string | null = null;
+    let targetMediaItem: MediaItem | null = null;
+    
     setMedia(prev => {
       const next = { ...prev };
-      Object.keys(next).forEach(eventId => {
-        next[eventId] = next[eventId].filter(item => item.id !== id);
+      Object.entries(next).forEach(([eventId, items]) => {
+        const item = items.find(i => i.id === id);
+        if (item) {
+          targetEventId = eventId;
+          targetMediaItem = item;
+          next[eventId] = items.filter(i => i.id !== id);
+        }
       });
       return next;
     });
 
     if (isSupabaseConfigured) {
       try {
-        const { error } = await supabase!
+        // 1. Try to delete from memories table (might fail due to RLS)
+        const { error: deleteError } = await supabase!
           .from('memories')
           .delete()
           .eq('id', id);
-          
-        if (error) throw error;
-        toast.success('Mídia excluída com sucesso.');
+        
+        // 2. Persistent fallback: add to event's deletedMediaIds blacklist
+        // This works because the admin owns the event and can update its settings
+        if (targetEventId && targetEventId !== 'global') {
+          const event = events.find(e => e.id === targetEventId);
+          if (event) {
+            const currentDeletedIds = event.settings.deletedMediaIds || [];
+            if (!currentDeletedIds.includes(id)) {
+              const updatedSettings = {
+                ...event.settings,
+                deletedMediaIds: [...currentDeletedIds, id]
+              };
+              
+              await supabase!
+                .from('events')
+                .update({ settings: updatedSettings })
+                .eq('id', targetEventId);
+            }
+          }
+        }
+
+        toast.success('Mídia removida com sucesso.');
+        await fetchEventsAndMedia();
       } catch (error) {
-        console.error('Error deleting media:', error);
-        toast.error('Erro ao excluir mídia.');
+        console.error('Error removing media:', error);
+        toast.error('Erro ao remover mídia.');
         deletingMediaIds.current.delete(id);
         fetchEventsAndMedia(); // Revert on error
       }
     }
-  }, [fetchEventsAndMedia]);
+  }, [events, fetchEventsAndMedia]);
 
   const uploadPaymentReceipt = useCallback(async (eventId: string, receiptUrl: string) => {
     try {

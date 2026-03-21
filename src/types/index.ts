@@ -41,6 +41,7 @@ export interface EventSettings {
   startedAt?: string;
   isOneRealTestMode?: boolean;
   isInfiniteFreeMode?: boolean;
+  deletedMediaIds?: string[];
 }
 
 export interface FrameSettings {

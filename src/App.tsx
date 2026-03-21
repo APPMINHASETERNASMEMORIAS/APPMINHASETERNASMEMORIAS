@@ -36,6 +36,7 @@ import { Input } from './components/ui/input';
 import { Label } from './components/ui/label';
 import { Switch } from './components/ui/switch';
 import { useEvents } from './hooks/useEvents';
+import { supabase } from './lib/supabase';
 import { CreateEventModal } from './components/CreateEventModal';
 import { QRCodeDisplay } from './components/QRCodeDisplay';
 import { AdminPanel } from './components/AdminPanel';
@@ -1162,6 +1163,31 @@ function EventPage() {
   const [isClientLoginModalOpen, setIsClientLoginModalOpen] = useState(false);
   const navigate = useNavigate();
   const { getEvent, isEventCreator, getEventMedia, updateEvent } = useEvents();
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    const checkAdmin = (session: any) => {
+      if (session?.user?.email === 'linktestadoeaprovado@gmail.com') {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+      }
+    };
+
+    // Check initial session
+    supabase?.auth.getSession().then(({ data: { session } }) => {
+      checkAdmin(session);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase!.auth.onAuthStateChange((_event, session) => {
+      checkAdmin(session);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
   
   const event = id ? getEvent(id) : undefined;
   const isCreator = id ? isEventCreator(id) : false;
@@ -1296,7 +1322,7 @@ function EventPage() {
                 eventId={id} 
                 refreshTrigger={refreshGallery} 
                 event={event} 
-                isAdmin={isCreator} 
+                isAdmin={isCreator || isAdmin} 
               />
             </div>
         </div>

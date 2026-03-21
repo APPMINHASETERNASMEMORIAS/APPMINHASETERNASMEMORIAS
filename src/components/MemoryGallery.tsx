@@ -441,9 +441,11 @@ export function MemoryGallery({ eventId, refreshTrigger, event, isAdmin = false 
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleDelete(memory.id);
+                            if (window.confirm('Tem certeza que deseja excluir esta memória?')) {
+                              handleDelete(memory.id);
+                            }
                           }}
-                          className="text-white/60 hover:text-red-500 transition-colors bg-black/20 p-1.5 rounded-full backdrop-blur-sm"
+                          className="text-white bg-red-600/80 hover:bg-red-600 transition-all p-1.5 rounded-full shadow-lg"
                           title="Excluir memória"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -544,8 +546,12 @@ export function MemoryGallery({ eventId, refreshTrigger, event, isAdmin = false 
 
                 {(uploaderId === selectedMemory.uploader_id || isAdmin) && (
                   <button 
-                    onClick={() => handleDelete(selectedMemory.id)}
-                    className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/30 text-red-400 px-6 py-3 rounded-full transition-all border border-red-500/20"
+                    onClick={() => {
+                      if (window.confirm('Tem certeza que deseja excluir esta memória?')) {
+                        handleDelete(selectedMemory.id);
+                      }
+                    }}
+                    className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-full transition-all shadow-lg"
                   >
                     <Trash2 className="w-5 h-5" />
                     <span className="font-bold">Excluir</span>

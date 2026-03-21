@@ -77,7 +77,7 @@ function MediaItemCard({ item, event, isAdmin, onApprove, onDelete, onClick }: {
         </div>
       )}
 
-      <div className={`absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent transition-opacity duration-300 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent transition-opacity duration-300 ${isHovered || isAdmin ? 'opacity-100' : 'opacity-0'}`}>
         {cleanCaption && <div className="absolute bottom-16 left-4 right-4"><p className="text-white text-sm line-clamp-2">{cleanCaption}</p></div>}
         <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
           <span className="text-white/80 text-xs">{item.uploadedBy}</span>
@@ -89,7 +89,18 @@ function MediaItemCard({ item, event, isAdmin, onApprove, onDelete, onClick }: {
                   <button onClick={(e) => { e.stopPropagation(); onApprove?.(item.id, false); }} className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center hover:bg-red-600 transition-colors"><X className="w-4 h-4 text-white" /></button>
                 </>
               )}
-              <button onClick={(e) => { e.stopPropagation(); onDelete?.(item.id); }} className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center hover:bg-gray-700 transition-colors"><Trash2 className="w-4 h-4 text-white" /></button>
+              <button 
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  if (window.confirm('Tem certeza que deseja excluir esta mídia?')) {
+                    onDelete?.(item.id); 
+                  }
+                }} 
+                className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center hover:bg-red-700 transition-colors shadow-lg"
+                title="Excluir mídia"
+              >
+                <Trash2 className="w-4 h-4 text-white" />
+              </button>
             </div>
           )}
         </div>
@@ -102,7 +113,7 @@ function MediaItemCard({ item, event, isAdmin, onApprove, onDelete, onClick }: {
   );
 }
 
-function Lightbox({ item, event, isOpen, onClose, onNext, onPrev, hasNext, hasPrev }: {
+function Lightbox({ item, event, isOpen, onClose, onNext, onPrev, hasNext, hasPrev, isAdmin, onDelete }: {
   item: MediaItem | null;
   event?: Event;
   isOpen: boolean;
@@ -111,6 +122,8 @@ function Lightbox({ item, event, isOpen, onClose, onNext, onPrev, hasNext, hasPr
   onPrev: () => void;
   hasNext: boolean;
   hasPrev: boolean;
+  isAdmin?: boolean;
+  onDelete?: (mediaId: string) => void;
 }) {
   if (!item) return null;
 
@@ -139,9 +152,26 @@ function Lightbox({ item, event, isOpen, onClose, onNext, onPrev, hasNext, hasPr
                 {cleanCaption && <p className="text-white text-lg mb-1">{cleanCaption}</p>}
                 <p className="text-white/60 text-sm">Enviado por {item.uploadedBy} • {new Date(item.uploadedAt).toLocaleDateString('pt-BR')}</p>
               </div>
-              <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white/10" onClick={() => { const link = document.createElement('a'); link.href = item.originalUrl; link.download = `foto-${item.id}.jpg`; link.click(); }}>
-                <Download className="w-4 h-4 mr-2" />Baixar
-              </Button>
+              <div className="flex gap-2">
+                {isAdmin && (
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                    onClick={() => {
+                      if (window.confirm('Tem certeza que deseja excluir esta mídia?')) {
+                        onDelete?.(item.id);
+                        onClose();
+                      }
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />Excluir
+                  </Button>
+                )}
+                <Button variant="outline" size="sm" className="border-white/30 text-white hover:bg-white/10" onClick={() => { const link = document.createElement('a'); link.href = item.originalUrl; link.download = `foto-${item.id}.jpg`; link.click(); }}>
+                  <Download className="w-4 h-4 mr-2" />Baixar
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -239,6 +269,8 @@ export function MediaWall({ event, media, isAdmin, onApprove, onDelete }: MediaW
         onPrev={handlePrev}
         hasNext={selectedIndex !== null && selectedIndex < filteredMedia.length - 1}
         hasPrev={selectedIndex !== null && selectedIndex > 0}
+        isAdmin={isAdmin}
+        onDelete={onDelete}
       />
     </div>
   );

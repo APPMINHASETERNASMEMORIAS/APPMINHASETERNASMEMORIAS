@@ -146,12 +146,16 @@ export function MemoryGallery({ eventId, refreshTrigger, event, isAdmin = false 
   }, [memories]);
 
   useEffect(() => {
+    setMemories([]); // Clear old memories
+    setIsLoading(true);
     if (!isSupabaseConfigured) {
       setIsLoading(false);
       return;
     }
 
     const fetchMemories = async (isBackground = false) => {
+      if (eventId && !event) return; // Wait for event to load
+
       try {
         let query = supabase!
           .from('memories')

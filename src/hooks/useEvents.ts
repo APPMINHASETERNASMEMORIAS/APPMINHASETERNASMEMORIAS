@@ -359,6 +359,7 @@ export function useEvents() {
   }, [fetchEventsAndMedia]);
 
   const deleteMedia = useCallback(async (id: string) => {
+    console.log('deleteMedia called for id:', id);
     if (isSupabaseConfigured) {
       try {
         const { error } = await supabase!
@@ -367,8 +368,10 @@ export function useEvents() {
           .eq('id', id);
           
         if (error) throw error;
+        console.log('Media deleted successfully from Supabase');
         toast.success('Mídia excluída com sucesso.');
         await fetchEventsAndMedia(); // Refresh data
+        console.log('fetchEventsAndMedia called after deletion');
       } catch (error) {
         console.error('Error deleting media:', error);
         toast.error('Erro ao excluir mídia.');

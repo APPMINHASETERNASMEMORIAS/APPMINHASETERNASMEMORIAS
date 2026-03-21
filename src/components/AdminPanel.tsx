@@ -1075,7 +1075,10 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
               </div>
               <MediaWall
                 event={selectedEvent}
-                media={media.filter(m => m.eventId === selectedEvent.id)}
+                media={media.filter(m => {
+                  console.log('Filtering media, item eventId:', m.eventId, 'selectedEvent.id:', selectedEvent.id);
+                  return m.eventId === selectedEvent.id;
+                })}
                 isAdmin={true}
                 onApprove={approveMedia}
                 onDelete={deleteMedia}

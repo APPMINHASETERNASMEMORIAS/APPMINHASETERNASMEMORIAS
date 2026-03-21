@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { supabase, isSupabaseConfigured } from '../lib/supabase';
-import { Heart, MessageCircle, PlayCircle, Trash2, Camera, X } from 'lucide-react';
+import { Heart, MessageCircle, PlayCircle, Trash2, Camera, X, Download } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { FrameOverlay } from './FrameOverlay';
 import { Event } from '../types';
@@ -109,6 +109,25 @@ export function MemoryGallery({ eventId, refreshTrigger, event, isAdmin = false 
       setMemories(prev => prev.map(m => 
         m.id === memoryId ? { ...m, likes_count: currentLikes } : m
       ));
+    }
+  };
+
+  const handleDownload = async (url: string, type: 'image' | 'video') => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `memoria-${new Date().getTime()}.${type === 'image' ? 'jpg' : 'mp4'}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+      toast.success('Download iniciado!');
+    } catch (error) {
+      console.error('Erro ao baixar:', error);
+      toast.error('Erro ao baixar arquivo.');
     }
   };
 
@@ -472,6 +491,18 @@ export function MemoryGallery({ eventId, refreshTrigger, event, isAdmin = false 
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       )}
+                      {isAdmin && (
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDownload(memory.url, memory.type);
+                          }}
+                          className="text-white bg-blue-600/80 hover:bg-blue-600 transition-all p-1.5 rounded-full shadow-lg"
+                          title="Baixar memória"
+                        >
+                          <Download className="w-3.5 h-3.5" />
+                        </button>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -564,6 +595,15 @@ export function MemoryGallery({ eventId, refreshTrigger, event, isAdmin = false 
                   <Heart className={`w-5 h-5 ${selectedMemory.likes_count > 0 ? 'fill-current text-red-400' : ''}`} />
                   <span className="font-bold">{selectedMemory.likes_count || 0} curtidas</span>
                 </button>
+                {isAdmin && (
+                  <button 
+                    onClick={() => handleDownload(selectedMemory.url, selectedMemory.type)}
+                    className="flex items-center gap-2 bg-white/10 hover:bg-blue-500/20 text-white px-6 py-3 rounded-full transition-all border border-white/10"
+                  >
+                    <Download className="w-5 h-5" />
+                    <span className="font-bold">Baixar</span>
+                  </button>
+                )}
 
                 {(uploaderId === selectedMemory.uploader_id || isAdmin) && (
                   <button 

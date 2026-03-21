@@ -78,6 +78,7 @@ export function useEvents() {
         .order('created_at', { ascending: false });
 
       if (memoriesError) throw memoriesError;
+      console.log('Fetched media:', memoriesData);
 
       const newMedia: Record<string, MediaItem[]> = {};
       
@@ -349,7 +350,7 @@ export function useEvents() {
           
         if (error) throw error;
         toast.success('Mídia rejeitada/excluída.');
-        fetchEventsAndMedia(); // Refresh data
+        await fetchEventsAndMedia(); // Refresh data
       } catch (error) {
         console.error('Error deleting media:', error);
         toast.error('Erro ao excluir mídia.');
@@ -367,7 +368,7 @@ export function useEvents() {
           
         if (error) throw error;
         toast.success('Mídia excluída com sucesso.');
-        fetchEventsAndMedia(); // Refresh data
+        await fetchEventsAndMedia(); // Refresh data
       } catch (error) {
         console.error('Error deleting media:', error);
         toast.error('Erro ao excluir mídia.');

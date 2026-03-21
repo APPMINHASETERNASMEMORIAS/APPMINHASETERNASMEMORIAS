@@ -237,6 +237,23 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
     }
   };
 
+  const handleDownload = async (url: string, type: 'image' | 'video') => {
+    try {
+      toast.loading('Baixando...', { id: 'download' });
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `midia-${Date.now()}.${type === 'image' ? 'jpg' : 'mp4'}`;
+      link.click();
+      window.URL.revokeObjectURL(blobUrl);
+      toast.success('Download iniciado!', { id: 'download' });
+    } catch (error) {
+      toast.error('Erro ao baixar mídia.', { id: 'download' });
+    }
+  };
+
   const handleDownloadEvent = async (event: Event) => {
     try {
       setIsDownloading(event.id);
@@ -1153,6 +1170,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                 isAdmin={true}
                 onApprove={approveMedia}
                 onDelete={deleteMedia}
+                onDownload={handleDownload}
               />
             </div>
           )}

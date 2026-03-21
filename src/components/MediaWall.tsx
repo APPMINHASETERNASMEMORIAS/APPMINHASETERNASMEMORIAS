@@ -11,6 +11,7 @@ interface MediaWallProps {
   isAdmin?: boolean;
   onApprove?: (mediaId: string, approved: boolean) => void;
   onDelete?: (mediaId: string) => void;
+  onDownload?: (url: string, type: 'image' | 'video') => void;
 }
 
 // Helper to extract frame and clean caption
@@ -28,12 +29,13 @@ const getMediaContent = (item: MediaItem) => {
   return { cleanCaption, frameUrl };
 };
 
-function MediaItemCard({ item, event, isAdmin, onApprove, onDelete, onClick }: {
+function MediaItemCard({ item, event, isAdmin, onApprove, onDelete, onDownload, onClick }: {
   item: MediaItem;
   event?: Event;
   isAdmin?: boolean;
   onApprove?: (mediaId: string, approved: boolean) => void;
   onDelete?: (mediaId: string) => void;
+  onDownload?: (url: string, type: 'image' | 'video') => void;
   onClick: () => void;
 }) {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -100,6 +102,16 @@ function MediaItemCard({ item, event, isAdmin, onApprove, onDelete, onClick }: {
                 title="Excluir mídia"
               >
                 <Trash2 className="w-4 h-4 text-white" />
+              </button>
+              <button 
+                onClick={(e) => { 
+                  e.stopPropagation(); 
+                  onDownload?.(item.url, item.type); 
+                }} 
+                className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center hover:bg-blue-700 transition-colors shadow-lg"
+                title="Baixar mídia"
+              >
+                <Download className="w-4 h-4 text-white" />
               </button>
             </div>
           )}
@@ -180,7 +192,7 @@ function Lightbox({ item, event, isOpen, onClose, onNext, onPrev, hasNext, hasPr
   );
 }
 
-export function MediaWall({ event, media, isAdmin, onApprove, onDelete }: MediaWallProps) {
+export function MediaWall({ event, media, isAdmin, onApprove, onDelete, onDownload }: MediaWallProps) {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [filter, setFilter] = useState<'all' | 'image' | 'video' | 'pending'>('all');
 
@@ -249,7 +261,7 @@ export function MediaWall({ event, media, isAdmin, onApprove, onDelete }: MediaW
       {filteredMedia.length > 0 ? (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
           {filteredMedia.map((item, index) => (
-            item && <MediaItemCard key={item.id} item={item} event={event} isAdmin={isAdmin} onApprove={onApprove} onDelete={onDelete} onClick={() => setSelectedIndex(index)} />
+            item && <MediaItemCard key={item.id} item={item} event={event} isAdmin={isAdmin} onApprove={onApprove} onDelete={onDelete} onDownload={onDownload} onClick={() => setSelectedIndex(index)} />
           ))}
         </div>
       ) : (

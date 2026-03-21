@@ -41,6 +41,7 @@ const getCleanMessage = (message: string | null) => {
 };
 
 export function MemoryGallery({ eventId, refreshTrigger, event, isAdmin = false }: { eventId?: string, refreshTrigger: number, event?: Event, isAdmin?: boolean }) {
+  console.log('MemoryGallery isAdmin:', isAdmin);
   const [memories, setMemories] = useState<Memory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);

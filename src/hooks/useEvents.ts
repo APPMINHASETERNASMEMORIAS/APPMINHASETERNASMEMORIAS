@@ -358,6 +358,7 @@ export function useEvents() {
           
         if (error) throw error;
         toast.success('Mídia rejeitada/excluída.');
+        await fetchEventsAndMedia(); // Refresh data from server
       } catch (error) {
         console.error('Error deleting media:', error);
         toast.error('Erro ao excluir mídia.');
@@ -385,6 +386,7 @@ export function useEvents() {
           
         if (error) throw error;
         toast.success('Mídia excluída com sucesso.');
+        await fetchEventsAndMedia(); // Refresh data from server
       } catch (error) {
         console.error('Error deleting media:', error);
         toast.error('Erro ao excluir mídia.');

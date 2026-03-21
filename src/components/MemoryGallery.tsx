@@ -114,7 +114,6 @@ export function MemoryGallery({ eventId, refreshTrigger, event, isAdmin = false 
 
   const handleDelete = async (memoryId: string) => {
     if (!isSupabaseConfigured) return;
-    if (!window.confirm('Tem certeza que deseja excluir esta memória?')) return;
 
     try {
       let query = supabase!

@@ -349,12 +349,13 @@ export function useEvents() {
           
         if (error) throw error;
         toast.success('Mídia rejeitada/excluída.');
+        fetchEventsAndMedia(); // Refresh data
       } catch (error) {
         console.error('Error deleting media:', error);
         toast.error('Erro ao excluir mídia.');
       }
     }
-  }, []);
+  }, [fetchEventsAndMedia]);
 
   const deleteMedia = useCallback(async (id: string) => {
     if (isSupabaseConfigured) {
@@ -366,12 +367,13 @@ export function useEvents() {
           
         if (error) throw error;
         toast.success('Mídia excluída com sucesso.');
+        fetchEventsAndMedia(); // Refresh data
       } catch (error) {
         console.error('Error deleting media:', error);
         toast.error('Erro ao excluir mídia.');
       }
     }
-  }, []);
+  }, [fetchEventsAndMedia]);
 
   const uploadPaymentReceipt = useCallback(async (eventId: string, receiptUrl: string) => {
     try {

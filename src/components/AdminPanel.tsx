@@ -55,6 +55,7 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
   const [password, setPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const [view, setView] = useState<AdminView>('dashboard');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
@@ -206,6 +207,29 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
       toast.success('Email de recuperação enviado para ' + ADMIN_EMAIL);
     }
     setIsLoading(false);
+  };
+
+  const handleUpdatePassword = async () => {
+    if (newPassword !== confirmPassword) {
+      toast.error('As senhas não coincidem.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error('A senha deve ter pelo menos 6 caracteres.');
+      return;
+    }
+    try {
+      setIsUpdatingPassword(true);
+      const { error } = await supabase!.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      toast.success('Senha alterada com sucesso!');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error) {
+      toast.error('Erro ao alterar senha.');
+    } finally {
+      setIsUpdatingPassword(false);
+    }
   };
 
   const handleDownloadEvent = async (event: Event) => {
@@ -1027,16 +1051,43 @@ export function AdminPanel({ onClose }: AdminPanelProps) {
                   <CardHeader>
                     <CardTitle>Segurança</CardTitle>
                   </CardHeader>
-                  <CardContent className="p-6 space-y-4">
-                    <p className="text-gray-600">Para trocar a senha do administrador, enviaremos um link de confirmação para o email <strong>{ADMIN_EMAIL}</strong>.</p>
-                    <Button 
-                      onClick={handleForgotPassword}
-                      disabled={isLoading}
-                      className="bg-purple-600 hover:bg-purple-700"
-                    >
-                      <Lock className="w-4 h-4 mr-2" />
-                      {isLoading ? 'Enviando...' : 'Trocar Senha'}
-                    </Button>
+                  <CardContent className="p-6 space-y-6">
+                    <div className="space-y-4">
+                      <h3 className="font-medium text-gray-700">Alterar Senha</h3>
+                      <div className="space-y-2">
+                        <Input
+                          type="password"
+                          placeholder="Nova senha"
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                        />
+                        <Input
+                          type="password"
+                          placeholder="Confirmar nova senha"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                        />
+                        <Button 
+                          onClick={handleUpdatePassword}
+                          disabled={isUpdatingPassword}
+                          className="w-full bg-purple-600 hover:bg-purple-700"
+                        >
+                          {isUpdatingPassword ? 'Alterando...' : 'Alterar Senha'}
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="pt-4 border-t border-gray-100">
+                      <p className="text-sm text-gray-600 mb-4">Caso prefira, podemos enviar um link de redefinição para o email <strong>{ADMIN_EMAIL}</strong>.</p>
+                      <Button 
+                        onClick={handleForgotPassword}
+                        disabled={isLoading}
+                        variant="outline"
+                        className="w-full"
+                      >
+                        <Lock className="w-4 h-4 mr-2" />
+                        {isLoading ? 'Enviando...' : 'Enviar Link de Redefinição'}
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               </div>

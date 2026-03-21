@@ -172,13 +172,16 @@ export function MemoryGallery({ eventId, refreshTrigger, event, isAdmin = false 
               .order('created_at', { ascending: false });
             const { data: fallbackData, error: fallbackError } = await fallbackQuery;
             if (fallbackError) throw fallbackError;
-            mergeMemories(fallbackData || []);
+            
+            const filteredFallback = (fallbackData || []).filter(m => !event?.settings?.deletedMediaIds?.includes(m.id));
+            mergeMemories(filteredFallback);
             return;
           }
           throw error;
         }
         
-        mergeMemories(data || []);
+        const filteredData = (data || []).filter(m => !event?.settings?.deletedMediaIds?.includes(m.id));
+        mergeMemories(filteredData);
       } catch (error) {
         console.error('Erro ao buscar memórias:', error);
       } finally {
@@ -240,7 +243,7 @@ export function MemoryGallery({ eventId, refreshTrigger, event, isAdmin = false 
       clearInterval(pollInterval);
       supabase!.removeChannel(channel);
     };
-  }, [refreshTrigger, eventId]);
+  }, [refreshTrigger, eventId, event?.settings?.deletedMediaIds]);
 
   // Distribute memories into columns for Masonry
   const columns = Array.from({ length: numCols }, () => [] as Memory[]);

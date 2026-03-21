@@ -465,7 +465,7 @@ export function MemoryGallery({ eventId, refreshTrigger, event, isAdmin = false 
                       </p>
                     )}
                     
-                    <div className="flex items-center justify-between mt-2">
+                    <div className="flex items-center justify-between mt-2 gap-2">
                        <button 
                         onClick={(e) => {
                           e.stopPropagation();

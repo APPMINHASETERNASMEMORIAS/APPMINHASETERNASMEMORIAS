@@ -78,7 +78,6 @@ export function useEvents() {
         .order('created_at', { ascending: false });
 
       if (memoriesError) throw memoriesError;
-      console.log('Fetched media:', memoriesData);
 
       const newMedia: Record<string, MediaItem[]> = {};
       
@@ -343,6 +342,15 @@ export function useEvents() {
     // Since we don't have a status column in memories yet, we'll just delete if rejected
     if (!approved && isSupabaseConfigured) {
       try {
+        // Optimistic update
+        setMedia(prev => {
+          const next = { ...prev };
+          Object.keys(next).forEach(eventId => {
+            next[eventId] = next[eventId].filter(item => item.id !== id);
+          });
+          return next;
+        });
+
         const { error } = await supabase!
           .from('memories')
           .delete()
@@ -350,17 +358,15 @@ export function useEvents() {
           
         if (error) throw error;
         toast.success('Mídia rejeitada/excluída.');
-        await fetchEventsAndMedia(); // Refresh data
       } catch (error) {
         console.error('Error deleting media:', error);
         toast.error('Erro ao excluir mídia.');
+        fetchEventsAndMedia(); // Revert on error
       }
     }
   }, [fetchEventsAndMedia]);
 
   const deleteMedia = useCallback(async (id: string) => {
-    console.log('deleteMedia called for id:', id);
-    
     // Optimistic update: remove from local state immediately
     setMedia(prev => {
       const next = { ...prev };
@@ -378,10 +384,7 @@ export function useEvents() {
           .eq('id', id);
           
         if (error) throw error;
-        console.log('Media deleted successfully from Supabase');
         toast.success('Mídia excluída com sucesso.');
-        await fetchEventsAndMedia(); // Refresh data to ensure consistency
-        console.log('fetchEventsAndMedia called after deletion');
       } catch (error) {
         console.error('Error deleting media:', error);
         toast.error('Erro ao excluir mídia.');

@@ -181,7 +181,6 @@ function Lightbox({ item, event, isOpen, onClose, onNext, onPrev, hasNext, hasPr
 }
 
 export function MediaWall({ event, media, isAdmin, onApprove, onDelete }: MediaWallProps) {
-  console.log('MediaWall media:', media);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [filter, setFilter] = useState<'all' | 'image' | 'video' | 'pending'>('all');
 

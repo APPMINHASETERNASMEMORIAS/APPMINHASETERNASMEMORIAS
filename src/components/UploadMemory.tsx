@@ -131,9 +131,36 @@ export function UploadMemory({
     setStep('upload');
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const selectedFile = e.target.files[0];
+      
+      if (selectedFile.type.startsWith('video/')) {
+        // Check duration immediately
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        const duration = await new Promise<number>((resolve) => {
+          video.onloadedmetadata = () => {
+            URL.revokeObjectURL(video.src);
+            resolve(video.duration);
+          };
+          video.onerror = () => {
+            URL.revokeObjectURL(video.src);
+            resolve(0);
+          };
+          video.src = URL.createObjectURL(selectedFile);
+        });
+
+        if (duration > 20.5) {
+          toast.error('O vídeo deve ter no máximo 20 segundos para ser enviado.', {
+            duration: 5000,
+            icon: '⚠️'
+          });
+          if (fileInputRef.current) fileInputRef.current.value = '';
+          return;
+        }
+      }
+
       setFile(selectedFile);
       
       if (previewUrl) URL.revokeObjectURL(previewUrl);

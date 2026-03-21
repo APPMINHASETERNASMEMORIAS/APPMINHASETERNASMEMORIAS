@@ -1292,7 +1292,12 @@ function EventPage() {
                   media={media} 
                 />
               )}
-              <MemoryGallery eventId={id} refreshTrigger={refreshGallery} event={event} />
+              <MemoryGallery 
+                eventId={id} 
+                refreshTrigger={refreshGallery} 
+                event={event} 
+                isAdmin={isCreator} 
+              />
             </div>
         </div>
       </main>

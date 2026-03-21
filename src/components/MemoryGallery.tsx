@@ -40,7 +40,7 @@ const getCleanMessage = (message: string | null) => {
   return message.replace(/\n?Frame: https?:\/\/[^\s]+/, '').trim();
 };
 
-export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: string, refreshTrigger: number, event?: Event }) {
+export function MemoryGallery({ eventId, refreshTrigger, event, isAdmin = false }: { eventId?: string, refreshTrigger: number, event?: Event, isAdmin?: boolean }) {
   const [memories, setMemories] = useState<Memory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedMemory, setSelectedMemory] = useState<Memory | null>(null);
@@ -117,15 +117,24 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
     if (!window.confirm('Tem certeza que deseja excluir esta memória?')) return;
 
     try {
-      const { error } = await supabase!
+      let query = supabase!
         .from('memories')
         .delete()
-        .eq('id', memoryId)
-        .eq('uploader_id', uploaderId);
+        .eq('id', memoryId);
+      
+      // If not admin, must be the uploader
+      if (!isAdmin) {
+        query = query.eq('uploader_id', uploaderId);
+      }
+
+      const { error } = await query;
 
       if (error) throw error;
       
       setMemories(prev => prev.filter(m => m.id !== memoryId));
+      if (selectedMemory?.id === memoryId) {
+        setSelectedMemory(null);
+      }
       toast.success('Memória excluída com sucesso.');
     } catch (error) {
       console.error('Erro ao excluir:', error);
@@ -428,15 +437,16 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
                         <span className="text-xs">{memory.likes_count || 0}</span>
                       </button>
                       
-                      {uploaderId === memory.uploader_id && (
+                      {(uploaderId === memory.uploader_id || isAdmin) && (
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
                             handleDelete(memory.id);
                           }}
-                          className="text-white/60 hover:text-red-500 transition-colors"
+                          className="text-white/60 hover:text-red-500 transition-colors bg-black/20 p-1.5 rounded-full backdrop-blur-sm"
+                          title="Excluir memória"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       )}
                     </div>
@@ -531,6 +541,16 @@ export function MemoryGallery({ eventId, refreshTrigger, event }: { eventId?: st
                   <Heart className={`w-5 h-5 ${selectedMemory.likes_count > 0 ? 'fill-current text-red-400' : ''}`} />
                   <span className="font-bold">{selectedMemory.likes_count || 0} curtidas</span>
                 </button>
+
+                {(uploaderId === selectedMemory.uploader_id || isAdmin) && (
+                  <button 
+                    onClick={() => handleDelete(selectedMemory.id)}
+                    className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/30 text-red-400 px-6 py-3 rounded-full transition-all border border-red-500/20"
+                  >
+                    <Trash2 className="w-5 h-5" />
+                    <span className="font-bold">Excluir</span>
+                  </button>
+                )}
               </div>
             </div>
           </div>

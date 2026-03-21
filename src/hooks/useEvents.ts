@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { Event, EventType, EventSettings, MediaItem } from '@/types';
 import { supabase, isSupabaseConfigured } from '@/lib/supabase';
@@ -16,6 +16,7 @@ export function useEvents() {
   const [events, setEvents] = useState<Event[]>([]);
   const [media, setMedia] = useState<Record<string, MediaItem[]>>({});
   const [loading, setLoading] = useState(true);
+  const deletingMediaIds = useRef<Set<string>>(new Set());
 
   const fetchEventsAndMedia = useCallback(async () => {
     if (!isSupabaseConfigured) {
@@ -82,6 +83,7 @@ export function useEvents() {
       const newMedia: Record<string, MediaItem[]> = {};
       
       (memoriesData || []).forEach(row => {
+        if (deletingMediaIds.current.has(row.id)) return;
         const eventId = row.event_id || 'global';
         if (!newMedia[eventId]) newMedia[eventId] = [];
         
@@ -341,16 +343,17 @@ export function useEvents() {
   const approveMedia = useCallback(async (id: string, approved: boolean) => {
     // Since we don't have a status column in memories yet, we'll just delete if rejected
     if (!approved && isSupabaseConfigured) {
-      try {
-        // Optimistic update
-        setMedia(prev => {
-          const next = { ...prev };
-          Object.keys(next).forEach(eventId => {
-            next[eventId] = next[eventId].filter(item => item.id !== id);
-          });
-          return next;
+      deletingMediaIds.current.add(id);
+      // Optimistic update: remove from local state immediately
+      setMedia(prev => {
+        const next = { ...prev };
+        Object.keys(next).forEach(eventId => {
+          next[eventId] = next[eventId].filter(item => item.id !== id);
         });
+        return next;
+      });
 
+      try {
         const { error } = await supabase!
           .from('memories')
           .delete()
@@ -358,16 +361,17 @@ export function useEvents() {
           
         if (error) throw error;
         toast.success('Mídia rejeitada/excluída.');
-        await fetchEventsAndMedia(); // Refresh data from server
       } catch (error) {
         console.error('Error deleting media:', error);
         toast.error('Erro ao excluir mídia.');
+        deletingMediaIds.current.delete(id);
         fetchEventsAndMedia(); // Revert on error
       }
     }
   }, [fetchEventsAndMedia]);
 
   const deleteMedia = useCallback(async (id: string) => {
+    deletingMediaIds.current.add(id);
     // Optimistic update: remove from local state immediately
     setMedia(prev => {
       const next = { ...prev };
@@ -386,10 +390,10 @@ export function useEvents() {
           
         if (error) throw error;
         toast.success('Mídia excluída com sucesso.');
-        await fetchEventsAndMedia(); // Refresh data from server
       } catch (error) {
         console.error('Error deleting media:', error);
         toast.error('Erro ao excluir mídia.');
+        deletingMediaIds.current.delete(id);
         fetchEventsAndMedia(); // Revert on error
       }
     }

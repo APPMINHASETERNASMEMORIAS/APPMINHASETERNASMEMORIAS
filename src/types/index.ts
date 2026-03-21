@@ -78,4 +78,5 @@ export interface MediaItem {
     width: number;
     height: number;
   };
+  isDeleting?: boolean;
 }

@@ -360,6 +360,16 @@ export function useEvents() {
 
   const deleteMedia = useCallback(async (id: string) => {
     console.log('deleteMedia called for id:', id);
+    
+    // Optimistic update: remove from local state immediately
+    setMedia(prev => {
+      const next = { ...prev };
+      Object.keys(next).forEach(eventId => {
+        next[eventId] = next[eventId].filter(item => item.id !== id);
+      });
+      return next;
+    });
+
     if (isSupabaseConfigured) {
       try {
         const { error } = await supabase!
@@ -370,11 +380,12 @@ export function useEvents() {
         if (error) throw error;
         console.log('Media deleted successfully from Supabase');
         toast.success('Mídia excluída com sucesso.');
-        await fetchEventsAndMedia(); // Refresh data
+        await fetchEventsAndMedia(); // Refresh data to ensure consistency
         console.log('fetchEventsAndMedia called after deletion');
       } catch (error) {
         console.error('Error deleting media:', error);
         toast.error('Erro ao excluir mídia.');
+        fetchEventsAndMedia(); // Revert on error
       }
     }
   }, [fetchEventsAndMedia]);

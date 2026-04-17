@@ -282,7 +282,7 @@ export function MemoryGallery({ eventId, refreshTrigger, event, isAdmin = false 
       clearInterval(pollInterval);
       supabase!.removeChannel(channel);
     };
-  }, [refreshTrigger, eventId, event?.settings?.deletedMediaIds]);
+  }, [refreshTrigger, eventId, event?.settings?.deletedMediaIds, event === undefined]);
 
   // Distribute memories into columns for Masonry
   const columns = Array.from({ length: numCols }, () => [] as Memory[]);
